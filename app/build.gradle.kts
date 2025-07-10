@@ -74,4 +74,5 @@ dependencies {
     implementation("com.google.code.gson:gson:2.13.1")
     // Charting Library - Vico
     implementation("com.patrykandpatrick.vico:compose-m3:1.13.0")
+    implementation("androidx.compose.ui:ui-text-google-fonts:1.6.0")
 }

@@ -7,8 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.gymtracker.ui.theme.GymTrackerTheme
-
+import com.example.compose.AppTheme
 @Composable
 fun GymScreen() {
     Box(
@@ -22,7 +21,7 @@ fun GymScreen() {
 @Preview(showBackground = true)
 @Composable
 fun GymScreenPreview() {
-    GymTrackerTheme {
+    AppTheme {
         GymScreen()
     }
 }

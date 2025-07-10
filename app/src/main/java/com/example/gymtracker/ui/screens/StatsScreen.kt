@@ -15,9 +15,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.compose.AppTheme
 import com.example.gymtracker.data.ExerciseSet
 import com.example.gymtracker.data.WorkoutSession
-import com.example.gymtracker.ui.theme.GymTrackerTheme
 import com.example.gymtracker.viewmodel.WorkoutViewModel
 import com.patrykandpatrick.vico.compose.axis.horizontal.rememberBottomAxis
 import com.patrykandpatrick.vico.compose.axis.vertical.rememberStartAxis
@@ -152,7 +152,7 @@ fun StatsScreenPreview() {
         WorkoutSession(4, "Benchpress", sets = listOf(ExerciseSet(17, 56.0)), Date()),
         WorkoutSession(5, "Benchpress", sets = listOf(ExerciseSet(23, 56.0)), Date())
     )
-    GymTrackerTheme {
+    AppTheme {
         StatsScreen("Benchpress", fakeSessions)
     }
 }

@@ -12,11 +12,11 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gymtracker.data.WorkoutSession
-import com.example.gymtracker.ui.theme.GymTrackerTheme
 import java.text.SimpleDateFormat
 import java.util.*
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import com.example.compose.AppTheme
 import com.example.gymtracker.data.ExerciseRepository
 
 
@@ -142,7 +142,7 @@ fun HomeScreenPreview() {
         WorkoutSession(2, "Squat", emptyList(), Date()),
         WorkoutSession(3, "Deadlift", emptyList(), Date())
     )
-    GymTrackerTheme {
+    AppTheme {
         HomeScreen(
             sessions = fakeSessions,
             onNavigateToAddWorkout = {},

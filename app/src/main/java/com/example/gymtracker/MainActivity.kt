@@ -26,18 +26,18 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.compose.AppTheme
 import com.example.gymtracker.ui.AppNavigation
 import com.example.gymtracker.ui.AppRoutes
 import com.example.gymtracker.ui.BottomBarDestination
 import com.example.gymtracker.ui.components.AppBottomNavigationBar
-import com.example.gymtracker.ui.theme.GymTrackerTheme
 import com.patrykandpatrick.vico.core.axis.AxisPosition
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            GymTrackerTheme {
+            AppTheme {
                 GymApp()
             }
         }
@@ -97,7 +97,7 @@ fun GymApp() {
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
-    GymTrackerTheme {
+    AppTheme {
         GymApp()
     }
 }
