@@ -40,6 +40,11 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
             }
         }
     }
+    fun deleteSession(session: WorkoutSession) {
+        viewModelScope.launch {
+            workoutDao.deleteSession(session)
+        }
+    }
 
     fun getSessionsForChart(exerciseName: String) = workoutDao.getSessionsForExercise(exerciseName)
 }

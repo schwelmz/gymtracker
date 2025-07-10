@@ -1,37 +1,31 @@
 package com.example.gymtracker.ui.screens
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.gymtracker.data.WorkoutSession
 import com.example.gymtracker.ui.theme.GymTrackerTheme
-import com.example.gymtracker.viewmodel.WorkoutViewModel
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.util.*
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+
 
 @Composable
 fun HomeScreen(
     sessions: List<WorkoutSession>,
     onNavigateToAddWorkout: () -> Unit,
-    onSessionClicked: (String) -> Unit
+    onSessionClicked: (String) -> Unit,
+    onDeleteSession: (WorkoutSession) -> Unit
 ) {
-    // ...
     LazyColumn(modifier = Modifier.padding(16.dp)) {
-        // Header
         item {
             Text(
                 text = "Recent Workouts",
@@ -39,19 +33,20 @@ fun HomeScreen(
                 modifier = Modifier.padding(bottom = 16.dp)
             )
         }
+
         items(sessions) { session ->
-            // Calculate details string
             val totalSets = session.sets.size
             val totalReps = session.sets.sumOf { it.reps }
             val details = "$totalSets sets, Total Reps: $totalReps"
+
             WorkoutSessionCard(
-                exerciseName = session.exerciseName,
-                date = session.date,
+                session = session,
                 details = details,
-                onClick = {onSessionClicked(session.exerciseName)}
+                onClick = { onSessionClicked(session.exerciseName) },
+                onDelete = { onDeleteSession(session) }
             )
         }
-        //In a real app with a ViewModel, you would check if the list is empty and show a message like this:
+
         if (sessions.isEmpty()) {
             item {
                 Text("No workouts recorded yet. Tap the '+' button to start!")
@@ -60,33 +55,79 @@ fun HomeScreen(
     }
 }
 
-@Preview(showBackground = true)
 @Composable
-fun HomeScreenPreview(){
-    val fakeSessions = listOf(
-        WorkoutSession(1, "Benchpress", emptyList(), Date()),
-        WorkoutSession(2, "Squat", emptyList(), Date()),
-        WorkoutSession(3, "Deadlift", emptyList(), Date())
-        )
-    GymTrackerTheme {
-        HomeScreen(sessions = fakeSessions, onNavigateToAddWorkout = {}, onSessionClicked = {})
-    }
-}
-
-@Composable
-fun WorkoutSessionCard(exerciseName: String, date: Date, details: String, onClick: (String) -> Unit) {
+fun WorkoutSessionCard(
+    session: WorkoutSession,
+    details: String,
+    onClick: () -> Unit,
+    onDelete: () -> Unit
+) {
+    var showDialog by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
     val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text("Delete Workout") },
+            text = { Text("Are you sure you want to delete this workout?") },
+            confirmButton = {
+                Button(onClick = {
+                    showDialog = false
+                    onDelete()
+                }) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                Button(onClick = { showDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 8.dp)
-            .clickable{onClick(exerciseName)}
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = { onClick() },
+                    onLongPress = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        showDialog = true
+                    }
+                )
+            }
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = exerciseName, style = MaterialTheme.typography.titleMedium)
-            Text(text = dateFormat.format(date), style = MaterialTheme.typography.bodySmall)
-            Text(text = details, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
+            Text(text = session.exerciseName, style = MaterialTheme.typography.titleMedium)
+            Text(text = dateFormat.format(session.date), style = MaterialTheme.typography.bodySmall)
+            Text(
+                text = details,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(top = 4.dp)
+            )
         }
+    }
+}
+
+
+@Preview(showBackground = true)
+@Composable
+fun HomeScreenPreview() {
+    val fakeSessions = listOf(
+        WorkoutSession(1, "Benchpress", emptyList(), Date()),
+        WorkoutSession(2, "Squat", emptyList(), Date()),
+        WorkoutSession(3, "Deadlift", emptyList(), Date())
+    )
+    GymTrackerTheme {
+        HomeScreen(
+            sessions = fakeSessions,
+            onNavigateToAddWorkout = {},
+            onSessionClicked = {},
+            onDeleteSession = {}
+        )
     }
 }

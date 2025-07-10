@@ -60,6 +60,9 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
                     onNavigateToAddWorkout = { navController.navigate(AppRoutes.ADD_WORKOUT_SCREEN) },
                     onSessionClicked = { exerciseName ->
                         navController.navigate(AppRoutes.STATS_SCREEN.replace("{exerciseName}", exerciseName))
+                    },
+                    onDeleteSession = { session ->
+                        viewModel.deleteSession(session)
                     }
                 )
             }
