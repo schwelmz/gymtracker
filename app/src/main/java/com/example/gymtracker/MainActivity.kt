@@ -93,11 +93,3 @@ fun GymApp() {
         }
     }
 }
-
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    AppTheme {
-        GymApp()
-    }
-}

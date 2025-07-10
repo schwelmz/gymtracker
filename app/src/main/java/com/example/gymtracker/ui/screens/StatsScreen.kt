@@ -36,10 +36,10 @@ import java.util.Date
 import java.util.Locale
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.runtime.remember
 import com.patrykandpatrick.vico.compose.component.textComponent
+import com.patrykandpatrick.vico.core.axis.vertical.VerticalAxis
 import com.patrykandpatrick.vico.core.component.text.textComponent
-
-val axisTitleTextComponent = textComponent {}
 
 @Composable
 fun StatsScreen(
@@ -66,12 +66,15 @@ fun StatsScreen(
         }
         ChartEntryModelProducer(chartEntries)
     }
+    val axisTitleTextComponent = textComponent {}
+    // Calculate min and max Y values for the first chart
+
     Column(modifier = Modifier
         .padding(16.dp)
         .verticalScroll(rememberScrollState())) {
         Text(text = "Progress for $exerciseName", style = MaterialTheme.typography.headlineMedium)
 
-        if (chartModelProducer != null) {
+        if (chartModelProducer != null && maxWeightChartModelProducer != null) {
             Chart(
                 chart = lineChart(
                     lines = listOf(
@@ -88,7 +91,11 @@ fun StatsScreen(
                 ),
 
                 chartModelProducer = chartModelProducer,
-                startAxis = rememberStartAxis(title = "Total Volume (kg)", titleComponent = axisTitleTextComponent),
+                startAxis = rememberStartAxis(
+                    title = "Total Volume (kg)",
+                    titleComponent = axisTitleTextComponent,
+                    valueFormatter = { value, _ -> value.toInt().toString() }
+                ),
                 bottomAxis = rememberBottomAxis(
                     title = "Workout Session",
                     valueFormatter = { value, _ ->
@@ -102,7 +109,9 @@ fun StatsScreen(
                         }
                     }
                 ),
-                modifier = Modifier.fillMaxWidth().height(300.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(300.dp)
             )
             Chart(
                 chart = lineChart(
@@ -119,8 +128,12 @@ fun StatsScreen(
                     )
                 ),
 
-                chartModelProducer = maxWeightChartModelProducer as ChartModelProducer<ChartEntryModel>,
-                startAxis = rememberStartAxis(title = "Total Volume (kg)"),
+                chartModelProducer = maxWeightChartModelProducer,
+                startAxis = rememberStartAxis(
+                    title = "Max. Volume (kg)",
+                    titleComponent = axisTitleTextComponent,
+                    valueFormatter = { value, _ -> value.toInt().toString() }
+                ),
                 bottomAxis = rememberBottomAxis(
                     title = "Workout Session",
                     valueFormatter = { value, _ ->
@@ -134,7 +147,9 @@ fun StatsScreen(
                         }
                     }
                 ),
-                modifier = Modifier.fillMaxWidth().height(300.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(300.dp)
             )
         } else {
             Text("Not enough data to display a chart.")
