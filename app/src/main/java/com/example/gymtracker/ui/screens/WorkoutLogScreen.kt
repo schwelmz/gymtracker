@@ -17,6 +17,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.example.gymtracker.data.ExerciseSet
 import com.example.gymtracker.ui.theme.GymTrackerTheme
 import com.example.gymtracker.viewmodel.WorkoutViewModel
@@ -24,6 +25,7 @@ import com.example.gymtracker.viewmodel.WorkoutViewModel
 @Composable
 fun WorkoutLogScreen(
     exerciseName: String,
+    imageUri: String?,
     sets: List<ExerciseSet>,
     onAddSet: (reps: Int, weight: Double) -> Unit,
     onWorkoutSaved: () -> Unit,
@@ -130,6 +132,16 @@ fun WorkoutLogScreen(
         ) {
             Text("Finish & Save Workout")
         }
+        imageUri?.let {
+            AsyncImage(
+                model = it,
+                contentDescription = "Workout Image",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .padding(vertical = 8.dp)
+            )
+        }
     }
 }
 
@@ -148,7 +160,8 @@ fun WorkoutLogScreenWithDataPreview() {
             exerciseName = "Squat",
             sets = fakeSets, // Provide the fake data
             onAddSet = { _, _ -> },
-            onWorkoutSaved = {}
+            onWorkoutSaved = {},
+            imageUri = null
         )
     }
 }

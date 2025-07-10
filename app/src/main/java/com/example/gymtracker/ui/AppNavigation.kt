@@ -1,7 +1,7 @@
 package com.example.gymtracker.ui
 
+import android.net.Uri
 import android.util.Log
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -24,7 +24,8 @@ object AppRoutes {
     const val GYM_GRAPH = "gym_graph"
     const val GYM_SCREEN = "gym_screen"
     const val ADD_WORKOUT_SCREEN = "add_workout"
-    const val WORKOUT_LOG_SCREEN = "workout_log/{exerciseName}"
+    const val WORKOUT_LOG_SCREEN = "workout_log/{exerciseName}?imageUri={imageUri}"
+
     const val STATS_SCREEN = "stats/{exerciseName}"
 }
 
@@ -69,20 +70,25 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
 
             // Screens you navigate to FROM the home screen
             composable(route = AppRoutes.ADD_WORKOUT_SCREEN) {
-                AddWorkoutScreen(
-                    onExerciseSelected = { exerciseName ->
-                        navController.navigate("workout_log/$exerciseName")
-                    }
-                )
+                val viewModel: WorkoutViewModel = viewModel()
+                AddWorkoutScreen { exerciseName, imageUri ->
+                    // Navigate to Workout Log with selected image
+                    navController.navigate(
+                        "workout_log/${Uri.encode(exerciseName)}?imageUri=${Uri.encode(imageUri)}"
+                    )
+                }
             }
+
 
             composable(route = AppRoutes.WORKOUT_LOG_SCREEN) { backStackEntry ->
                 val exerciseName = backStackEntry.arguments?.getString("exerciseName") ?: "Unknown"
                 // 1. Get the ViewModel and collect state here
                 val viewModel: WorkoutViewModel = viewModel()
                 val sets by viewModel.currentSets.collectAsState()
+                val imageUri = backStackEntry.arguments?.getString("imageUri")?:null
                 WorkoutLogScreen(
                     exerciseName = exerciseName,
+                    imageUri = imageUri,
                     sets = sets,
                     onAddSet = { reps, weight ->
                         // Add the set to the ViewModel
@@ -90,7 +96,7 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
                     },
                     onWorkoutSaved = {
                         // Navigate back to the home screen
-                        viewModel.saveWorkoutSession(exerciseName)
+                        viewModel.saveWorkoutSession(exerciseName, imageUri)
                         navController.popBackStack(AppRoutes.HOME_SCREEN, inclusive = false)
                     }
                 )

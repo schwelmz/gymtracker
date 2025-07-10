@@ -3,7 +3,6 @@ package com.example.gymtracker.ui.screens
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,7 +16,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import com.example.gymtracker.data.ExerciseRepository
+import coil.compose.AsyncImage
 
 
 @Composable
@@ -27,48 +26,33 @@ fun HomeScreen(
     onSessionClicked: (String) -> Unit,
     onDeleteSession: (WorkoutSession) -> Unit
 ) {
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
+    LazyColumn(modifier = Modifier.padding(16.dp)) {
         item {
             Text(
                 text = "Recent Workouts",
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.padding(bottom = 16.dp)
             )
         }
-        val exercises = ExerciseRepository.getAvailableExercises()
-        items(items = exercises) { exercise ->
-            if (!sessions.none { it.exerciseName == exercise.name }) {
-                Text(
-                    exercise.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(16.dp)
-                )
-            }
-            LazyRow (modifier = Modifier.padding(start = 16.dp)){
-                val filteredSessions = sessions
-                    .filter { it.exerciseName == exercise.name }
-                    .sortedByDescending { it.date }
-                items(filteredSessions) { session ->
-                    val totalSets = session.sets.size
-                    val totalReps = session.sets.sumOf { it.reps }
-                    val details = "$totalSets sets, Total Reps: $totalReps"
 
-                    WorkoutSessionCard(
-                        session = session,
-                        details = details,
-                        onClick = { onSessionClicked(session.exerciseName) },
-                        onDelete = { onDeleteSession(session) }
-                    )
-                }
-            }
+        items(sessions) { session ->
+            val totalSets = session.sets.size
+            val totalReps = session.sets.sumOf { it.reps }
+            val details = "$totalSets sets, Total Reps: $totalReps"
+
+            WorkoutSessionCard(
+                session = session,
+                details = details,
+                onClick = { onSessionClicked(session.exerciseName) },
+                onDelete = { onDeleteSession(session) }
+            )
         }
+
         if (sessions.isEmpty()) {
             item {
-                Text("No workouts recorded yet. Tap the '+' button to start!",
-                    modifier = Modifier.padding(16.dp))
+                Text("No workouts recorded yet. Tap the '+' button to start!")
             }
-    }
+        }
     }
 }
 
@@ -107,7 +91,7 @@ fun WorkoutSessionCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 2.dp)
+            .padding(bottom = 8.dp)
             .pointerInput(Unit) {
                 detectTapGestures(
                     onTap = { onClick() },
@@ -126,6 +110,16 @@ fun WorkoutSessionCard(
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(top = 4.dp)
             )
+            if (session.imageUri != null) {
+                AsyncImage(
+                    model = session.imageUri,
+                    contentDescription = "Workout Image",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .padding(vertical = 8.dp)
+                )
+            }
         }
     }
 }
@@ -135,10 +129,7 @@ fun WorkoutSessionCard(
 @Composable
 fun HomeScreenPreview() {
     val fakeSessions = listOf(
-        WorkoutSession(1, "Bench Press", emptyList(), Date(125, 7, 13)),
-        WorkoutSession(4, "Bench Press", emptyList(), Date(125, 7, 8)),
-        WorkoutSession(4, "Bench Press", emptyList(), Date(125, 7, 12)),
-        WorkoutSession(2, "Squat", emptyList(), Date()),
+        WorkoutSession(1, "Benchpress", emptyList(), Date()),
         WorkoutSession(2, "Squat", emptyList(), Date()),
         WorkoutSession(3, "Deadlift", emptyList(), Date())
     )

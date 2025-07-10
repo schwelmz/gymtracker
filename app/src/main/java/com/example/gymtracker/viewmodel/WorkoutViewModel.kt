@@ -26,13 +26,14 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         _currentSets.value = _currentSets.value + newSet
     }
 
-    fun saveWorkoutSession(exerciseName: String) {
+    fun saveWorkoutSession(exerciseName: String, imageUri: String?) {
         if (_currentSets.value.isNotEmpty()) {
             viewModelScope.launch {
                 val newSession = WorkoutSession(
                     exerciseName = exerciseName,
                     sets = _currentSets.value,
-                    date = Date()
+                    date = Date(),
+                    imageUri = imageUri
                 )
                 workoutDao.insertSession(newSession)
                 // Reset for the next workout

@@ -26,7 +26,8 @@ data class WorkoutSession(
     val id: Int = 0, // Unique ID for the database
     val exerciseName: String,
     val sets: List<ExerciseSet>,
-    val date: Date
+    val date: Date,
+    val imageUri: String? = null
 )
 
 // This class tells Room how to convert complex types (Date, List) to simple types it can store.
