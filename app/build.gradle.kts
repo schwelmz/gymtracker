@@ -72,4 +72,6 @@ dependencies {
     // Optional - Kotlin Extensions and Coroutines support for Room
     implementation(libs.androidx.room.ktx)
     implementation("com.google.code.gson:gson:2.13.1")
+    // Charting Library - Vico
+    implementation("com.patrykandpatrick.vico:compose-m3:1.13.0")
 }

@@ -11,8 +11,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gymtracker.data.ExerciseRepository
+import com.example.gymtracker.ui.theme.GymTrackerTheme
 
 @Composable
 fun AddWorkoutScreen(onExerciseSelected: (String) -> Unit) {
@@ -35,5 +37,13 @@ fun AddWorkoutScreen(onExerciseSelected: (String) -> Unit) {
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun AddWorkoutScreenPreview() {
+    GymTrackerTheme {
+        AddWorkoutScreen(onExerciseSelected = {})
     }
 }

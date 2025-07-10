@@ -14,24 +14,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.gymtracker.data.ExerciseSet
+import com.example.gymtracker.ui.theme.GymTrackerTheme
 import com.example.gymtracker.viewmodel.WorkoutViewModel
 
 @Composable
 fun WorkoutLogScreen(
     exerciseName: String,
+    sets: List<ExerciseSet>,
+    onAddSet: (reps: Int, weight: Double) -> Unit,
     onWorkoutSaved: () -> Unit,
-    // Get an instance of the WorkoutViewModel scoped to the navigation graph
-    viewModel: WorkoutViewModel = viewModel()
 ) {
     // Local UI state for the input fields. These are temporary.
     var reps by remember { mutableStateOf("") }
     var weight by remember { mutableStateOf("") }
-
-    // Observe the list of current sets from the ViewModel as a state.
-    // The UI will automatically recompose whenever this list changes.
-    val sets by viewModel.currentSets.collectAsState()
 
     Column(
         modifier = Modifier
@@ -107,7 +106,7 @@ fun WorkoutLogScreen(
                 val weightValue = weight.toDoubleOrNull()
                 // Validate input before adding the set
                 if (repCount != null && weightValue != null) {
-                    viewModel.addSet(repCount, weightValue)
+                    onAddSet(repCount, weightValue)
                     // Clear fields for the next entry
                     reps = ""
                     weight = ""
@@ -123,9 +122,6 @@ fun WorkoutLogScreen(
         // The final save button
         Button(
             onClick = {
-                // Tell the ViewModel to save the entire session to the database
-                viewModel.saveWorkoutSession(exerciseName)
-                // Execute the navigation callback to go back to the home screen
                 onWorkoutSaved()
             },
             // Disable the button if no sets have been added
@@ -134,5 +130,25 @@ fun WorkoutLogScreen(
         ) {
             Text("Finish & Save Workout")
         }
+    }
+}
+
+
+// Preview for when a few sets have already been logged
+@Preview(showBackground = true)
+@Composable
+fun WorkoutLogScreenWithDataPreview() {
+    val fakeSets = listOf(
+        ExerciseSet(reps = 10, weight = 100.0),
+        ExerciseSet(reps = 8, weight = 105.0),
+        ExerciseSet(reps = 6, weight = 110.0)
+    )
+    GymTrackerTheme {
+        WorkoutLogScreen(
+            exerciseName = "Squat",
+            sets = fakeSets, // Provide the fake data
+            onAddSet = { _, _ -> },
+            onWorkoutSaved = {}
+        )
     }
 }

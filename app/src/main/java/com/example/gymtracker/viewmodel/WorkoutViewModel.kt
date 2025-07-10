@@ -40,4 +40,6 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
             }
         }
     }
+
+    fun getSessionsForChart(exerciseName: String) = workoutDao.getSessionsForExercise(exerciseName)
 }

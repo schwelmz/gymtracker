@@ -1,5 +1,6 @@
 package com.example.gymtracker.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -12,61 +13,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.gymtracker.data.WorkoutSession
+import com.example.gymtracker.ui.theme.GymTrackerTheme
 import com.example.gymtracker.viewmodel.WorkoutViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 @Composable
-fun HomeScreen(onNavigateToAddWorkout: () -> Unit) {
-    // We use a LazyColumn for an efficient, scrollable list.
-    // In Phase 3, this list is just a placeholder.
-    LazyColumn(modifier = Modifier.padding(16.dp)) {
-        // Header
-        item {
-            Text(
-                text = "Recent Workouts",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-        }
-
-        // Placeholder for the list.
-        // If the list is empty, show a message.
-        // For now, we show a static example.
-        item {
-            WorkoutSessionCard(
-                exerciseName = "Bench Press",
-                date = Date(),
-                details = "3 sets, 8-10 reps"
-            )
-        }
-        item {
-            WorkoutSessionCard(
-                exerciseName = "Squat",
-                date = Date(),
-                details = "5 sets, 5 reps"
-            )
-        }
-
-        // In a real app with a ViewModel, you would check if the list is empty
-        // and show a message like this:
-        // if (sessions.isEmpty()) {
-        //    item {
-        //        Text("No workouts recorded yet. Tap the '+' button to start!")
-        //    }
-        // }
-    }
-}
-
-@Composable
 fun HomeScreen(
+    sessions: List<WorkoutSession>,
     onNavigateToAddWorkout: () -> Unit,
-    viewModel: WorkoutViewModel = viewModel()
+    onSessionClicked: (String) -> Unit
 ) {
-    val sessions by viewModel.allSessions.collectAsState(initial = emptyList())
     // ...
     LazyColumn(modifier = Modifier.padding(16.dp)) {
         // Header
@@ -85,7 +47,8 @@ fun HomeScreen(
             WorkoutSessionCard(
                 exerciseName = session.exerciseName,
                 date = session.date,
-                details = details
+                details = details,
+                onClick = {onSessionClicked(session.exerciseName)}
             )
         }
         //In a real app with a ViewModel, you would check if the list is empty and show a message like this:
@@ -97,14 +60,28 @@ fun HomeScreen(
     }
 }
 
+@Preview(showBackground = true)
 @Composable
-fun WorkoutSessionCard(exerciseName: String, date: Date, details: String) {
+fun HomeScreenPreview(){
+    val fakeSessions = listOf(
+        WorkoutSession(1, "Benchpress", emptyList(), Date()),
+        WorkoutSession(2, "Squat", emptyList(), Date()),
+        WorkoutSession(3, "Deadlift", emptyList(), Date())
+        )
+    GymTrackerTheme {
+        HomeScreen(sessions = fakeSessions, onNavigateToAddWorkout = {}, onSessionClicked = {})
+    }
+}
+
+@Composable
+fun WorkoutSessionCard(exerciseName: String, date: Date, details: String, onClick: (String) -> Unit) {
     val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 8.dp)
+            .clickable{onClick(exerciseName)}
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(text = exerciseName, style = MaterialTheme.typography.titleMedium)

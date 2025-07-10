@@ -11,6 +11,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -20,11 +22,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.gymtracker.ui.AppNavigation
 import com.example.gymtracker.ui.AppRoutes
+import com.example.gymtracker.ui.BottomBarDestination
+import com.example.gymtracker.ui.components.AppBottomNavigationBar
 import com.example.gymtracker.ui.theme.GymTrackerTheme
+import com.patrykandpatrick.vico.core.axis.AxisPosition
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,14 +62,25 @@ fun GymApp() {
                 )
             )
         },
+        bottomBar = {
+            AppBottomNavigationBar(
+                navController = navController,
+                destinations = listOf(
+                    BottomBarDestination.Home,
+                    BottomBarDestination.Gym
+                )
+            )
+        },
         floatingActionButton = {
             // Show FAB only on the home screen
-            if (currentRoute == AppRoutes.HOME_SCREEN) {
+            val currentGraphRoute = currentBackStackEntry?.destination?.parent?.route
+            if (currentGraphRoute == BottomBarDestination.Home.route) {
                 FloatingActionButton(onClick = { navController.navigate(AppRoutes.ADD_WORKOUT_SCREEN) }) {
                     Icon(Icons.Filled.Add, contentDescription = "Add Workout")
                 }
             }
         }
+
     ) { innerPadding ->
         Surface(
             modifier = Modifier
@@ -70,7 +88,8 @@ fun GymApp() {
                 .padding(innerPadding),
             color = MaterialTheme.colorScheme.background
         ) {
-            AppNavigation(navController = navController)
+            AppNavigation(
+                navController = navController)
         }
     }
 }
