@@ -2,6 +2,7 @@
 package com.example.gymtracker.ui.screens
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -29,7 +30,16 @@ import java.util.Date
 import java.util.Locale
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import com.patrykandpatrick.vico.core.axis.AxisItemPlacer
+import com.patrykandpatrick.vico.core.axis.AxisPosition
+import com.patrykandpatrick.vico.core.axis.vertical.VerticalAxis
+import com.patrykandpatrick.vico.core.chart.draw.ChartDrawContext
+import com.patrykandpatrick.vico.core.component.shape.LineComponent
 import com.patrykandpatrick.vico.core.component.text.textComponent
+import com.patrykandpatrick.vico.core.context.MeasureContext
 
 @Composable
 fun StatsScreen(
@@ -56,95 +66,143 @@ fun StatsScreen(
         }
         ChartEntryModelProducer(chartEntries)
     }
-    val axisTitleTextComponent = textComponent {}
-    // Calculate min and max Y values for the first chart
 
     Column(modifier = Modifier
         .padding(16.dp)
         .verticalScroll(rememberScrollState())) {
         Text(text = "Progress for $exerciseName", style = MaterialTheme.typography.headlineMedium)
+        Spacer(modifier = Modifier.height(40.dp))
 
-        if (chartModelProducer != null && maxWeightChartModelProducer != null) {
-            Chart(
-                chart = lineChart(
-                    lines = listOf(
-                        lineSpec(
-                            lineColor = MaterialTheme.colorScheme.primary,
-                            pointConnector = DefaultPointConnector(0f),
-                            point = shapeComponent(
-                                shape = Shapes.pillShape,
-                                color = MaterialTheme.colorScheme.primary
-                            ),
-                            pointSize = 6.dp
-                        )
-                    )
-                ),
-
-                chartModelProducer = chartModelProducer,
-                startAxis = rememberStartAxis(
-                    title = "Total Volume (kg)",
-                    titleComponent = axisTitleTextComponent,
-                    valueFormatter = { value, _ -> value.toInt().toString() }
-                ),
-                bottomAxis = rememberBottomAxis(
-                    title = "Workout Session",
-                    valueFormatter = { value, _ ->
-                        // Display date on X-axis
-                        val index = value.toInt()
-                        if (index in sessions.indices) {
-                            val date = sessions[index].date
-                            SimpleDateFormat("dd/MM", Locale.getDefault()).format(date)
-                        } else {
-                            ""
-                        }
-                    }
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(300.dp)
-            )
-            Chart(
-                chart = lineChart(
-                    lines = listOf(
-                        lineSpec(
-                            lineColor = MaterialTheme.colorScheme.primary,
-                            pointConnector = DefaultPointConnector(0f),
-                            point = shapeComponent(
-                                shape = Shapes.pillShape,
-                                color = MaterialTheme.colorScheme.primary
-                            ),
-                            pointSize = 6.dp
-                        )
-                    )
-                ),
-
-                chartModelProducer = maxWeightChartModelProducer,
-                startAxis = rememberStartAxis(
-                    title = "Max. Volume (kg)",
-                    titleComponent = axisTitleTextComponent,
-                    valueFormatter = { value, _ -> value.toInt().toString() }
-                ),
-                bottomAxis = rememberBottomAxis(
-                    title = "Workout Session",
-                    valueFormatter = { value, _ ->
-                        // Display date on X-axis
-                        val index = value.toInt()
-                        if (index in sessions.indices) {
-                            val date = sessions[index].date
-                            SimpleDateFormat("dd/MM", Locale.getDefault()).format(date)
-                        } else {
-                            ""
-                        }
-                    }
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(300.dp)
-            )
-        } else {
-            Text("Not enough data to display a chart.")
-        }
+            if (chartModelProducer != null && maxWeightChartModelProducer != null) {
+                createChart(sessions,
+                    chartModelProducer,
+                    "Workout Session",
+                    "Total Volume (kg)",
+                    MaterialTheme.colorScheme.primary)
+                createChart(sessions,
+                    maxWeightChartModelProducer,
+                    "Workout Session",
+                    "Max Weight (kg)",
+                    MaterialTheme.colorScheme.tertiary)
+            } else {
+                Text("Not enough data to display a chart.")
+            }
     }
+}
+
+@Composable
+fun createChart(
+    sessions: List<WorkoutSession>,
+    chartModelProducer: ChartEntryModelProducer,
+    xAxisTitle: String,
+    yAxisTitle: String,
+    lineColor: Color
+) {
+    val customAxisLineColor = MaterialTheme.colorScheme.onBackground // Or any color you want
+    val axisLine = LineComponent(
+        color = customAxisLineColor.toArgb(), // Vico core components often use ARGB integers for color
+        thicknessDp = 1f // Adjust thickness as needed
+    )
+    val axisTitleTextComponent = textComponent {color = MaterialTheme.colorScheme.onBackground.toArgb()}
+
+    val maxY = chartModelProducer.getModel()!!.maxY
+    val step = maxY/8
+    //val step = 150f
+    val maxTickValue = ((maxY + step - 1) / step).toInt()  // ceiling-ish
+    val ticks = (0..maxTickValue).map { it * step }
+
+    val yPlacer = remember { CustomVerticalPlacer(ticks) }
+
+    Chart(
+        chart = lineChart(
+            lines = listOf(
+                lineSpec(
+                    lineColor = lineColor,
+                    pointConnector = DefaultPointConnector(0f),
+                    point = shapeComponent(
+                        shape = Shapes.pillShape,
+                        color = lineColor
+                    ),
+                    pointSize = 6.dp
+                )
+            )
+        ),
+
+        chartModelProducer = chartModelProducer,
+        startAxis = rememberStartAxis(
+            title = yAxisTitle,
+            titleComponent = axisTitleTextComponent,
+            valueFormatter = { value, _ -> value.toInt().toString() },
+            axis = axisLine,
+            label = axisTitleTextComponent,
+            guideline = null,
+            itemPlacer = yPlacer
+        ),
+        bottomAxis = rememberBottomAxis(
+            title = xAxisTitle,
+            valueFormatter = { value, _ ->
+                // Display date on X-axis
+                val index = value.toInt()
+                if (index in sessions.indices) {
+                    val date = sessions[index].date
+                    SimpleDateFormat("dd/MM", Locale.getDefault()).format(date)
+                } else {
+                    ""
+                }
+            },
+            axis = axisLine,
+            titleComponent = axisTitleTextComponent,
+            label = axisTitleTextComponent,
+            guideline = null
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(300.dp)
+    )
+}
+
+class CustomVerticalPlacer(private val tickValues: List<Float>) : AxisItemPlacer.Vertical {
+    override fun getLabelValues(
+        context: ChartDrawContext,
+        axisHeight: Float,
+        maxLabelHeight: Float,
+        position: AxisPosition.Vertical
+    ): List<Float> {
+        return tickValues
+    }
+
+    override fun getHeightMeasurementLabelValues(
+        context: MeasureContext,
+        position: AxisPosition.Vertical
+    ): List<Float> {
+        return tickValues
+    }
+
+    override fun getWidthMeasurementLabelValues(
+        context: MeasureContext,
+        axisHeight: Float,
+        maxLabelHeight: Float,
+        position: AxisPosition.Vertical
+    ): List<Float> {
+        return tickValues
+    }
+
+    override fun getBottomVerticalAxisInset(
+        verticalLabelPosition: VerticalAxis.VerticalLabelPosition,
+        maxLabelHeight: Float,
+        maxLineThickness: Float
+    ): Float =
+        AxisItemPlacer.Vertical.default()
+            .getBottomVerticalAxisInset(verticalLabelPosition, maxLabelHeight, maxLineThickness)
+
+    override fun getTopVerticalAxisInset(
+        verticalLabelPosition: VerticalAxis.VerticalLabelPosition,
+        maxLabelHeight: Float,
+        maxLineThickness: Float
+    ): Float =
+        AxisItemPlacer.Vertical.default()
+            .getTopVerticalAxisInset(verticalLabelPosition, maxLabelHeight, maxLineThickness)
+
 }
 
 @Preview(showBackground = true)

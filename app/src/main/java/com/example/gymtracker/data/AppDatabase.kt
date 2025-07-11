@@ -8,7 +8,7 @@ import androidx.room.TypeConverters
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 
-@Database(entities = [WorkoutSession::class, Exercise::class], version = 4)
+@Database(entities = [WorkoutSession::class, Exercise::class], version = 5)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun workoutDao(): WorkoutDao

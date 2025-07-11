@@ -1,5 +1,6 @@
 package com.example.gymtracker.data
 
+import androidx.annotation.DrawableRes
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -12,5 +13,6 @@ data class Exercise(
     @PrimaryKey val name: String, // Unique ID for the database
     val description: String,
     val imageUri: String? = null,
+    @DrawableRes val imageResId: Int? = null,
     val isCustom: Boolean = false
 )

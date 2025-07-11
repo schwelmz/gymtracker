@@ -31,7 +31,7 @@ fun HomeScreen(
     onDeleteSession: (WorkoutSession) -> Unit
 ) {
     Column (modifier = Modifier.fillMaxSize()) {
-        LazyColumn(modifier = Modifier.padding(16.dp)) {
+        LazyColumn(modifier = Modifier.padding(start = 16.dp, end = 16.dp)) {
             item {
                 Text(
                     text = "Recent Workouts",

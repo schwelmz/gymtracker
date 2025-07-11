@@ -49,7 +49,7 @@ fun ExercisesScreen(
     //val exercises by viewModel.allExercises.collectAsState(initial = emptyList())
 
     Column (modifier = Modifier.fillMaxSize()) {
-        LazyColumn (modifier = Modifier.padding(16.dp)) {
+        LazyColumn (modifier = Modifier.padding(start = 16.dp, end = 16.dp)) {
             item {
                 Text(
                     text = "All Exercises",
@@ -143,6 +143,15 @@ fun ExerciseCard(
             if (!exercise.imageUri.isNullOrBlank()) {
                 AsyncImage(
                     model = exercise.imageUri, // Coil handles the loading
+                    contentDescription = exercise.name,
+                    modifier = Modifier
+                        .width(100.dp)
+                        .height(cardHeight)
+                )
+            }
+            else if (exercise.imageResId != null) {
+                Image(
+                    painter = painterResource(id = exercise.imageResId),
                     contentDescription = exercise.name,
                     modifier = Modifier
                         .width(100.dp)
