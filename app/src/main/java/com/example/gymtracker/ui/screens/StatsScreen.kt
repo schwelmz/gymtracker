@@ -6,10 +6,9 @@ import android.graphics.Typeface
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -45,13 +44,47 @@ import com.patrykandpatrick.vico.core.marker.MarkerLabelFormatter
 import java.text.SimpleDateFormat
 import java.util.*
 
+@OptIn(ExperimentalMaterial3Api::class) // Required for DatePicker
 @Composable
 fun StatsScreen(
     exerciseName: String,
     sessions: List<WorkoutSession>,
 ) {
-    // Model for the top chart (Total Volume)
-    val chartModelProducer = sessions.takeIf { it.isNotEmpty() }?.let { sessionList ->
+    // --- 1. STATE MANAGEMENT FOR DATE RANGE ---
+
+    // Find the earliest and latest dates from the session data to set as the initial range.
+    val minDate = remember(sessions) { sessions.minOfOrNull { it.date } }
+    val maxDate = remember(sessions) { sessions.maxOfOrNull { it.date } }
+
+    var startDate by remember { mutableStateOf(minDate) }
+    var endDate by remember { mutableStateOf(maxDate) }
+
+    // State to control the visibility of the date pickers
+    var showStartDatePicker by remember { mutableStateOf(false) }
+    var showEndDatePicker by remember { mutableStateOf(false) }
+
+    // --- 2. FILTER DATA BASED ON THE SELECTED DATE RANGE ---
+
+    val filteredSessions = remember(sessions, startDate, endDate) {
+        sessions.filter { session ->
+            // Use Calendar for reliable date comparisons
+            val sessionCal = Calendar.getInstance().apply { time = session.date }
+            val startCal = startDate?.let { Calendar.getInstance().apply { time = it } }
+            val endCal = endDate?.let { Calendar.getInstance().apply { time = it } }
+
+            // Normalize calendars to compare dates only, ignoring time.
+            sessionCal.set(Calendar.HOUR_OF_DAY, 0); sessionCal.set(Calendar.MINUTE, 0); sessionCal.set(Calendar.SECOND, 0)
+            startCal?.set(Calendar.HOUR_OF_DAY, 0); startCal?.set(Calendar.MINUTE, 0); startCal?.set(Calendar.SECOND, 0)
+            endCal?.set(Calendar.HOUR_OF_DAY, 0); endCal?.set(Calendar.MINUTE, 0); endCal?.set(Calendar.SECOND, 0)
+
+            val isAfterStart = startCal == null || !sessionCal.before(startCal)
+            val isBeforeEnd = endCal == null || !sessionCal.after(endCal)
+            isAfterStart && isBeforeEnd
+        }
+    }
+
+    // --- CHART MODELS (based on the newly filtered data) ---
+    val chartModelProducer = filteredSessions.takeIf { it.isNotEmpty() }?.let { sessionList ->
         val chartEntries = sessionList.mapIndexed { index, session ->
             val totalVolume = session.sets.sumOf { it.reps * it.weight }
             entryOf(index.toFloat(), totalVolume.toFloat())
@@ -59,63 +92,109 @@ fun StatsScreen(
         ChartEntryModelProducer(chartEntries)
     }
 
-    // Model for the bottom chart (Max Weight)
-    val maxWeightChartModelProducer = sessions.takeIf { it.isNotEmpty() }?.let { sessionList ->
-        val maxWeights = sessionList.map { session ->
-            session.sets.maxOfOrNull { it.weight } ?: 0.0
-        }
-        val chartEntries = maxWeights.mapIndexed { index, maxWeight ->
-            entryOf(index.toFloat(), maxWeight.toFloat())
-        }
+    val maxWeightChartModelProducer = filteredSessions.takeIf { it.isNotEmpty() }?.let { sessionList ->
+        val maxWeights = sessionList.map { session -> session.sets.maxOfOrNull { it.weight } ?: 0.0 }
+        val chartEntries = maxWeights.mapIndexed { index, maxWeight -> entryOf(index.toFloat(), maxWeight.toFloat()) }
         ChartEntryModelProducer(chartEntries)
     }
 
+    // --- UI COMPOSITION ---
     Column(
         modifier = Modifier
             .padding(16.dp)
             .verticalScroll(rememberScrollState())
     ) {
         Text(text = "Progress for $exerciseName", style = MaterialTheme.typography.headlineMedium)
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // --- 3. UI FOR DATE SELECTION ---
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceAround,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+            Button(onClick = { showStartDatePicker = true }) {
+                Text(text = "Start: ${startDate?.let(dateFormat::format) ?: "Any"}")
+            }
+            Button(onClick = { showEndDatePicker = true }) {
+                Text(text = "End: ${endDate?.let(dateFormat::format) ?: "Any"}")
+            }
+        }
+        Spacer(modifier = Modifier.height(24.dp))
 
         if (chartModelProducer != null && maxWeightChartModelProducer != null) {
-            // --- TOP CHART ---
-            // Formatter for the top chart, showing detailed set info.
             val volumeMarkerFormatter = MarkerLabelFormatter { markedEntries, _ ->
                 val index = markedEntries.first().entry.x.toInt()
-                if (index in sessions.indices) {
-                    val sets = sessions[index].sets
+                if (index in filteredSessions.indices) {
+                    val sets = filteredSessions[index].sets
                     sets.joinToString("\n") { "R: ${it.reps}, W: ${it.weight}kg" }
                 } else { "" }
             }
             createChart(
-                sessions,
+                filteredSessions,
                 chartModelProducer,
                 "Workout Session",
                 "Total Volume (kg)",
                 MaterialTheme.colorScheme.primary,
-                volumeMarkerFormatter // Pass the detailed formatter
+                volumeMarkerFormatter
             )
 
-            // --- BOTTOM CHART ---
-            // Formatter for the bottom chart, showing only the weight.
             val weightMarkerFormatter = MarkerLabelFormatter { markedEntries, _ ->
                 "${markedEntries.first().entry.y.toInt()} kg"
             }
             createChart(
-                sessions,
+                filteredSessions,
                 maxWeightChartModelProducer,
                 "Workout Session",
                 "Max Weight (kg)",
                 MaterialTheme.colorScheme.tertiary,
-                weightMarkerFormatter // Pass the simple formatter
+                weightMarkerFormatter
             )
         } else {
-            Text("Not enough data to display a chart.")
+            Text("No data available for the selected date range.")
+        }
+    }
+
+    // --- DATE PICKER DIALOGS ---
+    if (showStartDatePicker) {
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = startDate?.time)
+        DatePickerDialog(
+            onDismissRequest = { showStartDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    startDate = datePickerState.selectedDateMillis?.let { Date(it) }
+                    showStartDatePicker = false
+                }) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showStartDatePicker = false }) { Text("Cancel") }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    if (showEndDatePicker) {
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = endDate?.time)
+        DatePickerDialog(
+            onDismissRequest = { showEndDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    endDate = datePickerState.selectedDateMillis?.let { Date(it) }
+                    showEndDatePicker = false
+                }) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEndDatePicker = false }) { Text("Cancel") }
+            }
+        ) {
+            DatePicker(state = datePickerState)
         }
     }
 }
 
+// The createChart and CustomVerticalPlacer functions remain unchanged.
 @Composable
 fun createChart(
     sessions: List<WorkoutSession>,
@@ -184,19 +263,20 @@ fun createChart(
                 val markedEntry = markedEntries.firstOrNull() ?: return
                 val entryX = markedEntry.location.x
                 val entryY = markedEntry.location.y
-
+                val bubbleSpacingFromLinePx = context.run { context.dpToPx(8f) }
 
                 val chartValues = chartValuesProvider.getChartValues()
                 val labelText = formatter.getLabel(markedEntries, chartValues)
-                val guidelineTop =64f
-                val guidelineBottom = entryY
+
+                val labelBottomY = entryY - bubbleSpacingFromLinePx
+                val guidelineTop = 64f
+                val guidelineBottom = labelBottomY
                 guideline.drawVertical(
                     context,
                     guidelineTop,
                     guidelineBottom,
                     entryX
                 )
-
                 label.drawText(
                     context = context,
                     text = labelText,
