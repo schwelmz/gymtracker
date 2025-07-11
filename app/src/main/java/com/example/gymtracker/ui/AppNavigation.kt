@@ -17,22 +17,34 @@ import com.example.gymtracker.ui.screens.StatsScreen
 import com.example.gymtracker.ui.screens.WorkoutLogScreen
 import com.example.gymtracker.viewmodel.ExerciseViewModel
 import com.example.gymtracker.viewmodel.WorkoutViewModel
+// --- ADD IMPORTS FOR THE NEW SCREENS ---
+import com.example.gymtracker.ui.screens.FoodScannerScreen
+import com.example.gymtracker.ui.screens.WorkoutScreen // Assuming you will create a WorkoutScreen
 
 object AppRoutes {
-    const val HOME_GRAPH = "home_graph"
+    // Home Graph
+
     const val HOME_SCREEN = "home_screen"
-    const val EXERCISES_GRAPH = "exercises_graph"
-    const val EXERCISES_SCREEN = "exercises_screen"
-    const val ADD_EXERCISE_SCREEN = "add_exercise"
     const val ADD_WORKOUT_SCREEN = "add_workout"
     const val WORKOUT_LOG_SCREEN = "workout_log/{exerciseName}"
     const val STATS_SCREEN = "stats/{exerciseName}"
+
+    // Exercises Graph
+
+    const val EXERCISES_SCREEN = "exercises_screen"
+    const val ADD_EXERCISE_SCREEN = "add_exercise"
+
+    // --- ADD ROUTES FOR NEW GRAPHS ---
+
+    const val WORKOUT_SCREEN = "workout_screen"
+
+    const val SCANNER_SCREEN = "scanner_screen"
 }
 
 @Composable
 fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostController) {
 
-    // The start destination is now the ROUTE OF THE GRAPH for the home tab.
+    // The start destination is the route of the Home graph.
     NavHost(
         navController = navController,
         startDestination = BottomBarDestination.Home.route,
@@ -41,15 +53,10 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
         // =====================================================================
         // HOME NAVIGATION GRAPH
         // =====================================================================
-        // The 'route' here is what the bottom nav bar navigates to for this tab.
-        // The 'startDestination' is the first screen WITHIN this tab's graph.
         navigation(
             startDestination = AppRoutes.HOME_SCREEN,
-            route = BottomBarDestination.Home.route // "home_screen"
+            route = BottomBarDestination.Home.route
         ) {
-            // These are all the screens accessible from the Home tab.
-
-            // The main screen for the Home tab
             composable(route = AppRoutes.HOME_SCREEN) {
                 val workoutViewModel: WorkoutViewModel = viewModel()
                 val exerciseViewModel: ExerciseViewModel = viewModel()
@@ -68,8 +75,6 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
                     }
                 )
             }
-
-            // Screens you navigate to FROM the home screen
             composable(route = AppRoutes.ADD_WORKOUT_SCREEN) {
                 val exerciseViewModel: ExerciseViewModel = viewModel()
                 val exercises by exerciseViewModel.allExercises.collectAsState(initial = emptyList())
@@ -80,27 +85,20 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
                     exercises = exercises
                 )
             }
-
             composable(route = AppRoutes.WORKOUT_LOG_SCREEN) { backStackEntry ->
                 val exerciseName = backStackEntry.arguments?.getString("exerciseName") ?: "Unknown"
-                // 1. Get the ViewModel and collect state here
                 val viewModel: WorkoutViewModel = viewModel()
                 val sets by viewModel.currentSets.collectAsState()
                 WorkoutLogScreen(
                     exerciseName = exerciseName,
                     sets = sets,
-                    onAddSet = { reps, weight ->
-                        // Add the set to the ViewModel
-                        viewModel.addSet(reps, weight)
-                    },
+                    onAddSet = { reps, weight -> viewModel.addSet(reps, weight) },
                     onWorkoutSaved = {
-                        // Navigate back to the home screen
                         viewModel.saveWorkoutSession(exerciseName)
                         navController.popBackStack(AppRoutes.HOME_SCREEN, inclusive = false)
                     }
                 )
             }
-
             composable(route = AppRoutes.STATS_SCREEN) { backStackEntry ->
                 val exerciseName = backStackEntry.arguments?.getString("exerciseName") ?: "Unknown"
                 val viewModel: WorkoutViewModel = viewModel()
@@ -110,43 +108,61 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
         }
 
         // =====================================================================
-        // GYM NAVIGATION GRAPH
+        // EXERCISES NAVIGATION GRAPH
         // =====================================================================
         navigation(
             startDestination = AppRoutes.EXERCISES_SCREEN,
             route = BottomBarDestination.Exercises.route
         ) {
-            // The main screen for the Stats tab
             composable(route = AppRoutes.EXERCISES_SCREEN) {
                 val exerciseViewModel: ExerciseViewModel = viewModel()
                 val exercises by exerciseViewModel.allExercises.collectAsState(initial = emptyList())
                 ExercisesScreen(
                     exercises,
-                    onAddExerciseClicked = {
-                        navController.navigate(AppRoutes.ADD_EXERCISE_SCREEN)
-                    },
+                    onAddExerciseClicked = { navController.navigate(AppRoutes.ADD_EXERCISE_SCREEN) },
                     onExerciseClicked = { exerciseName ->
                         navController.navigate(AppRoutes.STATS_SCREEN.replace("{exerciseName}", exerciseName))
                     },
-                    onDeleteExercise = { exercise ->
-                        exerciseViewModel.deleteExercise(exercise)
-                    }
+                    onDeleteExercise = { exercise -> exerciseViewModel.deleteExercise(exercise) }
                 )
             }
-
             composable(route = AppRoutes.ADD_EXERCISE_SCREEN) {
                 val viewModel: ExerciseViewModel = viewModel()
                 AddExerciseScreen(
                     onSave = { name, description, imageUri ->
                         viewModel.addCustomExercise(name, description, imageUri)
-                        // After saving, go back to the previous screen
                         navController.popBackStack()
                     },
-                    onNavigateUp = {
-                        // Just go back without saving
-                        navController.popBackStack()
-                    }
+                    onNavigateUp = { navController.popBackStack() }
                 )
+            }
+        }
+
+        // =====================================================================
+        // WORKOUT NAVIGATION GRAPH (NEW)
+        // =====================================================================
+        navigation(
+            startDestination = AppRoutes.WORKOUT_SCREEN, // The main screen for this tab
+            route = BottomBarDestination.Workout.route // The route from the Bottom Nav Bar
+        ) {
+            composable(route = AppRoutes.WORKOUT_SCREEN) {
+                // You will need to create a WorkoutScreen composable.
+                // For now, we can use a placeholder.
+                WorkoutScreen()
+            }
+            // You can add other screens you navigate to from the WorkoutScreen here.
+        }
+
+        // =====================================================================
+        // SCANNER NAVIGATION GRAPH (NEW)
+        // =====================================================================
+        navigation(
+            startDestination = AppRoutes.SCANNER_SCREEN,
+            route = BottomBarDestination.Scanner.route
+        ) {
+            composable(route = AppRoutes.SCANNER_SCREEN) {
+                // This will be the screen with the barcode scanner.
+                FoodScannerScreen()
             }
         }
     }

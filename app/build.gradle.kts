@@ -1,5 +1,6 @@
 
 plugins {
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.2.0" // Or your Kotlin version
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
@@ -65,7 +66,6 @@ dependencies {
     // Navigation
     implementation("androidx.navigation:navigation-compose:2.9.1")
     // Room Database
-    val room_version = "2.6.0"
     implementation(libs.androidx.room.runtime)
     annotationProcessor(libs.androidx.room.compiler)
     // To use Kotlin Symbol Processing (KSP)
@@ -81,4 +81,24 @@ dependencies {
 
 // Accompanist Permissions (ensure you get the latest version)
     implementation("com.google.accompanist:accompanist-permissions:0.34.0")
+    // For Google's ML Kit Barcode Scanning
+    implementation("com.google.mlkit:barcode-scanning:17.2.0")
+    // For CameraX to display a camera preview
+    implementation("androidx.camera:camera-core:1.3.3")
+    implementation("androidx.camera:camera-camera2:1.3.3")
+    implementation("androidx.camera:camera-lifecycle:1.3.3")
+    implementation("androidx.camera:camera-view:1.3.3")
+// For Accompanist Permissions to easily handle camera permission
+    implementation("com.google.accompanist:accompanist-permissions:0.34.0")
+
+// For Retrofit (networking)
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+
+// For Kotlinx Serialization (JSON parsing)
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+    implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0")
+
+// For Coil (displaying images from a URL)
+    implementation("io.coil-kt:coil-compose:2.6.0")
+
 }

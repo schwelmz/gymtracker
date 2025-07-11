@@ -263,12 +263,12 @@ fun createChart(
                 val markedEntry = markedEntries.firstOrNull() ?: return
                 val entryX = markedEntry.location.x
                 val entryY = markedEntry.location.y
-                val bubbleSpacingFromLinePx = context.run { context.dpToPx(8f) }
+
 
                 val chartValues = chartValuesProvider.getChartValues()
                 val labelText = formatter.getLabel(markedEntries, chartValues)
 
-                val labelBottomY = entryY - bubbleSpacingFromLinePx
+                val labelBottomY = entryY
                 val guidelineTop = 64f
                 val guidelineBottom = labelBottomY
                 guideline.drawVertical(

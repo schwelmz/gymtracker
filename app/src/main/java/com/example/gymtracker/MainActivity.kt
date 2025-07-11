@@ -45,17 +45,19 @@ fun GymApp() {
 
     Scaffold(
         bottomBar = {
+            // --- THIS IS THE CORRECTED LIST OF DESTINATIONS ---
             AppBottomNavigationBar(
                 navController = navController,
                 destinations = listOf(
                     BottomBarDestination.Home,
+                    BottomBarDestination.Workout,   // <-- Added
+                    BottomBarDestination.Scanner,    // <-- Added
                     BottomBarDestination.Exercises
                 )
             )
         },
         floatingActionButton = {
             // Show FAB only on the home screen
-            val currentGraphRoute = currentBackStackEntry?.destination?.parent?.route
             if (currentRoute == AppRoutes.HOME_SCREEN) {
                 FloatingActionButton(onClick = { navController.navigate(AppRoutes.ADD_WORKOUT_SCREEN) }) {
                     Icon(Icons.Filled.Add, contentDescription = "Add Workout")

@@ -13,7 +13,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
 import com.example.gymtracker.ui.BottomBarDestination
 import kotlin.collections.forEach
 
@@ -53,7 +52,7 @@ fun AppBottomNavigationBar(
 @Composable
 fun AppBottomNavigationBarPreview() {
     // We need a NavController for the preview, rememberNavController() is a simple way to get one.
-    val navController = rememberNavController()
+
 
     // We can use a 'remember' state here to simulate clicking on items in the preview.
     var currentRoute by remember { mutableStateOf(BottomBarDestination.Home.route) }
@@ -65,7 +64,14 @@ fun AppBottomNavigationBarPreview() {
 
     // We wrap our component in a simple container to give it context.
     NavigationBar {
-        val destinations = listOf(BottomBarDestination.Home, BottomBarDestination.Exercises)
+        // --- THIS LIST IS NOW CORRECTED ---
+        // It includes all the destinations you want to see in the preview.
+        val destinations = listOf(
+            BottomBarDestination.Home,
+            BottomBarDestination.Workout, // This line has been uncommented
+            BottomBarDestination.Scanner,
+            BottomBarDestination.Exercises
+        )
         destinations.forEach { destination ->
             NavigationBarItem(
                 selected = currentRoute == destination.route,
