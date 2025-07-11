@@ -41,6 +41,7 @@ fun GymApp() {
     val navController = rememberNavController()
     // Observe the back stack to determine the current route
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = currentBackStackEntry?.destination?.route
 
     Scaffold(
         bottomBar = {
@@ -55,7 +56,7 @@ fun GymApp() {
         floatingActionButton = {
             // Show FAB only on the home screen
             val currentGraphRoute = currentBackStackEntry?.destination?.parent?.route
-            if (currentGraphRoute == BottomBarDestination.Home.route) {
+            if (currentRoute == AppRoutes.HOME_SCREEN) {
                 FloatingActionButton(onClick = { navController.navigate(AppRoutes.ADD_WORKOUT_SCREEN) }) {
                     Icon(Icons.Filled.Add, contentDescription = "Add Workout")
                 }
