@@ -13,12 +13,6 @@ data class ExerciseSet(
     val weight: Double
 )
 
-// Represents a type of exercise you can perform
-data class Exercise(
-    val name: String,
-    val description: String
-)
-
 // Represents a full workout session for one type of exercise on a specific day
 @Entity(tableName = "workout_sessions") // Tells Room this is a table
 data class WorkoutSession(

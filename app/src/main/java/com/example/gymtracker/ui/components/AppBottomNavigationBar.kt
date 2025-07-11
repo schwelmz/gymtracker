@@ -65,7 +65,7 @@ fun AppBottomNavigationBarPreview() {
 
     // We wrap our component in a simple container to give it context.
     NavigationBar {
-        val destinations = listOf(BottomBarDestination.Home, BottomBarDestination.Gym)
+        val destinations = listOf(BottomBarDestination.Home, BottomBarDestination.Exercises)
         destinations.forEach { destination ->
             NavigationBarItem(
                 selected = currentRoute == destination.route,

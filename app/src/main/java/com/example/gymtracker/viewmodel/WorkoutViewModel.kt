@@ -1,9 +1,12 @@
 package com.example.gymtracker.viewmodel
 
 import android.app.Application
+import androidx.constraintlayout.helper.widget.Flow
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.room.Query
 import com.example.gymtracker.data.AppDatabase
+import com.example.gymtracker.data.Exercise
 import com.example.gymtracker.data.ExerciseSet
 import com.example.gymtracker.data.WorkoutSession
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,6 +48,5 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
             workoutDao.deleteSession(session)
         }
     }
-
     fun getSessionsForChart(exerciseName: String) = workoutDao.getSessionsForExercise(exerciseName)
 }

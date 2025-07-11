@@ -67,7 +67,7 @@ fun GymApp() {
                 navController = navController,
                 destinations = listOf(
                     BottomBarDestination.Home,
-                    BottomBarDestination.Gym
+                    BottomBarDestination.Exercises
                 )
             )
         },

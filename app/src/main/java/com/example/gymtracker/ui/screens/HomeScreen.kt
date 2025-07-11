@@ -17,12 +17,14 @@ import java.util.*
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import com.example.compose.AppTheme
+import com.example.gymtracker.data.Exercise
 import com.example.gymtracker.data.ExerciseRepository
 
 
 @Composable
 fun HomeScreen(
     sessions: List<WorkoutSession>,
+    exercises: List<Exercise>,
     onNavigateToAddWorkout: () -> Unit,
     onSessionClicked: (String) -> Unit,
     onDeleteSession: (WorkoutSession) -> Unit
@@ -36,7 +38,6 @@ fun HomeScreen(
                 modifier = Modifier.padding(16.dp)
             )
         }
-        val exercises = ExerciseRepository.getAvailableExercises()
         items(items = exercises) { exercise ->
             if (!sessions.none { it.exerciseName == exercise.name }) {
                 Text(
@@ -145,6 +146,7 @@ fun HomeScreenPreview() {
     AppTheme {
         HomeScreen(
             sessions = fakeSessions,
+            exercises = ExerciseRepository.getAvailableExercises(),
             onNavigateToAddWorkout = {},
             onSessionClicked = {},
             onDeleteSession = {}

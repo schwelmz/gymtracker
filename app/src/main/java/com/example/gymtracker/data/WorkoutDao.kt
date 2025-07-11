@@ -23,4 +23,8 @@ interface WorkoutDao {
 
     @Query("SELECT * FROM workout_sessions WHERE exerciseName = :exerciseName ORDER BY date ASC")
     fun getSessionsForExercise(exerciseName: String): Flow<List<WorkoutSession>>
+
+    @Query("DELETE FROM workout_sessions WHERE exerciseName = :exerciseName")
+    suspend fun deleteSessionsByExerciseName(exerciseName: String)
+
 }

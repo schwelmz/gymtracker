@@ -14,11 +14,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.compose.AppTheme
+import com.example.gymtracker.data.Exercise
 import com.example.gymtracker.data.ExerciseRepository
 
 @Composable
-fun AddWorkoutScreen(onExerciseSelected: (String) -> Unit) {
-    val exercises = ExerciseRepository.getAvailableExercises()
+fun AddWorkoutScreen(
+    onExerciseSelected: (String) -> Unit,
+    exercises: List<Exercise>
+) {
 
     Column(modifier = Modifier.padding(16.dp)) {
         Text("Choose an Exercise", style = MaterialTheme.typography.titleLarge)
@@ -44,6 +47,8 @@ fun AddWorkoutScreen(onExerciseSelected: (String) -> Unit) {
 @Composable
 fun AddWorkoutScreenPreview() {
     AppTheme {
-        AddWorkoutScreen(onExerciseSelected = {})
+        AddWorkoutScreen(
+            onExerciseSelected = {},
+            exercises = ExerciseRepository.getAvailableExercises())
     }
 }
