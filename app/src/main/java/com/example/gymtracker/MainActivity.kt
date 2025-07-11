@@ -52,7 +52,8 @@ fun GymApp() {
                     BottomBarDestination.Home,
                     BottomBarDestination.Workout,   // <-- Added
                     BottomBarDestination.Scanner,    // <-- Added
-                    BottomBarDestination.Exercises
+                    BottomBarDestination.Exercises,
+                    BottomBarDestination.Settings
                 )
             )
         },

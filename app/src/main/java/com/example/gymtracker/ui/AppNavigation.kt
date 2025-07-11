@@ -17,9 +17,10 @@ import com.example.gymtracker.ui.screens.StatsScreen
 import com.example.gymtracker.ui.screens.WorkoutLogScreen
 import com.example.gymtracker.viewmodel.ExerciseViewModel
 import com.example.gymtracker.viewmodel.WorkoutViewModel
-// --- ADD IMPORTS FOR THE NEW SCREENS ---
 import com.example.gymtracker.ui.screens.FoodScannerScreen
 import com.example.gymtracker.ui.screens.WorkoutScreen // Assuming you will create a WorkoutScreen
+import com.example.gymtracker.ui.screens.AboutScreen
+import com.example.gymtracker.ui.screens.SettingsScreen
 
 object AppRoutes {
     // Home Graph
@@ -39,6 +40,9 @@ object AppRoutes {
     const val WORKOUT_SCREEN = "workout_screen"
 
     const val SCANNER_SCREEN = "scanner_screen"
+    // Settings Graph
+    const val SETTINGS_SCREEN = "settings_screen"
+    const val ABOUT_SCREEN = "about_screen"
 }
 
 @Composable
@@ -163,6 +167,28 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
             composable(route = AppRoutes.SCANNER_SCREEN) {
                 // This will be the screen with the barcode scanner.
                 FoodScannerScreen()
+            }
+        }
+        // =====================================================================
+        // SETTINGS NAVIGATION GRAPH (NEW)
+        // =====================================================================
+        navigation(
+            startDestination = AppRoutes.SETTINGS_SCREEN,
+            route = BottomBarDestination.Settings.route
+        ) {
+            composable(route = AppRoutes.SETTINGS_SCREEN) {
+                SettingsScreen(
+                    onNavigateToAbout = {
+                        navController.navigate(AppRoutes.ABOUT_SCREEN)
+                    }
+                )
+            }
+            composable(route = AppRoutes.ABOUT_SCREEN) {
+                AboutScreen(
+                    onNavigateUp = {
+                        navController.popBackStack()
+                    }
+                )
             }
         }
     }

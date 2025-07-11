@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Settings
 
 
 sealed class BottomBarDestination(
@@ -39,4 +40,8 @@ sealed class BottomBarDestination(
         title = "Scanner",
         icon = Icons.Filled.FavoriteBorder
     )
+    object Settings : BottomBarDestination(
+        "settings_graph",
+        "Settings",
+        Icons.Filled.Settings)
 }
