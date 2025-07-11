@@ -76,4 +76,9 @@ dependencies {
     // Charting Library - Vico
     implementation("com.patrykandpatrick.vico:compose-m3:1.13.0")
     implementation("androidx.compose.ui:ui-text-google-fonts:1.6.0")
+    // Image Loading - Coil
+    implementation("io.coil-kt:coil-compose:2.6.0")
+
+// Accompanist Permissions (ensure you get the latest version)
+    implementation("com.google.accompanist:accompanist-permissions:0.34.0")
 }

@@ -1,7 +1,5 @@
 package com.example.gymtracker.ui
 
-import android.util.Log
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -11,7 +9,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
-import com.example.gymtracker.data.ExerciseRepository
 import com.example.gymtracker.ui.screens.AddExerciseScreen
 import com.example.gymtracker.ui.screens.AddWorkoutScreen
 import com.example.gymtracker.ui.screens.ExercisesScreen
@@ -140,8 +137,8 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
             composable(route = AppRoutes.ADD_EXERCISE_SCREEN) {
                 val viewModel: ExerciseViewModel = viewModel()
                 AddExerciseScreen(
-                    onSave = { name, description ->
-                        viewModel.addCustomExercise(name, description)
+                    onSave = { name, description, imageUri ->
+                        viewModel.addCustomExercise(name, description, imageUri)
                         // After saving, go back to the previous screen
                         navController.popBackStack()
                     },

@@ -11,5 +11,6 @@ import androidx.room.PrimaryKey
 data class Exercise(
     @PrimaryKey val name: String, // Unique ID for the database
     val description: String,
+    val imageUri: String? = null,
     val isCustom: Boolean = false
 )

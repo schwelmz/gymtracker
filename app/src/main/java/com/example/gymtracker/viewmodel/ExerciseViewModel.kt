@@ -26,10 +26,14 @@ class ExerciseViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    fun addCustomExercise(name: String, description: String) {
+    fun addCustomExercise(name: String, description: String, imageUri: String?) {
         viewModelScope.launch(Dispatchers.IO) {
             // Create a new exercise marked as custom and insert it.
-            val newExercise = Exercise(name = name, description = description, isCustom = true)
+            val newExercise = Exercise(
+                name = name,
+                description = description,
+                imageUri = imageUri,
+                isCustom = true)
             exerciseDao.insertExercise(newExercise)
         }
     }

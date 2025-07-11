@@ -1,5 +1,6 @@
 package com.example.gymtracker.ui.screens
 
+import android.content.res.Configuration
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,7 +17,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import com.example.compose.AppTheme
+import com.example.gymtracker.ui.theme.AppTheme
 import com.example.gymtracker.data.Exercise
 import com.example.gymtracker.data.ExerciseRepository
 
@@ -29,47 +30,54 @@ fun HomeScreen(
     onSessionClicked: (String) -> Unit,
     onDeleteSession: (WorkoutSession) -> Unit
 ) {
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
-        item {
-            Text(
-                text = "Recent Workouts",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                modifier = Modifier.padding(16.dp)
-            )
-        }
-        items(items = exercises) { exercise ->
-            if (!sessions.none { it.exerciseName == exercise.name }) {
+    Column (modifier = Modifier.fillMaxSize()) {
+        LazyColumn(modifier = Modifier.padding(16.dp)) {
+            item {
                 Text(
-                    exercise.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(16.dp)
+                    text = "Recent Workouts",
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = MaterialTheme.colorScheme.tertiary,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                    modifier = Modifier.padding(top = 50.dp, bottom = 50.dp)
                 )
             }
-            LazyRow (modifier = Modifier.padding(start = 16.dp)){
-                val filteredSessions = sessions
-                    .filter { it.exerciseName == exercise.name }
-                    .sortedByDescending { it.date }
-                items(filteredSessions) { session ->
-                    val totalSets = session.sets.size
-                    val totalReps = session.sets.sumOf { it.reps }
-                    val details = "$totalSets sets, Total Reps: $totalReps"
+            val sessionDates = sessions.map { it.date }.distinct().sortedByDescending { it.time }
+            items(items = sessionDates) { sessionDate ->
+                Text(
+                    text = SimpleDateFormat(
+                        "MMM dd, yyyy",
+                        Locale.getDefault()
+                    ).format(sessionDate),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(bottom=16.dp)
+                )
 
-                    WorkoutSessionCard(
-                        session = session,
-                        details = details,
-                        onClick = { onSessionClicked(session.exerciseName) },
-                        onDelete = { onDeleteSession(session) }
+                LazyRow (modifier = Modifier.padding(bottom=16.dp)) {
+                    val filteredSessions = sessions
+                        .filter { it.date == sessionDate }
+                    items(filteredSessions) { session ->
+                        val totalSets = session.sets.size
+                        val totalReps = session.sets.sumOf { it.reps }
+                        val details = "$totalSets sets, Total Reps: $totalReps"
+
+                        WorkoutSessionCard(
+                            session = session,
+                            details = details,
+                            onClick = { onSessionClicked(session.exerciseName) },
+                            onDelete = { onDeleteSession(session) }
+                        )
+                    }
+                }
+            }
+            if (sessions.isEmpty()) {
+                item {
+                    Text(
+                        "No workouts recorded yet. Tap the '+' button to start!",
+                        modifier = Modifier.padding(16.dp)
                     )
                 }
             }
         }
-        if (sessions.isEmpty()) {
-            item {
-                Text("No workouts recorded yet. Tap the '+' button to start!",
-                    modifier = Modifier.padding(16.dp))
-            }
-    }
     }
 }
 
@@ -82,7 +90,6 @@ fun WorkoutSessionCard(
 ) {
     var showDialog by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
-    val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
 
     if (showDialog) {
         AlertDialog(
@@ -121,7 +128,7 @@ fun WorkoutSessionCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(text = session.exerciseName, style = MaterialTheme.typography.titleMedium)
-            Text(text = dateFormat.format(session.date), style = MaterialTheme.typography.bodySmall)
+            //Text(text = dateFormat.format(session.date), style = MaterialTheme.typography.bodySmall)
             Text(
                 text = details,
                 style = MaterialTheme.typography.bodyMedium,
@@ -131,19 +138,21 @@ fun WorkoutSessionCard(
     }
 }
 
-
-@Preview(showBackground = true)
+@Preview(name = "Dark", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
 @Composable
 fun HomeScreenPreview() {
     val fakeSessions = listOf(
         WorkoutSession(1, "Bench Press", emptyList(), Date(125, 7, 13)),
         WorkoutSession(4, "Bench Press", emptyList(), Date(125, 7, 8)),
         WorkoutSession(4, "Bench Press", emptyList(), Date(125, 7, 12)),
+        WorkoutSession(1, "Deadlift", emptyList(), Date(125, 7, 13)),
+        WorkoutSession(1, "Squat", emptyList(), Date(125, 7, 13)),
+        WorkoutSession(4, "Overhead Press", emptyList(), Date(125, 7, 8)),
+        WorkoutSession(4, "Squat", emptyList(), Date(125, 7, 12)),
         WorkoutSession(2, "Squat", emptyList(), Date()),
         WorkoutSession(2, "Squat", emptyList(), Date()),
-        WorkoutSession(3, "Deadlift", emptyList(), Date())
     )
-    AppTheme {
+    AppTheme () {
         HomeScreen(
             sessions = fakeSessions,
             exercises = ExerciseRepository.getAvailableExercises(),

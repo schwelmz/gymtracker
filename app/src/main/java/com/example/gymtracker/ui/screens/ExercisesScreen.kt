@@ -1,13 +1,15 @@
 package com.example.gymtracker.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
@@ -16,7 +18,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,14 +27,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.room.util.TableInfo
-import com.example.compose.AppTheme
+import coil.compose.AsyncImage
+import com.example.gymtracker.R
+import com.example.gymtracker.ui.theme.AppTheme
 import com.example.gymtracker.data.Exercise
 import com.example.gymtracker.data.ExerciseRepository
-import com.example.gymtracker.viewmodel.ExerciseViewModel
 
 val cardHeight = 95.dp
 @Composable
@@ -52,9 +53,10 @@ fun ExercisesScreen(
             item {
                 Text(
                     text = "All Exercises",
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = MaterialTheme.colorScheme.tertiary,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier.padding(top=50.dp,bottom=50.dp)
                 )
             }
             item {
@@ -137,13 +139,34 @@ fun ExerciseCard(
                 )
             }
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = exercise.name, style = MaterialTheme.typography.titleMedium)
-            Text(
-                text = exercise.description,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 4.dp)
-            )
+        Row {
+            if (!exercise.imageUri.isNullOrBlank()) {
+                AsyncImage(
+                    model = exercise.imageUri, // Coil handles the loading
+                    contentDescription = exercise.name,
+                    modifier = Modifier
+                        .width(100.dp)
+                        .height(cardHeight)
+                )
+            }
+            else {
+                Image(
+                    painter = painterResource(id = R.drawable.outline_picture_in_picture_center_24),
+                    contentDescription = exercise.name,
+                    modifier = Modifier
+                        .width(100.dp)
+                        .height(cardHeight)
+                )
+            }
+
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(text = exercise.name, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = exercise.description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
         }
     }
 }
