@@ -30,7 +30,6 @@ import com.patrykandpatrick.vico.core.axis.vertical.VerticalAxis
 import com.patrykandpatrick.vico.core.chart.DefaultPointConnector
 import com.patrykandpatrick.vico.core.chart.insets.Insets
 import com.patrykandpatrick.vico.core.chart.values.AxisValuesOverrider
-import com.patrykandpatrick.vico.core.chart.values.ChartValues
 import com.patrykandpatrick.vico.core.chart.values.ChartValuesProvider
 import com.patrykandpatrick.vico.core.component.shape.LineComponent
 import com.patrykandpatrick.vico.core.component.shape.ShapeComponent
@@ -51,6 +50,7 @@ fun StatsScreen(
     exerciseName: String,
     sessions: List<WorkoutSession>,
 ) {
+    // Model for the top chart (Total Volume)
     val chartModelProducer = sessions.takeIf { it.isNotEmpty() }?.let { sessionList ->
         val chartEntries = sessionList.mapIndexed { index, session ->
             val totalVolume = session.sets.sumOf { it.reps * it.weight }
@@ -58,9 +58,11 @@ fun StatsScreen(
         }
         ChartEntryModelProducer(chartEntries)
     }
+
+    // Model for the bottom chart (Max Weight)
     val maxWeightChartModelProducer = sessions.takeIf { it.isNotEmpty() }?.let { sessionList ->
         val maxWeights = sessionList.map { session ->
-            session.sets.maxOf { it.weight }
+            session.sets.maxOfOrNull { it.weight } ?: 0.0
         }
         val chartEntries = maxWeights.mapIndexed { index, maxWeight ->
             entryOf(index.toFloat(), maxWeight.toFloat())
@@ -77,19 +79,36 @@ fun StatsScreen(
         Spacer(modifier = Modifier.height(40.dp))
 
         if (chartModelProducer != null && maxWeightChartModelProducer != null) {
+            // --- TOP CHART ---
+            // Formatter for the top chart, showing detailed set info.
+            val volumeMarkerFormatter = MarkerLabelFormatter { markedEntries, _ ->
+                val index = markedEntries.first().entry.x.toInt()
+                if (index in sessions.indices) {
+                    val sets = sessions[index].sets
+                    sets.joinToString("\n") { "R: ${it.reps}, W: ${it.weight}kg" }
+                } else { "" }
+            }
             createChart(
                 sessions,
                 chartModelProducer,
                 "Workout Session",
                 "Total Volume (kg)",
-                MaterialTheme.colorScheme.primary
+                MaterialTheme.colorScheme.primary,
+                volumeMarkerFormatter // Pass the detailed formatter
             )
+
+            // --- BOTTOM CHART ---
+            // Formatter for the bottom chart, showing only the weight.
+            val weightMarkerFormatter = MarkerLabelFormatter { markedEntries, _ ->
+                "${markedEntries.first().entry.y.toInt()} kg"
+            }
             createChart(
                 sessions,
                 maxWeightChartModelProducer,
                 "Workout Session",
                 "Max Weight (kg)",
-                MaterialTheme.colorScheme.tertiary
+                MaterialTheme.colorScheme.tertiary,
+                weightMarkerFormatter // Pass the simple formatter
             )
         } else {
             Text("Not enough data to display a chart.")
@@ -103,7 +122,8 @@ fun createChart(
     chartModelProducer: ChartEntryModelProducer,
     xAxisTitle: String,
     yAxisTitle: String,
-    lineColor: Color
+    lineColor: Color,
+    markerFormatter: MarkerLabelFormatter // Accept the formatter as a parameter
 ) {
     val customAxisLineColor = MaterialTheme.colorScheme.onBackground
     val axisLine = LineComponent(
@@ -128,8 +148,9 @@ fun createChart(
     val marker = remember(markerLabelColor, markerBackgroundColor, markerGuidelineColor) {
         val label = textComponent {
             color = markerLabelColor.toArgb()
+            lineCount = 3 // Allow for multi-line text
             background = ShapeComponent(
-                shape = Shapes.roundedCornerShape(allPercent = 50),
+                shape = Shapes.roundedCornerShape(allPercent = 25), // A less circular bubble
                 color = markerBackgroundColor.toArgb()
             )
             padding = MutableDimensions(horizontalDp = 8.dp.value, verticalDp = 4.dp.value)
@@ -143,9 +164,8 @@ fun createChart(
         )
 
         object : Marker {
-            val formatter = MarkerLabelFormatter { markedEntries, chartValuesProvider ->
-                markedEntries.first().entry.y.toInt().toString()
-            }
+            // Use the passed-in formatter
+            val formatter = markerFormatter
 
             override fun getInsets(
                 context: MeasureContext,
@@ -165,30 +185,29 @@ fun createChart(
                 val entryX = markedEntry.location.x
                 val entryY = markedEntry.location.y
 
+
                 val chartValues = chartValuesProvider.getChartValues()
                 val labelText = formatter.getLabel(markedEntries, chartValues)
-
-                // Small vertical offset to float just above the point
-                val yOffset = context.dpToPx(16f)
-
-                label.drawText(
-                    context,
-                    labelText,
-                    entryX,
-                    8f,
-                    com.patrykandpatrick.vico.core.component.text.HorizontalPosition.Center,
-                    com.patrykandpatrick.vico.core.component.text.VerticalPosition.Bottom
-                )
-
-                // Draw guideline up to the point (not above bubble)
+                val guidelineTop =64f
+                val guidelineBottom = entryY
                 guideline.drawVertical(
                     context,
-                    64f,
-                    entryY,
+                    guidelineTop,
+                    guidelineBottom,
                     entryX
                 )
-            }
 
+                label.drawText(
+                    context = context,
+                    text = labelText,
+                    textX = entryX,
+                    textY = 0f,
+                    horizontalPosition = com.patrykandpatrick.vico.core.component.text.HorizontalPosition.Center,
+                    verticalPosition = com.patrykandpatrick.vico.core.component.text.VerticalPosition.Bottom
+                )
+
+
+            }
         }
     }
 
