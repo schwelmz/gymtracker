@@ -165,7 +165,10 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
                     exercises = exercises,
                     workoutDates = workoutDates,
                     onNavigateToAddWorkout = { navController.navigate(AppRoutes.ADD_WORKOUT_SCREEN) },
-                    onNavigateToWorkoutCalendarDay = { navController.navigate(AppRoutes.WORKOUT_CALENDAR_DAY_SCREEN) },
+                    onNavigateToWorkoutCalendarDay = { date ->
+                        val route = AppRoutes.WORKOUT_CALENDAR_DAY_SCREEN.replace("{day}", date.toString())
+                        navController.navigate(route)
+                    },
                     onSessionClicked = { exerciseName ->
                         navController.navigate(AppRoutes.STATS_SCREEN.replace("{exerciseName}", exerciseName))
                     },

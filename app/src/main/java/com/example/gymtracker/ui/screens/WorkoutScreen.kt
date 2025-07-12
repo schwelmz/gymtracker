@@ -28,7 +28,7 @@ fun WorkoutScreen(
     sessions: List<WorkoutSession>,
     exercises: List<Exercise>,
     onNavigateToAddWorkout: () -> Unit,
-    onNavigateToWorkoutCalendarDay: () -> Unit,
+    onNavigateToWorkoutCalendarDay: (LocalDate) -> Unit,
     workoutDates: Set<LocalDate>,
     onSessionClicked: (String) -> Unit,
     onDeleteSession: (WorkoutSession) -> Unit
@@ -95,8 +95,8 @@ fun WorkoutScreen(
                 WorkoutCalendar(
                     workoutDates = workoutDates,
                     modifier = Modifier.padding(top = 16.dp),
-                    onDayClicked = {
-                        onNavigateToWorkoutCalendarDay()
+                    onDayClicked = { date ->
+                        onNavigateToWorkoutCalendarDay(date)
                     }
                 )
             }
@@ -138,7 +138,7 @@ fun WorkoutSessionCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 2.dp)
+            .padding(horizontal = 2.dp, vertical = 4.dp)
             .pointerInput(Unit) {
                 detectTapGestures(
                     onTap = { onClick() },
