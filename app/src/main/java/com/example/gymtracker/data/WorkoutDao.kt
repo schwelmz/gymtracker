@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
+import java.util.Date
 
 @Dao
 interface WorkoutDao {
@@ -27,4 +28,6 @@ interface WorkoutDao {
     @Query("DELETE FROM workout_sessions WHERE exerciseName = :exerciseName")
     suspend fun deleteSessionsByExerciseName(exerciseName: String)
 
+    @Query("SELECT DISTINCT date FROM workout_sessions")
+    fun getAllWorkoutDates(): Flow<List<Date>>
 }

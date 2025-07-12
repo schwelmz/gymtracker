@@ -17,8 +17,10 @@ import androidx.compose.ui.unit.dp
 import com.example.gymtracker.data.Exercise
 import com.example.gymtracker.data.ExerciseRepository
 import com.example.gymtracker.data.WorkoutSession
+import com.example.gymtracker.ui.components.WorkoutCalendar
 import com.example.gymtracker.ui.theme.AppTheme
 import java.text.SimpleDateFormat
+import java.time.LocalDate
 import java.util.*
 
 @Composable
@@ -26,11 +28,22 @@ fun WorkoutScreen(
     sessions: List<WorkoutSession>,
     exercises: List<Exercise>,
     onNavigateToAddWorkout: () -> Unit,
+    onNavigateToWorkoutCalendarDay: () -> Unit,
+    workoutDates: Set<LocalDate>,
     onSessionClicked: (String) -> Unit,
     onDeleteSession: (WorkoutSession) -> Unit
 ) {
     Column (modifier = Modifier.fillMaxSize()) {
         LazyColumn(modifier = Modifier.padding(start = 16.dp, end = 16.dp)) {
+            item {
+                WorkoutCalendar(
+                    workoutDates = workoutDates,
+                    modifier = Modifier.padding(top = 16.dp),
+                    onDayClicked = {
+                        onNavigateToWorkoutCalendarDay()
+                    }
+                )
+            }
             item {
                 Text(
                     text = "Workout History", // Changed title to be more specific
@@ -156,7 +169,9 @@ fun WorkoutScreenPreview() { // Renamed from HomeScreenPreview
         WorkoutScreen(
             sessions = fakeSessions,
             exercises = ExerciseRepository.getAvailableExercises(),
+            workoutDates = setOf(LocalDate.now()),
             onNavigateToAddWorkout = {},
+            onNavigateToWorkoutCalendarDay = {},
             onSessionClicked = {},
             onDeleteSession = {}
         )

@@ -84,7 +84,7 @@ fun GymApp() {
         },
         floatingActionButton = {
             // Show FAB only on the home screen
-            if (currentRoute == AppRoutes.HOME_SCREEN) {
+            if (currentRoute == AppRoutes.WORKOUT_SCREEN) {
                 FloatingActionButton(onClick = { navController.navigate(AppRoutes.ADD_WORKOUT_SCREEN) }) {
                     Icon(Icons.Filled.Add, contentDescription = "Add Workout")
                 }

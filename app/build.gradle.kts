@@ -34,6 +34,7 @@ android {
         }
     }
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
@@ -84,7 +85,7 @@ dependencies {
     // Image Loading - Coil
     implementation("io.coil-kt:coil-compose:2.6.0")
 
-// Accompanist Permissions (ensure you get the latest version)
+    // Accompanist Permissions (ensure you get the latest version)
     implementation("com.google.accompanist:accompanist-permissions:0.34.0")
     // For Google's ML Kit Barcode Scanning
     implementation("com.google.mlkit:barcode-scanning:17.2.0")
@@ -93,18 +94,23 @@ dependencies {
     implementation("androidx.camera:camera-camera2:1.3.3")
     implementation("androidx.camera:camera-lifecycle:1.3.3")
     implementation("androidx.camera:camera-view:1.3.3")
-// For Accompanist Permissions to easily handle camera permission
+    // For Accompanist Permissions to easily handle camera permission
     implementation("com.google.accompanist:accompanist-permissions:0.34.0")
 
-// For Retrofit (networking)
+    // For Retrofit (networking)
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
 
-// For Kotlinx Serialization (JSON parsing)
+    // For Kotlinx Serialization (JSON parsing)
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0")
 
-// For Coil (displaying images from a URL)
+    // For Coil (displaying images from a URL)
     implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("androidx.camera:camera-core:1.3.3-ktx")
+
+    // Calendar Library
+    implementation("com.kizitonwose.calendar:compose:2.7.0")
+    //Desugaring
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 
 }

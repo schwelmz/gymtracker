@@ -8,9 +8,17 @@ import com.example.gymtracker.data.AppDatabase
 import com.example.gymtracker.data.ExerciseSet
 import com.example.gymtracker.data.WorkoutSession
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.util.Date
+import kotlin.collections.toSet
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
+import java.time.Instant
+import java.time.ZoneId
 
 class WorkoutViewModel(application: Application) : AndroidViewModel(application) {
     private val workoutDao = AppDatabase.getDatabase(application).workoutDao()
@@ -21,6 +29,22 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
     // State for the current logging session
     private val _currentSets = MutableStateFlow<List<ExerciseSet>>(emptyList())
     val currentSets = _currentSets.asStateFlow()
+
+    // NEW STATE FOR THE CALENDAR
+    val workoutDates: StateFlow<Set<LocalDate>> = workoutDao.getAllWorkoutDates()
+        .map { dates ->
+            // Convert the List<java.util.Date> to a Set<java.time.LocalDate>
+            dates.map { date ->
+                Instant.ofEpochMilli(date.time)
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalDate()
+            }.toSet()
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptySet()
+        )
 
     fun addSet(reps: Int, weight: Double) {
         val newSet = ExerciseSet(reps, weight)

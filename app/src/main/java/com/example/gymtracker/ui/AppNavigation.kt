@@ -22,6 +22,7 @@ import com.example.gymtracker.ui.screens.WorkoutScreen // Assuming you will crea
 import com.example.gymtracker.ui.screens.AboutScreen
 import com.example.gymtracker.ui.screens.SettingsScreen
 import androidx.compose.ui.platform.LocalUriHandler
+import com.example.gymtracker.ui.screens.WorkoutCalendarDayScreen
 
 object AppRoutes {
     // Home Graph
@@ -36,10 +37,12 @@ object AppRoutes {
     const val EXERCISES_SCREEN = "exercises_screen"
     const val ADD_EXERCISE_SCREEN = "add_exercise"
 
-    // --- ADD ROUTES FOR NEW GRAPHS ---
+    // Workout Graph
 
     const val WORKOUT_SCREEN = "workout_screen"
+    const val WORKOUT_CALENDAR_DAY_SCREEN = "workout_calendar_day_screen"
 
+    // rest
     const val SCANNER_SCREEN = "scanner_screen"
     // Settings Graph
     const val SETTINGS_SCREEN = "settings_screen"
@@ -155,11 +158,14 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
                 val exerciseViewModel: ExerciseViewModel = viewModel()
                 val sessions by workoutViewModel.allSessions.collectAsState(initial = emptyList())
                 val exercises by exerciseViewModel.allExercises.collectAsState(initial = emptyList())
+                val workoutDates by workoutViewModel.workoutDates.collectAsState(initial = emptySet())
 
                 WorkoutScreen(
                     sessions = sessions,
                     exercises = exercises,
+                    workoutDates = workoutDates,
                     onNavigateToAddWorkout = { navController.navigate(AppRoutes.ADD_WORKOUT_SCREEN) },
+                    onNavigateToWorkoutCalendarDay = { navController.navigate(AppRoutes.WORKOUT_CALENDAR_DAY_SCREEN) },
                     onSessionClicked = { exerciseName ->
                         navController.navigate(AppRoutes.STATS_SCREEN.replace("{exerciseName}", exerciseName))
                     },
@@ -167,6 +173,9 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
                         workoutViewModel.deleteSession(session)
                     }
                 )
+            }
+            composable(route = AppRoutes.WORKOUT_CALENDAR_DAY_SCREEN) {
+                WorkoutCalendarDayScreen()
             }
         }
 
