@@ -21,6 +21,7 @@ import com.example.gymtracker.ui.screens.FoodScannerScreen
 import com.example.gymtracker.ui.screens.WorkoutScreen // Assuming you will create a WorkoutScreen
 import com.example.gymtracker.ui.screens.AboutScreen
 import com.example.gymtracker.ui.screens.SettingsScreen
+import androidx.compose.ui.platform.LocalUriHandler
 
 object AppRoutes {
     // Home Graph
@@ -61,24 +62,15 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
             startDestination = AppRoutes.HOME_SCREEN,
             route = BottomBarDestination.Home.route
         ) {
+            // --- THIS IS THE CORRECTED SECTION ---
+            // The main screen for the Home tab now calls the simple HomeScreen.
             composable(route = AppRoutes.HOME_SCREEN) {
-                val workoutViewModel: WorkoutViewModel = viewModel()
-                val exerciseViewModel: ExerciseViewModel = viewModel()
-                val sessions by workoutViewModel.allSessions.collectAsState(initial = emptyList())
-                val exercises by exerciseViewModel.allExercises.collectAsState(initial = emptyList())
-
-                HomeScreen(
-                    sessions = sessions,
-                    exercises = exercises,
-                    onNavigateToAddWorkout = { navController.navigate(AppRoutes.ADD_WORKOUT_SCREEN) },
-                    onSessionClicked = { exerciseName ->
-                        navController.navigate(AppRoutes.STATS_SCREEN.replace("{exerciseName}", exerciseName))
-                    },
-                    onDeleteSession = { session ->
-                        workoutViewModel.deleteSession(session)
-                    }
-                )
+                // The parameters from the old implementation are no longer needed here.
+                HomeScreen()
             }
+
+            // The routes you navigate to FROM the home screen remain the same.
+            // These are still needed because the Floating Action Button uses them.
             composable(route = AppRoutes.ADD_WORKOUT_SCREEN) {
                 val exerciseViewModel: ExerciseViewModel = viewModel()
                 val exercises by exerciseViewModel.allExercises.collectAsState(initial = emptyList())
@@ -89,6 +81,7 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
                     exercises = exercises
                 )
             }
+
             composable(route = AppRoutes.WORKOUT_LOG_SCREEN) { backStackEntry ->
                 val exerciseName = backStackEntry.arguments?.getString("exerciseName") ?: "Unknown"
                 val viewModel: WorkoutViewModel = viewModel()
@@ -96,13 +89,18 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
                 WorkoutLogScreen(
                     exerciseName = exerciseName,
                     sets = sets,
-                    onAddSet = { reps, weight -> viewModel.addSet(reps, weight) },
+                    onAddSet = { reps, weight ->
+                        viewModel.addSet(reps, weight)
+                    },
                     onWorkoutSaved = {
                         viewModel.saveWorkoutSession(exerciseName)
-                        navController.popBackStack(AppRoutes.HOME_SCREEN, inclusive = false)
+                        navController.popBackStack(AppRoutes.WORKOUT_SCREEN, inclusive = false) // Go back to the workout list
                     }
                 )
             }
+
+            // StatsScreen is now mainly accessed from the WorkoutScreen, but can be kept here
+            // if you have other ways to access it from the Home graph.
             composable(route = AppRoutes.STATS_SCREEN) { backStackEntry ->
                 val exerciseName = backStackEntry.arguments?.getString("exerciseName") ?: "Unknown"
                 val viewModel: WorkoutViewModel = viewModel()
@@ -110,6 +108,7 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
                 StatsScreen(exerciseName = exerciseName, sessions = sessions)
             }
         }
+
 
         // =====================================================================
         // EXERCISES NAVIGATION GRAPH
@@ -143,18 +142,32 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
         }
 
         // =====================================================================
-        // WORKOUT NAVIGATION GRAPH (NEW)
+        // WORKOUT NAVIGATION GRAPH
         // =====================================================================
         navigation(
-            startDestination = AppRoutes.WORKOUT_SCREEN, // The main screen for this tab
-            route = BottomBarDestination.Workout.route // The route from the Bottom Nav Bar
+            startDestination = AppRoutes.WORKOUT_SCREEN,
+            route = BottomBarDestination.Workout.route
         ) {
             composable(route = AppRoutes.WORKOUT_SCREEN) {
-                // You will need to create a WorkoutScreen composable.
-                // For now, we can use a placeholder.
-                WorkoutScreen()
+                // --- THIS IS THE UPDATED SECTION ---
+                // Provide the same data to WorkoutScreen as you did for HomeScreen
+                val workoutViewModel: WorkoutViewModel = viewModel()
+                val exerciseViewModel: ExerciseViewModel = viewModel()
+                val sessions by workoutViewModel.allSessions.collectAsState(initial = emptyList())
+                val exercises by exerciseViewModel.allExercises.collectAsState(initial = emptyList())
+
+                WorkoutScreen(
+                    sessions = sessions,
+                    exercises = exercises,
+                    onNavigateToAddWorkout = { navController.navigate(AppRoutes.ADD_WORKOUT_SCREEN) },
+                    onSessionClicked = { exerciseName ->
+                        navController.navigate(AppRoutes.STATS_SCREEN.replace("{exerciseName}", exerciseName))
+                    },
+                    onDeleteSession = { session ->
+                        workoutViewModel.deleteSession(session)
+                    }
+                )
             }
-            // You can add other screens you navigate to from the WorkoutScreen here.
         }
 
         // =====================================================================
@@ -170,16 +183,24 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
             }
         }
         // =====================================================================
-        // SETTINGS NAVIGATION GRAPH (NEW)
+        // SETTINGS NAVIGATION GRAPH
         // =====================================================================
         navigation(
             startDestination = AppRoutes.SETTINGS_SCREEN,
             route = BottomBarDestination.Settings.route
         ) {
             composable(route = AppRoutes.SETTINGS_SCREEN) {
+                // --- THIS IS THE SECTION TO UPDATE ---
+                val uriHandler = LocalUriHandler.current
+                // !! IMPORTANT !! Replace this with your actual donation link
+                val donationUrl = "https://www.buymeacoffee.com/your-username"
+
                 SettingsScreen(
                     onNavigateToAbout = {
                         navController.navigate(AppRoutes.ABOUT_SCREEN)
+                    },
+                    onNavigateToDonate = {
+                        uriHandler.openUri(donationUrl)
                     }
                 )
             }

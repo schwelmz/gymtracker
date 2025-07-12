@@ -1,11 +1,11 @@
 package com.example.gymtracker.ui.screens
 
-
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -14,7 +14,8 @@ import androidx.compose.ui.Modifier
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    onNavigateToAbout: () -> Unit
+    onNavigateToAbout: () -> Unit,
+    onNavigateToDonate: () -> Unit // <-- 1. Add new lambda parameter
 ) {
     Scaffold(
         topBar = {
@@ -38,7 +39,20 @@ fun SettingsScreen(
                     modifier = Modifier.clickable(onClick = onNavigateToAbout)
                 )
             }
-            // You can add more settings items here in the future
+
+            // --- 2. ADD THE NEW LIST ITEM FOR DONATION ---
+            item {
+                ListItem(
+                    headlineContent = { Text("Support the App") },
+                    leadingContent = {
+                        Icon(
+                            Icons.Filled.Favorite,
+                            contentDescription = "Donate"
+                        )
+                    },
+                    modifier = Modifier.clickable(onClick = onNavigateToDonate)
+                )
+            }
         }
     }
 }
