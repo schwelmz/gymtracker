@@ -150,9 +150,10 @@ fun WorkoutSessionCard(
     }
 }
 
-@Preview(name = "Dark", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
+@Preview(showBackground = true)
 @Composable
 fun WorkoutScreenPreview() { // Renamed from HomeScreenPreview
+    val fakeDates = setOf(LocalDate.of(2025, 7, 13), LocalDate.of(2025, 7, 8), LocalDate.of(2025, 7, 12), LocalDate.of(2025, 7, 23))
     val fakeSessions = listOf(
         WorkoutSession(1, "Bench Press", emptyList(), Date(125, 7, 13)),
         WorkoutSession(4, "Bench Press", emptyList(), Date(125, 7, 8)),
@@ -161,15 +162,15 @@ fun WorkoutScreenPreview() { // Renamed from HomeScreenPreview
         WorkoutSession(1, "Squat", emptyList(), Date(125, 7, 13)),
         WorkoutSession(4, "Overhead Press", emptyList(), Date(125, 7, 8)),
         WorkoutSession(4, "Squat", emptyList(), Date(125, 7, 12)),
-        WorkoutSession(2, "Squat", emptyList(), Date()),
-        WorkoutSession(2, "Squat", emptyList(), Date()),
+        WorkoutSession(2, "Squat", emptyList(), Date(125, 7, 12)),
+        WorkoutSession(2, "Squat", emptyList(), Date(125, 7, 12)),
     )
     AppTheme {
         // Call the new WorkoutScreen in the preview
         WorkoutScreen(
             sessions = fakeSessions,
             exercises = ExerciseRepository.getAvailableExercises(),
-            workoutDates = setOf(LocalDate.now()),
+            workoutDates = fakeDates,
             onNavigateToAddWorkout = {},
             onNavigateToWorkoutCalendarDay = {},
             onSessionClicked = {},
