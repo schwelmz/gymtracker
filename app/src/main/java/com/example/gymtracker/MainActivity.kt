@@ -88,7 +88,12 @@ fun GymApp() {
                     Icon(Icons.Filled.Add, contentDescription = "Add Workout")
                 }
             }
-        }
+            if (currentRoute == AppRoutes.NUTRITION_SCREEN) {
+                FloatingActionButton(onClick = { navController.navigate(AppRoutes.FOOD_SCANNER_SCREEN) }) {
+                    Icon(Icons.Filled.Add, contentDescription = "Scan Food Item")
+                }
+            }
+        },
     ) { innerPadding ->
         Surface(
             modifier = Modifier

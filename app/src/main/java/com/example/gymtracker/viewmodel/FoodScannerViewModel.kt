@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 sealed interface FoodScannerUiState {
     object Idle : FoodScannerUiState
     object Loading : FoodScannerUiState
-    data class Success(val product: Product) : FoodScannerUiState
+    data class Success(val product: Product, val barcode: String) : FoodScannerUiState
     data class Error(val message: String) : FoodScannerUiState
 }
 
@@ -27,7 +27,7 @@ class FoodScannerViewModel : ViewModel() {
             try {
                 val response = RetrofitClient.instance.getProductByBarcode(barcode)
                 if (response.status == 1 && response.product != null) {
-                    _uiState.value = FoodScannerUiState.Success(response.product)
+                    _uiState.value = FoodScannerUiState.Success(response.product, barcode)
                 } else {
                     _uiState.value = FoodScannerUiState.Error("Product not found.")
                 }

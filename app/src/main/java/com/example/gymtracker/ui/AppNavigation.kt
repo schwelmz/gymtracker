@@ -21,9 +21,16 @@ import com.example.gymtracker.ui.screens.WorkoutScreen // Assuming you will crea
 import com.example.gymtracker.ui.screens.AboutScreen
 import com.example.gymtracker.ui.screens.SettingsScreen
 import androidx.compose.ui.platform.LocalUriHandler
+import com.example.gymtracker.ui.screens.NutritionScreen
 import com.example.gymtracker.ui.screens.WorkoutCalendarDayScreen
 import com.example.gymtracker.ui.screens.WorkoutModifyScreen
+import androidx.compose.runtime.rememberCoroutineScope
+import com.example.gymtracker.viewmodel.FoodScannerUiState
+import com.example.gymtracker.viewmodel.FoodScannerViewModel
+import com.example.gymtracker.viewmodel.FoodViewModel
+import kotlinx.coroutines.CoroutineScope
 import java.time.LocalDate
+import kotlinx.coroutines.launch
 
 object AppRoutes {
     // Home Graph
@@ -43,8 +50,10 @@ object AppRoutes {
     const val WORKOUT_CALENDAR_DAY_SCREEN = "workout_calendar_day_screen/{day}"
     const val WORKOUT_MODIFY_SCREEN = "workout_modify_screen/{sessionId}"
 
-    // rest
+    // Nutrition Graph
     const val NUTRITION_SCREEN = "nutrition_screen"
+    const val FOOD_SCANNER_SCREEN = "food_scanner_screen"
+
     // Settings Graph
     const val SETTINGS_SCREEN = "settings_screen"
     const val ABOUT_SCREEN = "about_screen"
@@ -52,6 +61,8 @@ object AppRoutes {
 
 @Composable
 fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostController,onGrantPermissionsClick: () -> Unit) {
+
+    val scope = rememberCoroutineScope()
 
     // The start destination is the route of the Home graph.
     NavHost(
@@ -228,8 +239,43 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
             route = BottomBarDestination.Nutrition.route
         ) {
             composable(route = AppRoutes.NUTRITION_SCREEN) {
-                // This will be the screen with the barcode scanner.
-                FoodScannerScreen()
+                val foodViewModel: FoodViewModel = viewModel()
+                val scannerViewModel: FoodScannerViewModel = viewModel()
+                NutritionScreen(
+                    foodViewModel,
+                    onDeleteFoodEntry = { food ->
+                        scope.launch {
+                            foodViewModel.deleteFood(food)
+                        }
+                    }
+                )
+            }
+            composable ( route = AppRoutes.FOOD_SCANNER_SCREEN) {
+                val foodViewModel: FoodViewModel = viewModel()
+                val scannerViewModel: FoodScannerViewModel = viewModel()
+                FoodScannerScreen(
+                    foodViewModel = foodViewModel,
+                    scannerViewModel = scannerViewModel,
+                    onSave = {
+                        val uiState = scannerViewModel.uiState.value
+                        if (uiState is FoodScannerUiState.Success) {
+                            val product = uiState.product
+                            val food = com.example.gymtracker.data.Food(
+                                barcode = uiState.barcode,
+                                name = product.name ?: "Unknown Product",
+                                calories = product.nutriments?.energyKcalPer100g?.toInt() ?: 0,
+                                carbs = product.nutriments?.sugarsPer100g?.toInt() ?: 0,
+                                protein = product.nutriments?.proteinsPer100g?.toInt() ?: 0,
+                                fat = product.nutriments?.fatPer100g?.toInt() ?: 0,
+                                imageUri = product.imageUrl
+                            )
+                            scope.launch {
+                                foodViewModel.insertFood(food)
+                            }
+                            navController.popBackStack(AppRoutes.NUTRITION_SCREEN, inclusive = false)
+                        }
+                    }
+                )
             }
         }
         // =====================================================================

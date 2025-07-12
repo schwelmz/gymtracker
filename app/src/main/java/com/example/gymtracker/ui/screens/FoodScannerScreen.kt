@@ -6,6 +6,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -17,15 +18,23 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.example.gymtracker.viewmodel.FoodScannerViewModel
+import com.example.gymtracker.viewmodel.FoodViewModel
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun FoodScannerScreen(
-    viewModel: FoodScannerViewModel = viewModel()
+    scannerViewModel: FoodScannerViewModel = viewModel(),
+    foodViewModel: FoodViewModel = viewModel(),
+    onSave: () -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by scannerViewModel.uiState.collectAsState()
     var showScanner by remember { mutableStateOf(false) }
     val cameraPermissionState = rememberPermissionState(android.Manifest.permission.CAMERA)
+
+    val name by remember { mutableStateOf("") }
+    val calories by remember { mutableIntStateOf(0) }
+
+    val context = LocalContext.current
 
     // A Box is used to allow for flexible placement of its children, like aligning
     // one element to the center and another to the bottom.
@@ -70,10 +79,19 @@ fun FoodScannerScreen(
             Text("Scan Barcode")
         }
 
+        Button(
+            onClick = {
+                onSave()
+            },
+            modifier = Modifier.align(Alignment.BottomEnd)
+        ){
+            Text("Add Food")
+        }
+
         if (showScanner) {
             BarcodeScannerView(onBarcodeScanned = { barcode ->
                 showScanner = false
-                viewModel.getProductByBarcode(barcode)
+                scannerViewModel.getProductByBarcode(barcode)
             })
         }
     }
