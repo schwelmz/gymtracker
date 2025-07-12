@@ -85,14 +85,13 @@ private fun Day(
         modifier = Modifier
             .aspectRatio(1f) // Makes it a square
             .clickable(
-                enabled = day.position == DayPosition.MonthDate,
                 onClick = { onDayClicked(day.date) }
             ),
         contentAlignment = Alignment.Center
     ) {
         // --- 1. DRAW THE PILL BACKGROUND ---
         val firstWorkout = getFirstWorkoutOfWeek(day, workoutDates, firstDayOfWeek)
-        if (day.position == DayPosition.MonthDate && firstWorkout != null) {
+        if (firstWorkout != null) {
             val lastWorkout = getLastWorkoutOfWeek(day, workoutDates, firstDayOfWeek)!!
             val prevWeekHasWorkout = previousWeekHasWorkout(day, workoutDates, firstDayOfWeek)
             val nextWeekHasWorkout = nextWeekHasWorkout(day, workoutDates, firstDayOfWeek)
@@ -188,7 +187,7 @@ private fun getFirstWorkoutOfWeek(
     workoutDates: Set<LocalDate>,
     firstDayOfWeek: DayOfWeek
 ): LocalDate? {
-    if (day.position != DayPosition.MonthDate) return null
+    //if (day.position != DayPosition.MonthDate) return null
     val weekStartDate = day.date.with(TemporalAdjusters.previousOrSame(firstDayOfWeek))
     for (i in 0..6) {
         val date = weekStartDate.plusDays(i.toLong())
@@ -204,7 +203,7 @@ private fun getLastWorkoutOfWeek(
     workoutDates: Set<LocalDate>,
     firstDayOfWeek: DayOfWeek
 ): LocalDate? {
-    if (day.position != DayPosition.MonthDate) return null
+    //if (day.position != DayPosition.MonthDate) return null
     val weekStartDate = day.date.with(TemporalAdjusters.previousOrSame(firstDayOfWeek))
     for (i in 6 downTo 0) {
         val date = weekStartDate.plusDays(i.toLong())

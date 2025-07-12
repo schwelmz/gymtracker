@@ -24,7 +24,8 @@ fun WorkoutCalendarDayScreen(
     day: String?,
     sessions: List<WorkoutSession>,
     onSessionClicked: (String) -> Unit,
-    onDeleteSession: (WorkoutSession) -> Unit
+    onDeleteSession: (WorkoutSession) -> Unit,
+    onModifySession: (WorkoutSession) -> Unit
 ) {
     val selectedDate by remember(day) {
         derivedStateOf {
@@ -62,7 +63,8 @@ fun WorkoutCalendarDayScreen(
                     session = session,
                     details = details,
                     onClick = { onSessionClicked(session.exerciseName) },
-                    onDelete = { onDeleteSession(session) }
+                    onDelete = { onDeleteSession(session) },
+                    onModify = { onModifySession(session) }
                 )
             }
         } else {
@@ -88,7 +90,8 @@ fun WorkoutCalendarDayScreenPreview() {
         day = LocalDate.now().toString(),
         sessions = fakeSessions,
         onSessionClicked = {},
-        onDeleteSession = {}
+        onDeleteSession = {},
+        onModifySession = {}
     )
 
 }

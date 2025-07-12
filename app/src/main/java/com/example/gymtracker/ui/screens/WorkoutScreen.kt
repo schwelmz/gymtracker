@@ -31,7 +31,8 @@ fun WorkoutScreen(
     onNavigateToWorkoutCalendarDay: (LocalDate) -> Unit,
     workoutDates: Set<LocalDate>,
     onSessionClicked: (String) -> Unit,
-    onDeleteSession: (WorkoutSession) -> Unit
+    onDeleteSession: (WorkoutSession) -> Unit,
+    onModifySession: (WorkoutSession) -> Unit
 ) {
     Column (modifier = Modifier.fillMaxSize()) {
         LazyColumn(modifier = Modifier.padding(start = 16.dp, end = 16.dp)) {
@@ -68,7 +69,8 @@ fun WorkoutScreen(
                             session = session,
                             details = details,
                             onClick = { onSessionClicked(session.exerciseName) },
-                            onDelete = { onDeleteSession(session) }
+                            onDelete = { onDeleteSession(session) },
+                            onModify = { onModifySession(session) }
                         )
                     }
                 }
@@ -100,6 +102,9 @@ fun WorkoutScreen(
                     }
                 )
             }
+            item {
+                Spacer(modifier = Modifier.height(100.dp))
+            }
         }
     }
 }
@@ -109,7 +114,8 @@ fun WorkoutSessionCard(
     session: WorkoutSession,
     details: String,
     onClick: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onModify: () -> Unit
 ) {
     var showDialog by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
@@ -117,8 +123,8 @@ fun WorkoutSessionCard(
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            title = { Text("Delete Workout") },
-            text = { Text("Are you sure you want to delete this workout?") },
+            title = { Text("Workout Options") },
+            text = { Text("What would you like to do with this workout?") },
             confirmButton = {
                 Button(onClick = {
                     showDialog = false
@@ -128,8 +134,11 @@ fun WorkoutSessionCard(
                 }
             },
             dismissButton = {
-                Button(onClick = { showDialog = false }) {
-                    Text("Cancel")
+                Button(onClick = {
+                    showDialog = false
+                    onModify()
+                }) {
+                    Text("Modify Date")
                 }
             }
         )
@@ -137,7 +146,7 @@ fun WorkoutSessionCard(
 
     Card(
         modifier = Modifier
-            .fillMaxWidth()
+            .width(200.dp)
             .padding(horizontal = 2.dp, vertical = 4.dp)
             .pointerInput(Unit) {
                 detectTapGestures(
@@ -184,7 +193,8 @@ fun WorkoutScreenPreview() { // Renamed from HomeScreenPreview
             onNavigateToAddWorkout = {},
             onNavigateToWorkoutCalendarDay = {},
             onSessionClicked = {},
-            onDeleteSession = {}
+            onDeleteSession = {},
+            onModifySession = {}
         )
     }
 }

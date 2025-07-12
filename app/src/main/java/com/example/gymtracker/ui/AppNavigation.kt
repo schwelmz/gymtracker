@@ -23,6 +23,8 @@ import com.example.gymtracker.ui.screens.AboutScreen
 import com.example.gymtracker.ui.screens.SettingsScreen
 import androidx.compose.ui.platform.LocalUriHandler
 import com.example.gymtracker.ui.screens.WorkoutCalendarDayScreen
+import com.example.gymtracker.ui.screens.WorkoutModifyScreen
+import java.time.LocalDate
 
 object AppRoutes {
     // Home Graph
@@ -41,6 +43,7 @@ object AppRoutes {
 
     const val WORKOUT_SCREEN = "workout_screen"
     const val WORKOUT_CALENDAR_DAY_SCREEN = "workout_calendar_day_screen/{day}"
+    const val WORKOUT_MODIFY_SCREEN = "workout_modify_screen/{sessionId}"
 
     // rest
     const val SCANNER_SCREEN = "scanner_screen"
@@ -165,7 +168,7 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
                     exercises = exercises,
                     workoutDates = workoutDates,
                     onNavigateToAddWorkout = { navController.navigate(AppRoutes.ADD_WORKOUT_SCREEN) },
-                    onNavigateToWorkoutCalendarDay = { date ->
+                    onNavigateToWorkoutCalendarDay = { date: LocalDate ->
                         val route = AppRoutes.WORKOUT_CALENDAR_DAY_SCREEN.replace("{day}", date.toString())
                         navController.navigate(route)
                     },
@@ -174,6 +177,10 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
                     },
                     onDeleteSession = { session ->
                         workoutViewModel.deleteSession(session)
+                    },
+                    onModifySession = { session ->
+                        val route = AppRoutes.WORKOUT_MODIFY_SCREEN.replace("{sessionId}", session.id.toString())
+                        navController.navigate(route)
                     }
                 )
             }
@@ -189,8 +196,21 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
                     },
                     onDeleteSession = { session ->
                         workoutViewModel.deleteSession(session)
+                    },
+                    onModifySession = { session ->
+                        val route = AppRoutes.WORKOUT_MODIFY_SCREEN.replace("{sessionId}", session.id.toString())
+                        navController.navigate(route)
                     }
                 )
+            }
+            composable(route = AppRoutes.WORKOUT_MODIFY_SCREEN) { backStackEntry ->
+                val sessionId = backStackEntry.arguments?.getString("sessionId")?.toIntOrNull()
+                if (sessionId != null) {
+                    WorkoutModifyScreen(
+                        sessionId = sessionId,
+                        onWorkoutModified = { navController.popBackStack() }
+                    )
+                }
             }
         }
 

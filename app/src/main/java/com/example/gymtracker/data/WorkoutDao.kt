@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 import java.util.Date
 
@@ -13,8 +14,14 @@ interface WorkoutDao {
     @Query("SELECT * FROM workout_sessions ORDER BY date DESC")
     fun getAllSessions(): Flow<List<WorkoutSession>>
 
+    @Query("SELECT * FROM workout_sessions WHERE id = :sessionId")
+    fun getSessionById(sessionId: Int): Flow<WorkoutSession>
+
     @Insert
     suspend fun insertSession(session: WorkoutSession)
+
+    @Update
+    suspend fun updateSession(session: WorkoutSession)
 
     @Delete
     suspend fun deleteSession(session: WorkoutSession)

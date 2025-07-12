@@ -46,6 +46,15 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
             initialValue = emptySet()
         )
 
+    fun getSessionById(sessionId: Int): StateFlow<WorkoutSession> {
+        return workoutDao.getSessionById(sessionId)
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = WorkoutSession(id = -1, exerciseName = "", sets = emptyList(), date = Date())
+            )
+    }
+
     fun addSet(reps: Int, weight: Double) {
         val newSet = ExerciseSet(reps, weight)
         _currentSets.value = _currentSets.value + newSet
@@ -71,6 +80,12 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         }
     }
     fun getSessionsForChart(exerciseName: String) = workoutDao.getSessionsForExercise(exerciseName)
+
+    fun updateSession(session: WorkoutSession) {
+        viewModelScope.launch {
+            workoutDao.updateSession(session)
+        }
+    }
 }
 
 fun Date.normalized(): Date {
