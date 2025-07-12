@@ -21,61 +21,59 @@ import com.example.gymtracker.viewmodel.FoodScannerViewModel
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun FoodScannerScreen(
-    // The viewModel is automatically provided by the framework.
     viewModel: FoodScannerViewModel = viewModel()
 ) {
-    // Collect the current state from the ViewModel. The UI will automatically
-    // update whenever this state changes.
     val uiState by viewModel.uiState.collectAsState()
-
-    // State to decide when to show the full-screen camera view.
     var showScanner by remember { mutableStateOf(false) }
-
-    // State for handling the camera permission request.
     val cameraPermissionState = rememberPermissionState(android.Manifest.permission.CAMERA)
 
-    Column(
+    // A Box is used to allow for flexible placement of its children, like aligning
+    // one element to the center and another to the bottom.
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(16.dp)
     ) {
-        Button(onClick = {
-            if (cameraPermissionState.status.isGranted) {
-                // If permission is granted, show the scanner.
-                showScanner = true
-            } else {
-                // Otherwise, request the permission.
-                cameraPermissionState.launchPermissionRequest()
+        // This Column holds the main content and is aligned to the center of the screen.
+        Column(
+            modifier = Modifier.align(Alignment.Center),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            when (val state = uiState) {
+                is FoodScannerUiState.Idle -> {
+                    Text("Scan a product to see its details.")
+                }
+                is FoodScannerUiState.Loading -> {
+                    CircularProgressIndicator()
+                }
+                is FoodScannerUiState.Success -> {
+                    ProductDetails(product = state.product)
+                }
+                is FoodScannerUiState.Error -> {
+                    Text("Error: ${state.message}", color = MaterialTheme.colorScheme.error)
+                }
             }
-        }) {
+        }
+
+        // This button is aligned to the bottom center of the Box, pushing it to the footer.
+        Button(
+            onClick = {
+                if (cameraPermissionState.status.isGranted) {
+                    showScanner = true
+                } else {
+                    cameraPermissionState.launchPermissionRequest()
+                }
+            },
+            // The align modifier positions this specific composable within the parent Box.
+            modifier = Modifier.align(Alignment.BottomCenter)
+        ) {
             Text("Scan Barcode")
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // This 'when' block reacts to the state from the ViewModel.
-        when (val state = uiState) {
-            is FoodScannerUiState.Idle -> {
-                Text("Scan a product to see its details.")
-            }
-            is FoodScannerUiState.Loading -> {
-                CircularProgressIndicator()
-            }
-            is FoodScannerUiState.Success -> {
-                // If data is fetched successfully, show the ProductDetails component.
-                ProductDetails(product = state.product)
-            }
-            is FoodScannerUiState.Error -> {
-                Text("Error: ${state.message}", color = MaterialTheme.colorScheme.error)
-            }
-        }
-
-        // If showScanner is true, display the camera scanner view.
         if (showScanner) {
             BarcodeScannerView(onBarcodeScanned = { barcode ->
-                showScanner = false // Hide scanner after getting a result
-                viewModel.getProductByBarcode(barcode) // Trigger the API call
+                showScanner = false
+                viewModel.getProductByBarcode(barcode)
             })
         }
     }
@@ -83,6 +81,7 @@ fun FoodScannerScreen(
 
 /**
  * A simple, reusable composable to display the details of a Product.
+ * (This composable does not need any changes)
  */
 @Composable
 fun ProductDetails(product: Product) {
