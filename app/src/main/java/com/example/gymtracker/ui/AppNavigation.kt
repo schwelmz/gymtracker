@@ -47,7 +47,7 @@ object AppRoutes {
 }
 
 @Composable
-fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostController) {
+fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostController,onGrantPermissionsClick: () -> Unit) {
 
     // The start destination is the route of the Home graph.
     NavHost(
@@ -66,7 +66,7 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
             // The main screen for the Home tab now calls the simple HomeScreen.
             composable(route = AppRoutes.HOME_SCREEN) {
                 // The parameters from the old implementation are no longer needed here.
-                HomeScreen()
+                HomeScreen(onGrantPermissionsClick = onGrantPermissionsClick)
             }
 
             // The routes you navigate to FROM the home screen remain the same.

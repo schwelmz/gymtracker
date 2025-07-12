@@ -13,12 +13,15 @@ android {
 
     defaultConfig {
         applicationId = "com.example.gymtracker"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables {
+            useSupportLibrary = true
+        }
     }
 
     buildTypes {
@@ -43,7 +46,9 @@ android {
 }
 
 dependencies {
-    //implementation("androidx.health.connect:connect-client:1.1.0-alpha07")
+    implementation("com.google.guava:guava:32.1.3-android")
+    implementation("androidx.health.connect:connect-client:1.1.0-rc02")
+    implementation("androidx.concurrent:concurrent-futures-ktx:1.1.0")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -100,5 +105,6 @@ dependencies {
 
 // For Coil (displaying images from a URL)
     implementation("io.coil-kt:coil-compose:2.6.0")
+    implementation("androidx.camera:camera-core:1.3.3-ktx")
 
 }
