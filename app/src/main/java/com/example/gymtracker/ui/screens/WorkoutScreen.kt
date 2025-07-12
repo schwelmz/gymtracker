@@ -36,26 +36,17 @@ fun WorkoutScreen(
     Column (modifier = Modifier.fillMaxSize()) {
         LazyColumn(modifier = Modifier.padding(start = 16.dp, end = 16.dp)) {
             item {
-                WorkoutCalendar(
-                    workoutDates = workoutDates,
-                    modifier = Modifier.padding(top = 16.dp),
-                    onDayClicked = {
-                        onNavigateToWorkoutCalendarDay()
-                    }
-                )
-            }
-            item {
                 Text(
-                    text = "Workout History", // Changed title to be more specific
+                    text = "Recent Workouts", // Changed title to be more specific
                     style = MaterialTheme.typography.headlineLarge,
                     color = MaterialTheme.colorScheme.tertiary,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                    modifier = Modifier.padding(top = 50.dp, bottom = 50.dp)
+                    modifier = Modifier.padding(top = 50.dp, bottom = 20.dp)
                 )
             }
             // Group sessions by date and display them chronologically
             val sessionDates = sessions.map { it.date }.distinct().sortedByDescending { it.time }
-            items(items = sessionDates) { sessionDate ->
+            items(items = sessionDates.take(2)) { sessionDate ->
                 Text(
                     text = SimpleDateFormat(
                         "MMM dd, yyyy",
@@ -89,6 +80,25 @@ fun WorkoutScreen(
                         modifier = Modifier.padding(16.dp)
                     )
                 }
+            }
+            item {
+                Text(
+                    text = "Workout Calendar", // Changed title to be more specific
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = MaterialTheme.colorScheme.tertiary,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                    modifier = Modifier.padding(top = 20.dp, bottom = 20.dp)
+                )
+            }
+
+            item {
+                WorkoutCalendar(
+                    workoutDates = workoutDates,
+                    modifier = Modifier.padding(top = 16.dp),
+                    onDayClicked = {
+                        onNavigateToWorkoutCalendarDay()
+                    }
+                )
             }
         }
     }

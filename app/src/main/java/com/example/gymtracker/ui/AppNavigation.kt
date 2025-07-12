@@ -40,7 +40,7 @@ object AppRoutes {
     // Workout Graph
 
     const val WORKOUT_SCREEN = "workout_screen"
-    const val WORKOUT_CALENDAR_DAY_SCREEN = "workout_calendar_day_screen"
+    const val WORKOUT_CALENDAR_DAY_SCREEN = "workout_calendar_day_screen/{day}"
 
     // rest
     const val SCANNER_SCREEN = "scanner_screen"
@@ -174,8 +174,20 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
                     }
                 )
             }
-            composable(route = AppRoutes.WORKOUT_CALENDAR_DAY_SCREEN) {
-                WorkoutCalendarDayScreen()
+            composable(route = AppRoutes.WORKOUT_CALENDAR_DAY_SCREEN) { backStackEntry ->
+                val day = backStackEntry.arguments?.getString("day")
+                val workoutViewModel: WorkoutViewModel = viewModel()
+                val sessions by workoutViewModel.allSessions.collectAsState(initial = emptyList())
+                WorkoutCalendarDayScreen(
+                    day = day,
+                    sessions = sessions,
+                    onSessionClicked = { exerciseName ->
+                        navController.navigate(AppRoutes.STATS_SCREEN.replace("{exerciseName}", exerciseName))
+                    },
+                    onDeleteSession = { session ->
+                        workoutViewModel.deleteSession(session)
+                    }
+                )
             }
         }
 

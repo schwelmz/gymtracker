@@ -29,6 +29,7 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.TextStyle
+import java.time.temporal.TemporalAdjusters
 import java.util.Locale
 import androidx.compose.foundation.shape.RoundedCornerShape
 
@@ -52,17 +53,8 @@ fun WorkoutCalendar(
     )
 
     Column(modifier = modifier) {
-        // This is the header that shows the month and year
-//        Text(
-//            text = "${state.firstVisibleMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault())} ${state.firstVisibleMonth.year}",
-//            style = MaterialTheme.typography.titleMedium,
-//            modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
-//        )
-
-        // This composable lays out the days of the week titles (Mon, Tue, etc.)
         DaysOfWeekTitle(daysOfWeek = state.firstDayOfWeek.let {
             val days = DayOfWeek.values()
-            // Reorder the days to start with the locale's first day of the week
             days.slice(days.indexOf(it)..days.lastIndex) + days.slice(0 until days.indexOf(it))
         })
 
@@ -71,138 +63,110 @@ fun WorkoutCalendar(
             dayContent = { day ->
                 Day(
                     day = day,
-                    hasWorkout = day.date in workoutDates, // Check if this date has a workout
-                    weekHasWorkout = weekHasWorkout(day, workoutDates, firstDayOfWeek), // Check if this week has a workout
-                    firstDayOfWeek = firstDayOfWeek,
-                    onClick = { onDayClicked(day.date) }
+                    hasWorkout = day.date in workoutDates,
+                    onDayClicked = { onDayClicked(day.date) },
+                    workoutDates = workoutDates,
+                    firstDayOfWeek = firstDayOfWeek
                 )
             }
         )
     }
 }
 
-//@Composable
-//private fun Day(
-//    day: CalendarDay,
-//    hasWorkout: Boolean,
-//    onClick: (CalendarDay) -> Unit = {}) {
-//    // Each day is a box. We only draw content if it's part of the current month.
-//
-//        Box(
-//            modifier = Modifier
-//                .aspectRatio(1f), // Makes the day cell a square
-//            contentAlignment = Alignment.Center
-//        ) {
-//            // If a workout exists on this day, draw a small dot underneath the number.
-//            if (hasWorkout) {
-//                Box(
-//                    modifier = Modifier
-//                        .size(30.dp)
-//                        .clip(CircleShape)
-//                        .background(color = MaterialTheme.colorScheme.tertiary)
-//                        .clickable(
-//                            enabled = day.position == DayPosition.MonthDate,
-//                            onClick = { onClick(day) }
-//                        )
-//                )
-//                Text(
-//                    text = day.date.dayOfMonth.toString(),
-//                    color = MaterialTheme.colorScheme.onTertiary
-//                )
-//            }
-//            else {
-//                // This is the text for the day number (e.g., "1", "25")
-//                if (day.position == DayPosition.MonthDate) {
-//                    Text(
-//                        text = day.date.dayOfMonth.toString(),
-//                        color =  MaterialTheme.colorScheme.onSurface
-//                    )
-//                }
-//                else if (day.date == LocalDate.now()) {
-//                    Text(
-//                        text = day.date.dayOfMonth.toString(),
-//                        color = MaterialTheme.colorScheme.primary
-//                    )
-//                }
-//                else {
-//                    Text(
-//                        text = day.date.dayOfMonth.toString(),
-//                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
-//                    )
-//                }
-//
-//            }
-//        }
-//
-//}
-
 @Composable
 private fun Day(
     day: CalendarDay,
-    hasWorkout: Boolean, // Does this specific day have a workout?
-    weekHasWorkout: Boolean, // Does this entire week have a workout?
-    firstDayOfWeek: DayOfWeek,
-    onClick: (CalendarDay) -> Unit = {}
+    hasWorkout: Boolean,
+    onDayClicked: (LocalDate) -> Unit,
+    workoutDates: Set<LocalDate>,
+    firstDayOfWeek: DayOfWeek
 ) {
-    // This is the main container for each day cell
     Box(
-        modifier = Modifier.aspectRatio(1f), // Makes it a square
+        modifier = Modifier
+            .aspectRatio(1f) // Makes it a square
+            .clickable(
+                enabled = day.position == DayPosition.MonthDate,
+                onClick = { onDayClicked(day.date) }
+            ),
         contentAlignment = Alignment.Center
     ) {
-        // --- 1. DRAW THE PILL BACKGROUND FIRST ---
-        if (day.position == DayPosition.MonthDate && weekHasWorkout) {
-            // Determine the shape based on the day's position in the week
-            val pillShape = when (day.date.dayOfWeek) {
-                firstDayOfWeek -> RoundedCornerShape(topStartPercent = 50, bottomStartPercent = 50)
-                firstDayOfWeek.plus(6) -> RoundedCornerShape(topEndPercent = 50, bottomEndPercent = 50)
-                else -> RoundedCornerShape(0.dp)
+        // --- 1. DRAW THE PILL BACKGROUND ---
+        val firstWorkout = getFirstWorkoutOfWeek(day, workoutDates, firstDayOfWeek)
+        if (day.position == DayPosition.MonthDate && firstWorkout != null) {
+            val lastWorkout = getLastWorkoutOfWeek(day, workoutDates, firstDayOfWeek)!!
+            val prevWeekHasWorkout = previousWeekHasWorkout(day, workoutDates, firstDayOfWeek)
+            val nextWeekHasWorkout = nextWeekHasWorkout(day, workoutDates, firstDayOfWeek)
+
+            // Determine the start and end dates for the visual pill background.
+            val weekStartDate = day.date.with(TemporalAdjusters.previousOrSame(firstDayOfWeek))
+            val weekEndDate = weekStartDate.plusDays(6)
+            val pillStartDate = if (prevWeekHasWorkout) weekStartDate else firstWorkout
+            val pillEndDate = if (nextWeekHasWorkout) weekEndDate else lastWorkout
+
+            // Draw the background only if the current day is within the pill's range.
+            if (day.date >= pillStartDate && day.date <= pillEndDate) {
+                val pillShape = when {
+                    // Single-day workout in a non-connected week
+                    pillStartDate == pillEndDate -> RoundedCornerShape(50)
+                    // The first day of the pill
+                    day.date == pillStartDate -> RoundedCornerShape(topStartPercent = 50, bottomStartPercent = 50)
+                    // The last day of the pill
+                    day.date == pillEndDate -> RoundedCornerShape(topEndPercent = 50, bottomEndPercent = 50)
+                    // A day in the middle of the pill
+                    else -> RoundedCornerShape(0.dp)
+                }
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.tertiaryContainer, shape = pillShape)
+                )
             }
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .fillMaxWidth(1f) // Leave a small gap between weeks
-                    .background(MaterialTheme.colorScheme.tertiaryContainer, shape = pillShape)
-            )
         }
 
-        // --- 2. DRAW THE DAY NUMBER AND DOT ON TOP ---
-        // This Box ensures the content is aligned correctly within the cell
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            // The text for the day number (e.g., "1", "25")
-            Text(
-                text = day.date.dayOfMonth.toString(),
-                color = if (day.position != DayPosition.MonthDate) {
-                    Color.Gray // Mute the color for days not in the current month
-                } else if (day.date == LocalDate.now()) {
-                    MaterialTheme.colorScheme.primary // Highlight today's date
-                } else {
-                    Color.Unspecified
-                },
-                fontWeight = if (hasWorkout) FontWeight.Bold else FontWeight.Normal
-            )
-            }
-        // If a workout exists on this specific day, draw the dot.
+        // --- 2. DRAW THE DAY NUMBER AND DOT ---
+        val isToday = day.date == LocalDate.now()
+        val textColor = when {
+            isToday -> MaterialTheme.colorScheme.primary
+            day.position != DayPosition.MonthDate -> Color.Gray
+            else -> Color.Unspecified
+        }
+
+        // The day number text
+        Text(
+            text = day.date.dayOfMonth.toString(),
+            color = if (hasWorkout) Color.Transparent else textColor,
+            fontWeight = if (!hasWorkout && isToday) FontWeight.Bold else FontWeight.Normal,
+        )
+
+        // If a workout exists, draw the filled circle and the number on top of it.
         if (hasWorkout) {
             Box(
                 modifier = Modifier
                     .size(30.dp)
                     .clip(CircleShape)
-                    .background(color = MaterialTheme.colorScheme.tertiary)
-                    .clickable(
-                        enabled = day.position == DayPosition.MonthDate,
-                        onClick = { onClick(day) }
-                    )
-            )
-            Text(
-                text = day.date.dayOfMonth.toString(),
-                color = MaterialTheme.colorScheme.onTertiary
+                    .background(MaterialTheme.colorScheme.tertiary),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = day.date.dayOfMonth.toString(),
+                    color = MaterialTheme.colorScheme.onTertiary,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+        if (isToday) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .offset(y=-4.dp)
+                    .size(4.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary) // Current color
             )
         }
     }
 }
+
 
 @Composable
 private fun DaysOfWeekTitle(daysOfWeek: List<DayOfWeek>) {
@@ -219,48 +183,57 @@ private fun DaysOfWeekTitle(daysOfWeek: List<DayOfWeek>) {
     }
 }
 
-/**
- * Checks if the week containing the given day has any workouts.
- * @param day The specific day to check the week for.
- * @param workoutDates A set of all dates that have workouts.
- * @param firstDayOfWeek The first day of the week (e.g., Monday or Sunday).
- * @return True if at least one day in that week is in the workoutDates set.
- */
-private fun weekHasWorkout(
+private fun getFirstWorkoutOfWeek(
     day: CalendarDay,
     workoutDates: Set<LocalDate>,
     firstDayOfWeek: DayOfWeek
-): Boolean {
-    // If the day is not a month date, it can't be part of a workout week.
-    if (day.position != DayPosition.MonthDate) return false
-
-    // Get the date of the first day of this week.
-    var currentDay = day.date
-    while (currentDay.dayOfWeek != firstDayOfWeek) {
-        currentDay = currentDay.minusDays(1)
-    }
-
-    // Check every day from the start of the week for the next 7 days.
+): LocalDate? {
+    if (day.position != DayPosition.MonthDate) return null
+    val weekStartDate = day.date.with(TemporalAdjusters.previousOrSame(firstDayOfWeek))
     for (i in 0..6) {
-        if (currentDay.plusDays(i.toLong()) in workoutDates) {
-            return true
+        val date = weekStartDate.plusDays(i.toLong())
+        if (date in workoutDates) {
+            return date
         }
     }
-    return false
+    return null
 }
+
+private fun getLastWorkoutOfWeek(
+    day: CalendarDay,
+    workoutDates: Set<LocalDate>,
+    firstDayOfWeek: DayOfWeek
+): LocalDate? {
+    if (day.position != DayPosition.MonthDate) return null
+    val weekStartDate = day.date.with(TemporalAdjusters.previousOrSame(firstDayOfWeek))
+    for (i in 6 downTo 0) {
+        val date = weekStartDate.plusDays(i.toLong())
+        if (date in workoutDates) {
+            return date
+        }
+    }
+    return null
+}
+
 
 private fun previousWeekHasWorkout(
     day: CalendarDay,
     workoutDates: Set<LocalDate>,
     firstDayOfWeek: DayOfWeek
 ): Boolean {
-    // If the previous week has not workouts, return false.
-    if (day.date.minusWeeks(1) !in workoutDates){
-        return false
-    }
-    else {
-        return true
-    }
+    val prevWeekDate = day.date.minusWeeks(1)
+    val prevWeekDay = CalendarDay(prevWeekDate, DayPosition.MonthDate) // Create a dummy CalendarDay for the check
+    return getFirstWorkoutOfWeek(prevWeekDay, workoutDates, firstDayOfWeek) != null
+}
+
+private fun nextWeekHasWorkout(
+    day: CalendarDay,
+    workoutDates: Set<LocalDate>,
+    firstDayOfWeek: DayOfWeek
+): Boolean {
+    val nextWeekDate = day.date.plusWeeks(1)
+    val nextWeekDay = CalendarDay(nextWeekDate, DayPosition.MonthDate) // Create a dummy CalendarDay for the check
+    return getFirstWorkoutOfWeek(nextWeekDay, workoutDates, firstDayOfWeek) != null
 }
 
 @Composable
