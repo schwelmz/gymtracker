@@ -76,8 +76,7 @@ fun GymApp() {
                 destinations = listOf(
                     BottomBarDestination.Home,
                     BottomBarDestination.Workout,
-                    BottomBarDestination.Scanner,
-                    BottomBarDestination.Exercises,
+                    BottomBarDestination.Nutrition,
                     BottomBarDestination.Settings
                 )
             )

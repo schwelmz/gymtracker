@@ -11,7 +11,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import com.example.gymtracker.ui.screens.AddExerciseScreen
 import com.example.gymtracker.ui.screens.AddWorkoutScreen
-import com.example.gymtracker.ui.screens.ExercisesScreen
 import com.example.gymtracker.ui.screens.HomeScreen
 import com.example.gymtracker.ui.screens.StatsScreen
 import com.example.gymtracker.ui.screens.WorkoutLogScreen
@@ -36,7 +35,6 @@ object AppRoutes {
 
     // Exercises Graph
 
-    const val EXERCISES_SCREEN = "exercises_screen"
     const val ADD_EXERCISE_SCREEN = "add_exercise"
 
     // Workout Graph
@@ -46,7 +44,7 @@ object AppRoutes {
     const val WORKOUT_MODIFY_SCREEN = "workout_modify_screen/{sessionId}"
 
     // rest
-    const val SCANNER_SCREEN = "scanner_screen"
+    const val NUTRITION_SCREEN = "nutrition_screen"
     // Settings Graph
     const val SETTINGS_SCREEN = "settings_screen"
     const val ABOUT_SCREEN = "about_screen"
@@ -119,33 +117,24 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
         // =====================================================================
         // EXERCISES NAVIGATION GRAPH
         // =====================================================================
-        navigation(
-            startDestination = AppRoutes.EXERCISES_SCREEN,
-            route = BottomBarDestination.Exercises.route
-        ) {
-            composable(route = AppRoutes.EXERCISES_SCREEN) {
-                val exerciseViewModel: ExerciseViewModel = viewModel()
-                val exercises by exerciseViewModel.allExercises.collectAsState(initial = emptyList())
-                ExercisesScreen(
-                    exercises,
-                    onAddExerciseClicked = { navController.navigate(AppRoutes.ADD_EXERCISE_SCREEN) },
-                    onExerciseClicked = { exerciseName ->
-                        navController.navigate(AppRoutes.STATS_SCREEN.replace("{exerciseName}", exerciseName))
-                    },
-                    onDeleteExercise = { exercise -> exerciseViewModel.deleteExercise(exercise) }
-                )
-            }
-            composable(route = AppRoutes.ADD_EXERCISE_SCREEN) {
-                val viewModel: ExerciseViewModel = viewModel()
-                AddExerciseScreen(
-                    onSave = { name, description, imageUri ->
-                        viewModel.addCustomExercise(name, description, imageUri)
-                        navController.popBackStack()
-                    },
-                    onNavigateUp = { navController.popBackStack() }
-                )
-            }
-        }
+//        navigation(
+//            startDestination = AppRoutes.EXERCISES_SCREEN,
+//            route = BottomBarDestination.Exercises.route
+//        ) {
+//            composable(route = AppRoutes.EXERCISES_SCREEN) {
+//                val exerciseViewModel: ExerciseViewModel = viewModel()
+//                val exercises by exerciseViewModel.allExercises.collectAsState(initial = emptyList())
+//                ExercisesScreen(
+//                    exercises,
+//                    onAddExerciseClicked = { navController.navigate(AppRoutes.ADD_EXERCISE_SCREEN) },
+//                    onExerciseClicked = { exerciseName ->
+//                        navController.navigate(AppRoutes.STATS_SCREEN.replace("{exerciseName}", exerciseName))
+//                    },
+//                    onDeleteExercise = { exercise -> exerciseViewModel.deleteExercise(exercise) }
+//                )
+//            }
+//
+//        }
 
         // =====================================================================
         // WORKOUT NAVIGATION GRAPH
@@ -181,6 +170,13 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
                     onModifySession = { session ->
                         val route = AppRoutes.WORKOUT_MODIFY_SCREEN.replace("{sessionId}", session.id.toString())
                         navController.navigate(route)
+                    },
+                    onAddExerciseClicked = { navController.navigate(AppRoutes.ADD_EXERCISE_SCREEN) },
+                    onExerciseClicked = { exerciseName ->
+                        navController.navigate(AppRoutes.STATS_SCREEN.replace("{exerciseName}", exerciseName))
+                    },
+                    onDeleteExercise = { exercise ->
+                        exerciseViewModel.deleteExercise(exercise)
                     }
                 )
             }
@@ -212,16 +208,26 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
                     )
                 }
             }
+            composable(route = AppRoutes.ADD_EXERCISE_SCREEN) {
+                val viewModel: ExerciseViewModel = viewModel()
+                AddExerciseScreen(
+                    onSave = { name, description, imageUri ->
+                        viewModel.addCustomExercise(name, description, imageUri)
+                        navController.popBackStack()
+                    },
+                    onNavigateUp = { navController.popBackStack() }
+                )
+            }
         }
 
         // =====================================================================
         // SCANNER NAVIGATION GRAPH (NEW)
         // =====================================================================
         navigation(
-            startDestination = AppRoutes.SCANNER_SCREEN,
-            route = BottomBarDestination.Scanner.route
+            startDestination = AppRoutes.NUTRITION_SCREEN,
+            route = BottomBarDestination.Nutrition.route
         ) {
-            composable(route = AppRoutes.SCANNER_SCREEN) {
+            composable(route = AppRoutes.NUTRITION_SCREEN) {
                 // This will be the screen with the barcode scanner.
                 FoodScannerScreen()
             }

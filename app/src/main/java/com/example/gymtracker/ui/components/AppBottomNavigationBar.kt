@@ -69,8 +69,8 @@ fun AppBottomNavigationBarPreview() {
         val destinations = listOf(
             BottomBarDestination.Home,
             BottomBarDestination.Workout, // This line has been uncommented
-            BottomBarDestination.Scanner,
-            BottomBarDestination.Exercises
+            BottomBarDestination.Nutrition,
+            BottomBarDestination.Settings
         )
         destinations.forEach { destination ->
             NavigationBarItem(

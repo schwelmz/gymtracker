@@ -1,13 +1,12 @@
 package com.example.gymtracker.ui
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.material.icons.outlined.Home
 
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.Menu
+import androidx.compose.material.icons.outlined.Star
+import androidx.compose.ui.graphics.vector.ImageVector
 
 
 sealed class BottomBarDestination(
@@ -18,30 +17,30 @@ sealed class BottomBarDestination(
     object Home : BottomBarDestination(
         route = "home_graph",
         title = "Home",
-        icon = Icons.Filled.Home
+        icon = Icons.Outlined.Home
     )
 
-    object Exercises : BottomBarDestination(
-        route = "exercises_graph",
-        title = "Exercises",
-        icon = Icons.AutoMirrored.Filled.List
-    )
+//    object Exercises : BottomBarDestination(
+//        route = "exercises_graph",
+//        title = "Exercises",
+//        icon = Icons.AutoMirrored.Filled.List
+//    )
 
     // --- ADD THESE TWO OBJECTS IF THEY ARE MISSING ---
 
     object Workout : BottomBarDestination(
         route = "workout_graph",
         title = "Workout",
-        icon = Icons.Filled.Star
+        icon = Icons.Outlined.Star
     )
 
-    object Scanner : BottomBarDestination(
-        route = "scanner_graph",
-        title = "Scanner",
-        icon = Icons.Filled.FavoriteBorder
+    object Nutrition : BottomBarDestination(
+        route = "nutrition_graph",
+        title = "Nutrition",
+        icon = Icons.Outlined.FavoriteBorder
     )
     object Settings : BottomBarDestination(
         "settings_graph",
         "Settings",
-        Icons.Filled.Settings)
+        icon = Icons.Outlined.Menu)
 }

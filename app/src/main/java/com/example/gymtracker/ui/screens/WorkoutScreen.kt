@@ -1,6 +1,7 @@
 package com.example.gymtracker.ui.screens
 
 import android.content.res.Configuration
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -8,12 +9,16 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import com.example.gymtracker.R
 import com.example.gymtracker.data.Exercise
 import com.example.gymtracker.data.ExerciseRepository
 import com.example.gymtracker.data.WorkoutSession
@@ -32,7 +37,10 @@ fun WorkoutScreen(
     workoutDates: Set<LocalDate>,
     onSessionClicked: (String) -> Unit,
     onDeleteSession: (WorkoutSession) -> Unit,
-    onModifySession: (WorkoutSession) -> Unit
+    onModifySession: (WorkoutSession) -> Unit,
+    onAddExerciseClicked: () -> Unit,
+    onExerciseClicked: (String) -> Unit,
+    onDeleteExercise: (Exercise) -> Unit
 ) {
     Column (modifier = Modifier.fillMaxSize()) {
         LazyColumn(modifier = Modifier.padding(start = 16.dp, end = 16.dp)) {
@@ -40,7 +48,7 @@ fun WorkoutScreen(
                 Text(
                     text = "Recent Workouts", // Changed title to be more specific
                     style = MaterialTheme.typography.headlineLarge,
-                    color = MaterialTheme.colorScheme.tertiary,
+                    color = MaterialTheme.colorScheme.secondary,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                     modifier = Modifier.padding(top = 50.dp, bottom = 20.dp)
                 )
@@ -87,7 +95,7 @@ fun WorkoutScreen(
                 Text(
                     text = "Workout Calendar", // Changed title to be more specific
                     style = MaterialTheme.typography.headlineLarge,
-                    color = MaterialTheme.colorScheme.tertiary,
+                    color = MaterialTheme.colorScheme.secondary,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                     modifier = Modifier.padding(top = 20.dp, bottom = 20.dp)
                 )
@@ -102,8 +110,46 @@ fun WorkoutScreen(
                     }
                 )
             }
+
             item {
-                Spacer(modifier = Modifier.height(100.dp))
+                Text(
+                    text = "All Exercises",
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = MaterialTheme.colorScheme.secondary,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                    modifier = Modifier.padding(top=20.dp,bottom=20.dp)
+                )
+            }
+            item {
+                Card(
+                    onClick = onAddExerciseClicked,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(cardHeight) // Ensures the card has enough height for centering
+                        .padding(vertical = 8.dp) // Outer padding for the card in the list
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()    // Box fills the card
+                            .padding(16.dp),  // Inner padding within the card, content centered inside this
+                        contentAlignment = Alignment.Center // THIS IS KEY FOR HORIZONTAL & VERTICAL CENTERING
+                    ) {
+                        Text(
+                            text = "Add custom exercise", // Your desired text
+                            style = MaterialTheme.typography.titleMedium
+                            // textAlign = TextAlign.Center is not strictly needed here for horizontal
+                            // centering because the Box handles it, but won't hurt.
+                        )
+                    }
+                }
+            }
+
+            items(items = exercises) { exercise ->
+                ExerciseCard(
+                    exercise,
+                    onClick = { onExerciseClicked(exercise.name) },
+                    onDelete = { onDeleteExercise(exercise) }
+                )
             }
         }
     }
@@ -156,15 +202,107 @@ fun WorkoutSessionCard(
                         showDialog = true
                     }
                 )
-            }
+            },
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(text = session.exerciseName, style = MaterialTheme.typography.titleMedium)
             Text(
                 text = details,
                 style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier.padding(top = 4.dp)
             )
+        }
+    }
+}
+
+val cardHeight = 95.dp
+@Composable
+fun ExerciseCard(
+    exercise: Exercise,
+    onClick: () -> Unit = {},
+    onDelete: () -> Unit = {}
+) {
+    var showDialog by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text("Delete Exercise") },
+            text = { Text("Are you sure you want to delete this exercise?") },
+            confirmButton = {
+                Button(onClick = {
+                    showDialog = false
+                    onDelete()
+                }) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                Button(onClick = { showDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+            .height(cardHeight)
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = { onClick() },
+                    onLongPress = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        showDialog = true
+                    }
+                )
+            }
+    ) {
+        Row {
+            val imageWidth = 95.dp
+            if (!exercise.imageUri.isNullOrBlank()) {
+                AsyncImage(
+                    model = exercise.imageUri, // Coil handles the loading
+                    contentDescription = exercise.name,
+                    modifier = Modifier
+                        .width(imageWidth)
+                        .height(cardHeight)
+                )
+            }
+            else if (exercise.imageResId != null) {
+                Image(
+                    painter = painterResource(id = exercise.imageResId),
+                    contentDescription = exercise.name,
+                    modifier = Modifier
+                        .width(imageWidth)
+                        .height(cardHeight)
+                )
+            }
+            else {
+                Image(
+                    painter = painterResource(id = R.drawable.outline_picture_in_picture_center_24),
+                    contentDescription = exercise.name,
+                    modifier = Modifier
+                        .width(imageWidth)
+                        .height(cardHeight)
+                )
+            }
+
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(text = exercise.name, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = exercise.description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
         }
     }
 }
@@ -194,7 +332,10 @@ fun WorkoutScreenPreview() { // Renamed from HomeScreenPreview
             onNavigateToWorkoutCalendarDay = {},
             onSessionClicked = {},
             onDeleteSession = {},
-            onModifySession = {}
+            onModifySession = {},
+            onAddExerciseClicked = {},
+            onExerciseClicked = {},
+            onDeleteExercise = {}
         )
     }
 }

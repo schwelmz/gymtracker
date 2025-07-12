@@ -48,7 +48,7 @@ fun WorkoutCalendarDayScreen(
             val formattedDate = selectedDate?.format(DateTimeFormatter.ofPattern("MMMM dd")) ?: "Unknown Date"
             Text(text = "Workouts on $formattedDate",
                 style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.tertiary,
+                color = MaterialTheme.colorScheme.secondary,
                 fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                 modifier = Modifier.padding(top = 50.dp, bottom = 20.dp)
             )
