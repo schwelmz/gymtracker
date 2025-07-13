@@ -2,7 +2,10 @@ package com.example.gymtracker.viewmodel
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.gymtracker.data.AppDatabase
 import com.example.gymtracker.data.CustomFood
 import com.example.gymtracker.data.Food
@@ -111,5 +114,23 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
 
     suspend fun deleteFood(food: Food) {
         foodDao.deleteFood(food)
+    }
+    // --- ADD THIS COMPANION OBJECT ---
+    companion object {
+        val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(
+                modelClass: Class<T>,
+                extras: CreationExtras
+            ): T {
+                if (modelClass.isAssignableFrom(FoodViewModel::class.java)) {
+                    // Get the Application object from extras
+                    val application = checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])
+                    // Create and return an instance of FoodViewModel
+                    return FoodViewModel(application) as T
+                }
+                throw IllegalArgumentException("Unknown ViewModel class")
+            }
+        }
     }
 }

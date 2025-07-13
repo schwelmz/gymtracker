@@ -2,9 +2,8 @@ package com.example.gymtracker
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Box
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -13,20 +12,15 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LargeFloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -37,6 +31,7 @@ import com.example.gymtracker.ui.AppRoutes
 import com.example.gymtracker.ui.BottomBarDestination
 import com.example.gymtracker.ui.components.AppBottomNavigationBar
 import com.example.gymtracker.ui.theme.AppTheme
+import com.example.gymtracker.viewmodel.FoodViewModel
 import com.example.gymtracker.viewmodel.HomeViewModel
 
 class MainActivity : ComponentActivity() {
@@ -53,9 +48,15 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GymApp() {
+    // --- VIEWMODEL CREATION ---
+    // Create ViewModels once at the top-level of the app using their factories.
+    // This ensures they are shared across all screens and prevents crashes.
+    val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory)
+    // You will need to create a FoodViewModel.Factory similar to HomeViewModel.Factory
+    val foodViewModel: FoodViewModel = viewModel(factory = FoodViewModel.Factory)
+
     // --- HEALTH CONNECT PERMISSION HANDLING ---
     val context = LocalContext.current
-    val homeViewModel: HomeViewModel = viewModel()
     val healthConnectManager = remember { HealthConnectManager(context) }
 
     val requestPermissionsLauncher =
@@ -67,7 +68,6 @@ fun GymApp() {
         requestPermissionsLauncher.launch(homeViewModel.permissions)
     }
     // --- END OF HEALTH CONNECT LOGIC ---
-
 
     val navController = rememberNavController()
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
@@ -89,27 +89,21 @@ fun GymApp() {
             // Show FAB for the Workout screen
             if (currentRoute == AppRoutes.WORKOUT_SCREEN) {
                 FloatingActionButton(onClick = { navController.navigate(AppRoutes.ADD_WORKOUT_SCREEN) }) {
-                    Box(contentAlignment = Alignment.Center) {
-                        // Layer 1: The background icon
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "Add Workout", // Accessibility description
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add Workout",
+                    )
                 }
             }
-            // Show FAB for the Nutrition screen with the custom icon and text
+            // Show FAB for the Nutrition screen
             if (currentRoute == AppRoutes.NUTRITION_SCREEN) {
                 FloatingActionButton(onClick = { navController.navigate(AppRoutes.FOOD_SCANNER_SCREEN) }) {
-                    Box(contentAlignment = Alignment.Center) {
-                        // Layer 1: The background icon
-                        Icon(
-                            painter = painterResource(id = R.drawable.ean_icon),
-                            contentDescription = "Scan Food Item", // Accessibility description
-                            modifier = Modifier.size(42.dp),
-                            tint = Color.Unspecified
-                        )
-                    }
+                    Icon(
+                        painter = painterResource(id = R.drawable.ean_icon),
+                        contentDescription = "Scan Food Item",
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
                 }
             }
         },
@@ -117,12 +111,17 @@ fun GymApp() {
         Surface(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
-            color = MaterialTheme.colorScheme.background
+                // Use the innerPadding from the Scaffold for proper layout
+                .padding(innerPadding)
         ) {
+            // --- CORRECTED NAVIGATION CALL ---
+            // Pass the single instances of the ViewModels and the modifier to the navigation host.
             AppNavigation(
+                modifier = Modifier, // You can pass the surface modifier here if needed
                 navController = navController,
-                onGrantPermissionsClick = onGrantPermissionsClick
+                onGrantPermissionsClick = onGrantPermissionsClick,
+                homeViewModel = homeViewModel,
+                foodViewModel = foodViewModel
             )
         }
     }

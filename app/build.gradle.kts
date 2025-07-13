@@ -112,5 +112,5 @@ dependencies {
     implementation("com.kizitonwose.calendar:compose:2.7.0")
     //Desugaring
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
-
+    implementation("androidx.datastore:datastore-preferences:1.1.7")
 }

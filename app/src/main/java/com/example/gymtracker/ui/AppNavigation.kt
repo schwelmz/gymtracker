@@ -17,7 +17,7 @@ import com.example.gymtracker.ui.screens.WorkoutLogScreen
 import com.example.gymtracker.viewmodel.ExerciseViewModel
 import com.example.gymtracker.viewmodel.WorkoutViewModel
 import com.example.gymtracker.ui.screens.FoodScannerScreen
-import com.example.gymtracker.ui.screens.WorkoutScreen // Assuming you will create a WorkoutScreen
+import com.example.gymtracker.ui.screens.WorkoutScreen
 import com.example.gymtracker.ui.screens.AboutScreen
 import com.example.gymtracker.ui.screens.SettingsScreen
 import androidx.compose.ui.platform.LocalUriHandler
@@ -39,27 +39,20 @@ import com.example.gymtracker.viewmodel.HomeViewModel
 
 object AppRoutes {
     // Home Graph
-
     const val HOME_SCREEN = "home_screen"
     const val ADD_WORKOUT_SCREEN = "add_workout"
     const val WORKOUT_LOG_SCREEN = "workout_log/{exerciseName}"
     const val STATS_SCREEN = "stats/{exerciseName}"
-
     // Exercises Graph
-
     const val ADD_EXERCISE_SCREEN = "add_exercise"
-
     // Workout Graph
-
     const val WORKOUT_SCREEN = "workout_screen"
     const val WORKOUT_CALENDAR_DAY_SCREEN = "workout_calendar_day_screen/{day}"
     const val WORKOUT_MODIFY_SCREEN = "workout_modify_screen/{sessionId}"
-
     // Nutrition Graph
     const val NUTRITION_SCREEN = "nutrition_screen"
     const val FOOD_SCANNER_SCREEN = "food_scanner_screen"
     const val FOOD_DIARY_SCREEN = "food_diary_screen"
-
     // Settings Graph
     const val SETTINGS_SCREEN = "settings_screen"
     const val ABOUT_SCREEN = "about_screen"
@@ -68,11 +61,17 @@ object AppRoutes {
 }
 
 @Composable
-fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostController,onGrantPermissionsClick: () -> Unit) {
+fun AppNavigation(
+    modifier: Modifier = Modifier,
+    navController: NavHostController,
+    onGrantPermissionsClick: () -> Unit,
+    // 1. Accept the ViewModels as parameters instead of creating them inside
+    homeViewModel: HomeViewModel,
+    foodViewModel: FoodViewModel
+) {
 
     val scope = rememberCoroutineScope()
 
-    // The start destination is the route of the Home graph.
     NavHost(
         navController = navController,
         startDestination = BottomBarDestination.Home.route,
@@ -86,24 +85,20 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
             route = BottomBarDestination.Home.route
         ) {
             // --- THIS IS THE CORRECTED SECTION ---
-            // The main screen for the Home tab now calls the simple HomeScreen.
             composable(route = AppRoutes.HOME_SCREEN) {
-                // --- THIS IS THE CHANGE ---
-                // Get both ViewModels. They will be scoped to the NavHost,
-                // making them available application-wide.
-                val homeViewModel: HomeViewModel = viewModel()
-                val foodViewModel: FoodViewModel = viewModel()
-
+                // 2. Pass the provided ViewModel instances directly to the HomeScreen.
+                // This fixes the crash because you are no longer calling viewModel()
+                // without the required factory.
                 HomeScreen(
                     homeViewModel = homeViewModel,
-                    foodViewModel = foodViewModel, // Pass the FoodViewModel
+                    foodViewModel = foodViewModel,
                     onGrantPermissionsClick = onGrantPermissionsClick
                 )
             }
 
-            // The routes you navigate to FROM the home screen remain the same.
-            // These are still needed because the Floating Action Button uses them.
+            // ... (The rest of your home navigation graph remains the same)
             composable(route = AppRoutes.ADD_WORKOUT_SCREEN) {
+                // Assuming ExerciseViewModel doesn't need a complex factory
                 val exerciseViewModel: ExerciseViewModel = viewModel()
                 val exercises by exerciseViewModel.allExercises.collectAsState(initial = emptyList())
                 AddWorkoutScreen(
@@ -126,13 +121,11 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
                     },
                     onWorkoutSaved = {
                         viewModel.saveWorkoutSession(exerciseName)
-                        navController.popBackStack(AppRoutes.WORKOUT_SCREEN, inclusive = false) // Go back to the workout list
+                        navController.popBackStack(AppRoutes.WORKOUT_SCREEN, inclusive = false)
                     }
                 )
             }
 
-            // StatsScreen is now mainly accessed from the WorkoutScreen, but can be kept here
-            // if you have other ways to access it from the Home graph.
             composable(route = AppRoutes.STATS_SCREEN) { backStackEntry ->
                 val exerciseName = backStackEntry.arguments?.getString("exerciseName") ?: "Unknown"
                 val viewModel: WorkoutViewModel = viewModel()
@@ -141,37 +134,16 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
             }
         }
 
+        // ... (The rest of your AppNavigation file remains unchanged)
 
         // =====================================================================
-        // EXERCISES NAVIGATION GRAPH
-        // =====================================================================
-//        navigation(
-//            startDestination = AppRoutes.EXERCISES_SCREEN,
-//            route = BottomBarDestination.Exercises.route
-//        ) {
-//            composable(route = AppRoutes.EXERCISES_SCREEN) {
-//                val exerciseViewModel: ExerciseViewModel = viewModel()
-//                val exercises by exerciseViewModel.allExercises.collectAsState(initial = emptyList())
-//                ExercisesScreen(
-//                    exercises,
-//                    onAddExerciseClicked = { navController.navigate(AppRoutes.ADD_EXERCISE_SCREEN) },
-//                    onExerciseClicked = { exerciseName ->
-//                        navController.navigate(AppRoutes.STATS_SCREEN.replace("{exerciseName}", exerciseName))
-//                    },
-//                    onDeleteExercise = { exercise -> exerciseViewModel.deleteExercise(exercise) }
-//                )
-//            }
-//
-//        }
-
-        // =====================================================================
-        // WORKOUT NAVIGATION GRAPH (CORRECTED)
+        // WORKOUT NAVIGATION GRAPH
         // =====================================================================
         navigation(
             startDestination = AppRoutes.WORKOUT_SCREEN,
             route = BottomBarDestination.Workout.route
         ) {
-            composable(route = AppRoutes.WORKOUT_SCREEN) { navBackStackEntry -> // FIX: Explicitly name the parameter
+            composable(route = AppRoutes.WORKOUT_SCREEN) { navBackStackEntry ->
                 val parentEntry = remember(navBackStackEntry) {
                     navController.getBackStackEntry(BottomBarDestination.Workout.route)
                 }
@@ -206,7 +178,7 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
                     onDeleteExercise = { exercise -> scope.launch { exerciseViewModel.deleteExercise(exercise) } }
                 )
             }
-            composable(route = AppRoutes.WORKOUT_CALENDAR_DAY_SCREEN) { navBackStackEntry -> // FIX: Explicit name
+            composable(route = AppRoutes.WORKOUT_CALENDAR_DAY_SCREEN) { navBackStackEntry ->
                 val day = navBackStackEntry.arguments?.getString("day")
                 val parentEntry = remember(navBackStackEntry) {
                     navController.getBackStackEntry(BottomBarDestination.Workout.route)
@@ -236,7 +208,7 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
                     )
                 }
             }
-            composable(route = AppRoutes.ADD_EXERCISE_SCREEN) { navBackStackEntry -> // FIX: Explicitly name the parameter
+            composable(route = AppRoutes.ADD_EXERCISE_SCREEN) { navBackStackEntry ->
                 val parentEntry = remember(navBackStackEntry) {
                     navController.getBackStackEntry(BottomBarDestination.Workout.route)
                 }
@@ -255,18 +227,17 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
         }
 
         // =====================================================================
-        // NUTRITION NAVIGATION GRAPH (CORRECTED)
+        // NUTRITION NAVIGATION GRAPH
         // =====================================================================
         navigation(
             startDestination = AppRoutes.NUTRITION_SCREEN,
             route = BottomBarDestination.Nutrition.route
         ) {
-            composable(route = AppRoutes.NUTRITION_SCREEN) { navBackStackEntry -> // FIX: Explicit name
+            composable(route = AppRoutes.NUTRITION_SCREEN) { navBackStackEntry ->
                 val parentEntry = remember(navBackStackEntry) {
                     navController.getBackStackEntry(BottomBarDestination.Nutrition.route)
                 }
-                val foodViewModel: FoodViewModel = viewModel(parentEntry)
-
+                // Here we use the foodViewModel passed into the function
                 NutritionScreen(
                     viewModel = foodViewModel,
                     onDeleteFoodEntry = { food ->
@@ -279,11 +250,10 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
                     onNavigateToCustomFood = { navController.navigate(AppRoutes.CUSTOM_FOOD_LIST_SCREEN) }
                 )
             }
-            composable(route = AppRoutes.FOOD_SCANNER_SCREEN) { navBackStackEntry -> // FIX: Explicit name
+            composable(route = AppRoutes.FOOD_SCANNER_SCREEN) { navBackStackEntry ->
                 val parentEntry = remember(navBackStackEntry) {
                     navController.getBackStackEntry(BottomBarDestination.Nutrition.route)
                 }
-                val foodViewModel: FoodViewModel = viewModel(parentEntry)
                 val scannerViewModel: FoodScannerViewModel = viewModel(parentEntry)
 
                 FoodScannerScreen(
@@ -294,23 +264,13 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
                     }
                 )
             }
-            composable(route = AppRoutes.FOOD_DIARY_SCREEN) { navBackStackEntry -> // FIX: Explicit name
-                val parentEntry = remember(navBackStackEntry) {
-                    navController.getBackStackEntry(BottomBarDestination.Nutrition.route)
-                }
-                val foodViewModel: FoodViewModel = viewModel(parentEntry)
-
+            composable(route = AppRoutes.FOOD_DIARY_SCREEN) { navBackStackEntry ->
                 FoodDiaryScreen(
                     viewModel = foodViewModel,
                     onNavigateUp = { navController.popBackStack() }
                 )
             }
-            // Add the new destinations
             composable(route = AppRoutes.CUSTOM_FOOD_LIST_SCREEN) { navBackStackEntry ->
-                val parentEntry = remember(navBackStackEntry) {
-                    navController.getBackStackEntry(BottomBarDestination.Nutrition.route)
-                }
-                val foodViewModel: FoodViewModel = viewModel(parentEntry)
                 CustomFoodListScreen(
                     viewModel = foodViewModel,
                     onNavigateUp = { navController.popBackStack() },
@@ -319,10 +279,6 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
             }
 
             composable(route = AppRoutes.ADD_CUSTOM_FOOD_SCREEN) { navBackStackEntry ->
-                val parentEntry = remember(navBackStackEntry) {
-                    navController.getBackStackEntry(BottomBarDestination.Nutrition.route)
-                }
-                val foodViewModel: FoodViewModel = viewModel(parentEntry)
                 AddCustomFoodScreen(
                     viewModel = foodViewModel,
                     onNavigateUp = { navController.popBackStack() }
@@ -338,9 +294,7 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
             route = BottomBarDestination.Settings.route
         ) {
             composable(route = AppRoutes.SETTINGS_SCREEN) {
-                // --- THIS IS THE SECTION TO UPDATE ---
                 val uriHandler = LocalUriHandler.current
-                // !! IMPORTANT !! Replace this with your actual donation link
                 val donationUrl = "https://www.buymeacoffee.com/your-username"
 
                 SettingsScreen(
