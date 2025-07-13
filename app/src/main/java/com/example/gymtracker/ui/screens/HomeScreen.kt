@@ -289,10 +289,13 @@ fun CalorieBudgetGraph(
             Spacer(modifier = Modifier.height(8.dp))
             // --- CORRECTED ---
             LinearProgressIndicator(
-                progress = progress, // Removed the curly braces
+                progress = {
+                    progress // Removed the curly braces
+                },
                 modifier = Modifier.fillMaxWidth().height(12.dp).clip(MaterialTheme.shapes.small),
                 color = progressBarColor,
-                trackColor = MaterialTheme.colorScheme.surfaceVariant
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
             )
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -332,9 +335,13 @@ fun HealthStatsGrid(stats: TodayHealthStats, stepsGoal: Int, onStepsGoalClick: (
                         Text(text = "Steps", style = MaterialTheme.typography.labelLarge)
                         // --- CORRECTED ---
                         LinearProgressIndicator(
-                            progress = progress, // Removed the curly braces
+                            progress = {
+                                progress // Removed the curly braces
+                            },
                             modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.primary,
+                            trackColor = ProgressIndicatorDefaults.linearTrackColor,
+                            strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
                         )
                         Text(text = "${stats.steps} / $stepsGoal", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
                     }
@@ -380,9 +387,13 @@ private fun MacroStat(label: String, value: Int, goal: Int, onClick: () -> Unit)
         Text(text = label, style = MaterialTheme.typography.labelLarge)
         // --- CORRECTED ---
         LinearProgressIndicator(
-            progress = progress, // Removed the curly braces
+            progress = {
+                progress // Removed the curly braces
+            },
             modifier = Modifier.width(80.dp).padding(vertical = 4.dp),
-            color = MaterialTheme.colorScheme.primary
+            color = MaterialTheme.colorScheme.primary,
+            trackColor = ProgressIndicatorDefaults.linearTrackColor,
+            strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
         )
         Text(text = "${value}g / ${goal}g", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
     }
