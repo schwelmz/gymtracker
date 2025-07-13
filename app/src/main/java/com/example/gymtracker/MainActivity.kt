@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LargeFloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -91,10 +92,8 @@ fun GymApp() {
                     Box(contentAlignment = Alignment.Center) {
                         // Layer 1: The background icon
                         Icon(
-                            painter = painterResource(id = R.drawable.dumbell_icon),
+                            imageVector = Icons.Default.Add,
                             contentDescription = "Add Workout", // Accessibility description
-                            modifier = Modifier.size(42.dp),
-                            tint = Color.Unspecified
                         )
                     }
                 }
