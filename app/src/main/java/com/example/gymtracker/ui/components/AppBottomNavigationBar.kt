@@ -6,77 +6,53 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.NavHostController
+import androidx.compose.ui.res.painterResource // <-- ADD THIS IMPORT
+import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.gymtracker.ui.BottomBarDestination
-import kotlin.collections.forEach
 
 @Composable
 fun AppBottomNavigationBar(
-    navController: NavHostController,
+    navController: NavController,
     destinations: List<BottomBarDestination>
 ) {
     NavigationBar {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
-        val currentGraphRoute = navBackStackEntry?.destination?.parent?.route
+        val currentRoute = navBackStackEntry?.destination?.parent?.route
+
         destinations.forEach { destination ->
             NavigationBarItem(
-                selected = currentGraphRoute == destination.route,
+                selected = currentRoute == destination.route,
                 onClick = {
                     navController.navigate(destination.route) {
-                        popUpTo(navController.graph.findStartDestination().id) {
+                        // Pop up to the start destination of the graph to avoid building up a large
+                        // back stack as users select items
+                        popUpTo(navController.graph.startDestinationId) {
                             saveState = true
                         }
+                        // Avoid multiple copies of the same destination when re-selecting the same item
                         launchSingleTop = true
+                        // Restore state when re-selecting a previously selected item
                         restoreState = true
                     }
                 },
                 icon = {
-                    Icon(
-                        imageVector = destination.icon,
-                        contentDescription = destination.title
-                    )
+                    // --- THIS IS THE CRITICAL CHANGE ---
+                    // Check which type of icon to display
+                    if (destination.icon != null) {
+                        // Display the built-in ImageVector icon
+                        Icon(
+                            imageVector = destination.icon,
+                            contentDescription = destination.title
+                        )
+                    } else if (destination.iconResId != null) {
+                        // Display the custom XML drawable icon
+                        Icon(
+                            painter = painterResource(id = destination.iconResId),
+                            contentDescription = destination.title
+                        )
+                    }
                 },
-                label = { Text(destination.title) }
-            )
-        }
-    }
-}
-
-@Preview
-@Composable
-fun AppBottomNavigationBarPreview() {
-    // We need a NavController for the preview, rememberNavController() is a simple way to get one.
-
-
-    // We can use a 'remember' state here to simulate clicking on items in the preview.
-    var currentRoute by remember { mutableStateOf(BottomBarDestination.Home.route) }
-
-    // This is a simplified onClick logic just for the preview to work.
-    val previewOnClick: (String) -> Unit = { route ->
-        currentRoute = route
-    }
-
-    // We wrap our component in a simple container to give it context.
-    NavigationBar {
-        // --- THIS LIST IS NOW CORRECTED ---
-        // It includes all the destinations you want to see in the preview.
-        val destinations = listOf(
-            BottomBarDestination.Home,
-            BottomBarDestination.Workout, // This line has been uncommented
-            BottomBarDestination.Nutrition,
-            BottomBarDestination.Settings
-        )
-        destinations.forEach { destination ->
-            NavigationBarItem(
-                selected = currentRoute == destination.route,
-                onClick = { previewOnClick(destination.route) },
-                icon = { Icon(destination.icon, contentDescription = null) },
                 label = { Text(destination.title) }
             )
         }

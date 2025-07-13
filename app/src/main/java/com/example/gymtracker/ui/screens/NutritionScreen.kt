@@ -5,7 +5,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape // <-- Import CircleShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
@@ -23,31 +23,24 @@ import com.example.gymtracker.R
 import com.example.gymtracker.data.Food
 import com.example.gymtracker.viewmodel.FoodViewModel
 
-// This is the single, correct definition for your NutritionScreen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NutritionScreen(
     viewModel: FoodViewModel,
     onDeleteFoodEntry: (Food) -> Unit,
     onNavigateToDiary: () -> Unit,
-    onNavigateToScanner: () -> Unit
+    onNavigateToScanner: () -> Unit,
+    onNavigateToCustomFood: () -> Unit
 ) {
     Scaffold(
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { onNavigateToScanner() },
-                shape = CircleShape // <-- ADD THIS LINE TO MAKE IT CIRCULAR
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add food entry")
-            }
-        }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             val todaysFoodEntries by viewModel.todayFood.collectAsState(initial = emptyList())
 
-            val totalCalories = remember(todaysFoodEntries) {
-                todaysFoodEntries.sumOf { it.calories }
-            }
+            val totalCalories = remember(todaysFoodEntries) { todaysFoodEntries.sumOf { it.calories } }
+            val totalProtein = remember(todaysFoodEntries) { todaysFoodEntries.sumOf { it.protein } }
+            val totalCarbs = remember(todaysFoodEntries) { todaysFoodEntries.sumOf { it.carbs } }
+            val totalFat = remember(todaysFoodEntries) { todaysFoodEntries.sumOf { it.fat } }
 
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
@@ -55,7 +48,7 @@ fun NutritionScreen(
             ) {
                 item {
                     Text(
-                        text = "Today's Nutrition",
+                        text = "Today's Summary",
                         style = MaterialTheme.typography.headlineLarge,
                         color = MaterialTheme.colorScheme.secondary,
                         fontWeight = FontWeight.Bold,
@@ -64,19 +57,73 @@ fun NutritionScreen(
                 }
 
                 item {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(bottom = 24.dp)
+                    Card(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+                            ) {
+                                Text(
+                                    text = "Today's Total Calories",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                Text(
+                                    text = "$totalCalories kcal",
+                                    style = MaterialTheme.typography.displaySmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                            Divider()
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                                horizontalArrangement = Arrangement.SpaceAround
+                            ) {
+                                MacroStat(label = "Protein", value = totalProtein)
+                                MacroStat(label = "Carbs", value = totalCarbs)
+                                MacroStat(label = "Fat", value = totalFat)
+                            }
+                        }
+                    }
+                }
+
+                // --- BUTTONS SECTION (MOVED) ---
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 24.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Button(
+                            onClick = { onNavigateToCustomFood() },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Add Food")
+                        }
+                        Button(
+                            onClick = { onNavigateToDiary() },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Diary")
+                        }
+                    }
+                }
+
+                // Title for the food list
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Total Calories",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Text(
-                            text = "$totalCalories kcal",
-                            style = MaterialTheme.typography.displaySmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            text = "Today's Entries",
+                            style = MaterialTheme.typography.titleLarge
                         )
                     }
                 }
@@ -85,22 +132,26 @@ fun NutritionScreen(
                     FoodCard(food = food, onDelete = { onDeleteFoodEntry(food) })
                 }
 
+                // Spacer at the end so list items don't hide behind the FAB
                 item {
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Button(
-                        onClick = { onNavigateToDiary() },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 32.dp)
-                    ) {
-                        Text("View Food Diary")
-                    }
                     Spacer(modifier = Modifier.height(96.dp))
                 }
             }
         }
     }
 }
+
+/**
+ * A small, reusable composable to display a single macronutrient stat.
+ */
+@Composable
+private fun MacroStat(label: String, value: Int) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(text = label, style = MaterialTheme.typography.labelLarge)
+        Text(text = "${value}g", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+    }
+}
+
 
 @Composable
 fun FoodCard(

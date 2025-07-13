@@ -2,9 +2,12 @@ package com.example.gymtracker
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -13,21 +16,26 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.gymtracker.ui.theme.AppTheme
+import com.example.gymtracker.data.HealthConnectManager
 import com.example.gymtracker.ui.AppNavigation
 import com.example.gymtracker.ui.AppRoutes
 import com.example.gymtracker.ui.BottomBarDestination
 import com.example.gymtracker.ui.components.AppBottomNavigationBar
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.gymtracker.data.HealthConnectManager
+import com.example.gymtracker.ui.theme.AppTheme
 import com.example.gymtracker.viewmodel.HomeViewModel
 
 class MainActivity : ComponentActivity() {
@@ -45,19 +53,15 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun GymApp() {
     // --- HEALTH CONNECT PERMISSION HANDLING ---
-    // Get the ViewModel and the HealthConnectManager
     val context = LocalContext.current
     val homeViewModel: HomeViewModel = viewModel()
     val healthConnectManager = remember { HealthConnectManager(context) }
 
-    // Create the launcher to request Health Connect permissions
     val requestPermissionsLauncher =
         rememberLauncherForActivityResult(healthConnectManager.requestPermissionsContract()) {
-            // After the user responds, check permissions again to update the UI
             homeViewModel.checkAvailabilityAndPermissions()
         }
 
-    // This is the function that will be passed down to the HomeScreen's button
     val onGrantPermissionsClick: () -> Unit = {
         requestPermissionsLauncher.launch(homeViewModel.permissions)
     }
@@ -65,7 +69,6 @@ fun GymApp() {
 
 
     val navController = rememberNavController()
-    // Observe the back stack to determine the current route
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry?.destination?.route
 
@@ -82,15 +85,32 @@ fun GymApp() {
             )
         },
         floatingActionButton = {
-            // Show FAB only on the home screen
+            // Show FAB for the Workout screen
             if (currentRoute == AppRoutes.WORKOUT_SCREEN) {
                 FloatingActionButton(onClick = { navController.navigate(AppRoutes.ADD_WORKOUT_SCREEN) }) {
-                    Icon(Icons.Filled.Add, contentDescription = "Add Workout")
+                    Box(contentAlignment = Alignment.Center) {
+                        // Layer 1: The background icon
+                        Icon(
+                            painter = painterResource(id = R.drawable.dumbell_icon),
+                            contentDescription = "Add Workout", // Accessibility description
+                            modifier = Modifier.size(42.dp),
+                            tint = Color.Unspecified
+                        )
+                    }
                 }
             }
+            // Show FAB for the Nutrition screen with the custom icon and text
             if (currentRoute == AppRoutes.NUTRITION_SCREEN) {
                 FloatingActionButton(onClick = { navController.navigate(AppRoutes.FOOD_SCANNER_SCREEN) }) {
-                    Icon(Icons.Filled.Add, contentDescription = "Scan Food Item")
+                    Box(contentAlignment = Alignment.Center) {
+                        // Layer 1: The background icon
+                        Icon(
+                            painter = painterResource(id = R.drawable.ean_icon),
+                            contentDescription = "Scan Food Item", // Accessibility description
+                            modifier = Modifier.size(42.dp),
+                            tint = Color.Unspecified
+                        )
+                    }
                 }
             }
         },
@@ -98,10 +118,9 @@ fun GymApp() {
         Surface(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding), // Apply padding from the Scaffold
+                .padding(innerPadding),
             color = MaterialTheme.colorScheme.background
         ) {
-            // AppNavigation is now the main content and receives the permission handler
             AppNavigation(
                 navController = navController,
                 onGrantPermissionsClick = onGrantPermissionsClick

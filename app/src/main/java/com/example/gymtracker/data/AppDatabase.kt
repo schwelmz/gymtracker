@@ -8,12 +8,14 @@ import androidx.room.TypeConverters
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 
-@Database(entities = [WorkoutSession::class, Exercise::class, Food::class], version = 9)
+// You must increment the version number for the runtime migration
+@Database(entities = [WorkoutSession::class, Exercise::class, Food::class, CustomFood::class], version = 10) // <-- 1. ENSURE CustomFood::class IS HERE
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun workoutDao(): WorkoutDao
     abstract fun exerciseDao(): ExerciseDao
     abstract fun foodDao(): FoodDao
+    abstract fun customFoodDao(): CustomFoodDao // <-- 2. ENSURE THIS LINE IS HERE
 
     companion object {
         @Volatile
@@ -27,7 +29,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "gym_tracker_database"
                 )
-                    .fallbackToDestructiveMigration(dropAllTables = true)
+                    .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
                 instance

@@ -33,6 +33,9 @@ import kotlinx.coroutines.CoroutineScope
 import java.time.LocalDate
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.remember
+import com.example.gymtracker.ui.screens.AddCustomFoodScreen
+import com.example.gymtracker.ui.screens.CustomFoodListScreen
+import com.example.gymtracker.viewmodel.HomeViewModel
 
 object AppRoutes {
     // Home Graph
@@ -60,6 +63,8 @@ object AppRoutes {
     // Settings Graph
     const val SETTINGS_SCREEN = "settings_screen"
     const val ABOUT_SCREEN = "about_screen"
+    const val CUSTOM_FOOD_LIST_SCREEN = "custom_food_list_screen"
+    const val ADD_CUSTOM_FOOD_SCREEN = "add_custom_food_screen"
 }
 
 @Composable
@@ -83,8 +88,17 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
             // --- THIS IS THE CORRECTED SECTION ---
             // The main screen for the Home tab now calls the simple HomeScreen.
             composable(route = AppRoutes.HOME_SCREEN) {
-                // The parameters from the old implementation are no longer needed here.
-                HomeScreen(onGrantPermissionsClick = onGrantPermissionsClick)
+                // --- THIS IS THE CHANGE ---
+                // Get both ViewModels. They will be scoped to the NavHost,
+                // making them available application-wide.
+                val homeViewModel: HomeViewModel = viewModel()
+                val foodViewModel: FoodViewModel = viewModel()
+
+                HomeScreen(
+                    homeViewModel = homeViewModel,
+                    foodViewModel = foodViewModel, // Pass the FoodViewModel
+                    onGrantPermissionsClick = onGrantPermissionsClick
+                )
             }
 
             // The routes you navigate to FROM the home screen remain the same.
@@ -261,7 +275,8 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
                         }
                     },
                     onNavigateToDiary = { navController.navigate(AppRoutes.FOOD_DIARY_SCREEN) },
-                    onNavigateToScanner = { navController.navigate(AppRoutes.FOOD_SCANNER_SCREEN) }
+                    onNavigateToScanner = { navController.navigate(AppRoutes.FOOD_SCANNER_SCREEN) },
+                    onNavigateToCustomFood = { navController.navigate(AppRoutes.CUSTOM_FOOD_LIST_SCREEN) }
                 )
             }
             composable(route = AppRoutes.FOOD_SCANNER_SCREEN) { navBackStackEntry -> // FIX: Explicit name
@@ -286,6 +301,29 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
                 val foodViewModel: FoodViewModel = viewModel(parentEntry)
 
                 FoodDiaryScreen(
+                    viewModel = foodViewModel,
+                    onNavigateUp = { navController.popBackStack() }
+                )
+            }
+            // Add the new destinations
+            composable(route = AppRoutes.CUSTOM_FOOD_LIST_SCREEN) { navBackStackEntry ->
+                val parentEntry = remember(navBackStackEntry) {
+                    navController.getBackStackEntry(BottomBarDestination.Nutrition.route)
+                }
+                val foodViewModel: FoodViewModel = viewModel(parentEntry)
+                CustomFoodListScreen(
+                    viewModel = foodViewModel,
+                    onNavigateUp = { navController.popBackStack() },
+                    onNavigateToAddCustomFood = { navController.navigate(AppRoutes.ADD_CUSTOM_FOOD_SCREEN) }
+                )
+            }
+
+            composable(route = AppRoutes.ADD_CUSTOM_FOOD_SCREEN) { navBackStackEntry ->
+                val parentEntry = remember(navBackStackEntry) {
+                    navController.getBackStackEntry(BottomBarDestination.Nutrition.route)
+                }
+                val foodViewModel: FoodViewModel = viewModel(parentEntry)
+                AddCustomFoodScreen(
                     viewModel = foodViewModel,
                     onNavigateUp = { navController.popBackStack() }
                 )
