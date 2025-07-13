@@ -7,9 +7,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Search // <-- Import the Search icon
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -26,11 +26,10 @@ fun CustomFoodListScreen(
     onNavigateUp: () -> Unit,
     onNavigateToAddCustomFood: () -> Unit
 ) {
-    // --- 1. STATE MANAGEMENT ---
+    // --- STATE MANAGEMENT ---
     val allCustomFoods by viewModel.allCustomFoods.collectAsState(initial = emptyList())
     var searchQuery by remember { mutableStateOf("") }
 
-    // This derived state will automatically update when the query or the main list changes
     val filteredFoods = remember(searchQuery, allCustomFoods) {
         if (searchQuery.isBlank()) {
             allCustomFoods
@@ -52,25 +51,29 @@ fun CustomFoodListScreen(
             text = {
                 OutlinedTextField(
                     value = grams,
-                    onValueChange = { grams = it },
+                    onValueChange = { grams = it.filter { char -> char.isDigit() } },
                     label = { Text("Enter weight (g)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true
                 )
             },
             confirmButton = {
-                Button(onClick = {
-                    val gramsInt = grams.toIntOrNull()
-                    if (gramsInt != null) {
-                        viewModel.addCustomFoodEntry(selectedFood!!, gramsInt)
-                        showLogDialog = false
-                        onNavigateUp()
-                    }
-                }) {
+                Button(
+                    onClick = {
+                        val gramsInt = grams.toIntOrNull()
+                        if (gramsInt != null) {
+                            viewModel.addCustomFoodEntry(selectedFood!!, gramsInt)
+                            showLogDialog = false
+                            onNavigateUp() // Go back after logging the food
+                        }
+                    },
+                    enabled = grams.isNotBlank()
+                ) {
                     Text("Log")
                 }
             },
             dismissButton = {
-                Button(onClick = { showLogDialog = false }) { Text("Cancel") }
+                TextButton(onClick = { showLogDialog = false }) { Text("Cancel") }
             }
         )
     }
@@ -78,21 +81,30 @@ fun CustomFoodListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("My Foods") }, // Changed title for clarity
+                title = { Text("My Foods") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateUp) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
         },
+        // --- THIS IS THE CORRECTED SECTION ---
         floatingActionButton = {
-            FloatingActionButton(onClick = onNavigateToAddCustomFood, shape = CircleShape) {
-                Icon(Icons.Default.Add, contentDescription = "Add new custom food")
+            // Wrap the FAB in a Box and apply an offset.
+            // A negative 'y' value moves the button up.
+            Box(
+                modifier = Modifier.offset(y = (-52).dp) // Adjust this value as needed
+            ) {
+                FloatingActionButton(
+                    onClick = onNavigateToAddCustomFood,
+                    shape = CircleShape
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Add new custom food")
+                }
             }
         }
     ) { padding ->
-        // --- 2. UI STRUCTURE ---
         Column(
             modifier = Modifier
                 .padding(padding)
@@ -102,7 +114,7 @@ fun CustomFoodListScreen(
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                label = { Text("Search Foods") },
+                label = { Text("Search Foods or add your Food with '+'") },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -111,9 +123,8 @@ fun CustomFoodListScreen(
 
             // List of foods
             LazyColumn(
-                contentPadding = PaddingValues(horizontal = 16.dp)
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
             ) {
-                // --- 3. DISPLAY FILTERED LIST ---
                 items(filteredFoods) { food ->
                     ListItem(
                         headlineContent = { Text(food.name, fontWeight = FontWeight.Bold) },
@@ -124,6 +135,12 @@ fun CustomFoodListScreen(
                             showLogDialog = true
                         }
                     )
+                    HorizontalDivider()
+                }
+
+                // Spacer at the end so the FAB doesn't hide the last item
+                item {
+                    Spacer(modifier = Modifier.height(80.dp))
                 }
             }
         }
