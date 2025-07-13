@@ -56,9 +56,12 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
                 val proteinPer100g = nutriments.proteinsPer100g ?: 0.0
                 val fatPer100g = nutriments.fatPer100g ?: 0.0
 
+                // Robustly find the best available name
+                val bestName = findBestName(product)
+
                 val food = Food(
                     barcode = product.code ?: "",
-                    name = product.name ?: "Unknown",
+                    name = bestName, // Use the best name found
                     calories = (caloriesPer100g * grams / 100.0).toInt(),
                     carbs = (carbsPer100g * grams / 100.0).toInt(),
                     protein = (proteinPer100g * grams / 100.0).toInt(),
@@ -71,7 +74,20 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
-
+    // --- HELPER FUNCTION TO FIND THE BEST NAME ---
+    private fun findBestName(product: Product): String {
+        // Prefer the specific product name if it's not blank.
+        if (!product.name.isNullOrBlank()) {
+            // Further clean it up to remove brand/weight info
+            return product.name.split("–", "-").firstOrNull()?.trim() ?: product.name
+        }
+        // Otherwise, use the generic name as a fallback.
+        if (!product.genericName.isNullOrBlank()) {
+            return product.genericName
+        }
+        // If all else fails, return a default value.
+        return "Unknown Product"
+    }
     /**
      * Creates a new Food log entry from a CustomFood template and a given weight.
      */

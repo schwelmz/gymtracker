@@ -14,8 +14,9 @@ data class Product(
     // the variable name, or if it contains characters not allowed in Kotlin variable names (like '-').
     val code: String?,
     @SerialName("product_name_en")
-    val name: String? = "No name found",
-
+    val name: String? = null,
+    @SerialName("generic_name")
+    val genericName: String? = null,
     @SerialName("image_front_url")
     val imageUrl: String? = null,
 

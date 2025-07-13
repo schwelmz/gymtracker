@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
@@ -89,21 +90,45 @@ fun FoodScannerScreen(
 fun ProductDetails(product: Product, onAddFood: (Int) -> Unit) {
     var grams by remember { mutableStateOf("100") }
 
+    val displayName = remember(product) {
+        if (!product.name.isNullOrBlank()) {
+            product.name.split("–", "-").firstOrNull()?.trim() ?: product.name
+        } else if (!product.genericName.isNullOrBlank()) {
+            product.genericName
+        } else {
+            "Unknown Product"
+        }
+    }
+
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth()
     ) {
         AsyncImage(
             model = product.imageUrl,
-            contentDescription = product.name,
+            contentDescription = displayName,
             modifier = Modifier
                 .height(200.dp)
                 .fillMaxWidth(),
             contentScale = ContentScale.Fit
         )
         Spacer(modifier = Modifier.height(16.dp))
-        Text(product.name ?: "N/A", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-        Text(product.brands ?: "N/A", style = MaterialTheme.typography.titleMedium)
+
+        Text(
+            text = displayName,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center
+        )
+
+        if (!product.brands.isNullOrBlank()) {
+            Text(
+                text = product.brands,
+                style = MaterialTheme.typography.titleMedium,
+                textAlign = TextAlign.Center
+            )
+        }
         Spacer(modifier = Modifier.height(16.dp))
         product.nutriments?.let {
             Text("Energy (per 100g): ${it.energyKcalPer100g} kcal")
@@ -118,7 +143,6 @@ fun ProductDetails(product: Product, onAddFood: (Int) -> Unit) {
             value = grams,
             onValueChange = { grams = it },
             label = { Text("Grams") },
-            // Corrected this line
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
         )
         Spacer(modifier = Modifier.height(16.dp))

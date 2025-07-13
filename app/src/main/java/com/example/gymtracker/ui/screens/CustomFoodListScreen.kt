@@ -114,7 +114,7 @@ fun CustomFoodListScreen(
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                label = { Text("Search Foods or add your Food with '+'") },
+                label = { Text("Search Foods or add your Food '+'") },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
                 modifier = Modifier
                     .fillMaxWidth()
