@@ -25,11 +25,11 @@ fun HomeHostScreen(mainNavController: NavHostController, onGrantPermissionsClick
     )
 
     Row(modifier = Modifier.fillMaxSize()) {
-        AppNavigationRail(
-            items = homeNavItems,
-            selectedItemId = homeRailNavController.currentDestination?.route ?: AppRoutes.HOME_SCREEN,
-            onItemSelected = { route -> homeRailNavController.navigate(route) }
-        )
+//        AppNavigationRail(
+//            items = homeNavItems,
+//            selectedItemId = homeRailNavController.currentDestination?.route ?: AppRoutes.HOME_SCREEN,
+//            onItemSelected = { route -> homeRailNavController.navigate(route) }
+//        )
         Surface(modifier = Modifier.fillMaxSize()) {
             HomeNavHost(navController = homeRailNavController, mainNavController = mainNavController, onGrantPermissionsClick = onGrantPermissionsClick)
         }

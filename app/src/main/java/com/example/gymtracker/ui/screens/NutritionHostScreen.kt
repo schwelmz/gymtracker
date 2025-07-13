@@ -31,11 +31,11 @@ fun NutritionHostScreen(mainNavController: NavHostController) {
     )
 
     Row(modifier = Modifier.fillMaxSize()) {
-        AppNavigationRail(
-            items = nutritionNavItems,
-            selectedItemId = nutritionRailNavController.currentDestination?.route ?: AppRoutes.FOOD_DIARY_SCREEN,
-            onItemSelected = { route -> nutritionRailNavController.navigate(route) }
-        )
+//        AppNavigationRail(
+//            items = nutritionNavItems,
+//            selectedItemId = nutritionRailNavController.currentDestination?.route ?: AppRoutes.FOOD_DIARY_SCREEN,
+//            onItemSelected = { route -> nutritionRailNavController.navigate(route) }
+//        )
         Surface(modifier = Modifier.fillMaxSize()) {
             NutritionNavHost(navController = nutritionRailNavController, mainNavController = mainNavController)
         }
@@ -45,7 +45,7 @@ fun NutritionHostScreen(mainNavController: NavHostController) {
 @Composable
 fun NutritionNavHost(navController: NavHostController, mainNavController: NavHostController) {
     val scope = rememberCoroutineScope()
-    NavHost(navController = navController, startDestination = AppRoutes.FOOD_DIARY_SCREEN) {
+    NavHost(navController = navController, startDestination = AppRoutes.NUTRITION_SCREEN) {
         composable(route = AppRoutes.NUTRITION_SCREEN) { // This will be the default for the rail
             val foodViewModel: FoodViewModel = viewModel()
             NutritionScreen(
