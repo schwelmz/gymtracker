@@ -1,13 +1,14 @@
 package com.example.gymtracker.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
@@ -31,19 +32,11 @@ fun FoodScannerScreen(
     var showScanner by remember { mutableStateOf(false) }
     val cameraPermissionState = rememberPermissionState(android.Manifest.permission.CAMERA)
 
-    val name by remember { mutableStateOf("") }
-    val calories by remember { mutableIntStateOf(0) }
-
-    val context = LocalContext.current
-
-    // A Box is used to allow for flexible placement of its children, like aligning
-    // one element to the center and another to the bottom.
     Box(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        // This Column holds the main content and is aligned to the center of the screen.
         Column(
             modifier = Modifier.align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -56,7 +49,13 @@ fun FoodScannerScreen(
                     CircularProgressIndicator()
                 }
                 is FoodScannerUiState.Success -> {
-                    ProductDetails(product = state.product)
+                    ProductDetails(
+                        product = state.product,
+                        onAddFood = { grams ->
+                            foodViewModel.addFood(state.product, grams)
+                            onSave()
+                        }
+                    )
                 }
                 is FoodScannerUiState.Error -> {
                     Text("Error: ${state.message}", color = MaterialTheme.colorScheme.error)
@@ -64,7 +63,6 @@ fun FoodScannerScreen(
             }
         }
 
-        // This button is aligned to the bottom center of the Box, pushing it to the footer.
         Button(
             onClick = {
                 if (cameraPermissionState.status.isGranted) {
@@ -73,19 +71,9 @@ fun FoodScannerScreen(
                     cameraPermissionState.launchPermissionRequest()
                 }
             },
-            // The align modifier positions this specific composable within the parent Box.
             modifier = Modifier.align(Alignment.BottomCenter)
         ) {
             Text("Scan Barcode")
-        }
-
-        Button(
-            onClick = {
-                onSave()
-            },
-            modifier = Modifier.align(Alignment.BottomEnd)
-        ){
-            Text("Add Food")
         }
 
         if (showScanner) {
@@ -97,12 +85,10 @@ fun FoodScannerScreen(
     }
 }
 
-/**
- * A simple, reusable composable to display the details of a Product.
- * (This composable does not need any changes)
- */
 @Composable
-fun ProductDetails(product: Product) {
+fun ProductDetails(product: Product, onAddFood: (Int) -> Unit) {
+    var grams by remember { mutableStateOf("100") }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth()
@@ -121,10 +107,26 @@ fun ProductDetails(product: Product) {
         Spacer(modifier = Modifier.height(16.dp))
         product.nutriments?.let {
             Text("Energy (per 100g): ${it.energyKcalPer100g} kcal")
+            Text("Carbohydrates (per 100g): ${it.carbohydratesPer100g} g")
             Text("Sugars (per 100g): ${it.sugarsPer100g} g")
             Text("Salt (per 100g): ${it.saltPer100g} g")
             Text("Proteins (per 100g): ${it.proteinsPer100g} g")
             Text("Fat (per 100g): ${it.fatPer100g} g")
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        OutlinedTextField(
+            value = grams,
+            onValueChange = { grams = it },
+            label = { Text("Grams") },
+            // Corrected this line
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = {
+            val gramsInt = grams.toIntOrNull() ?: 100
+            onAddFood(gramsInt)
+        }) {
+            Text("Add Food")
         }
     }
 }

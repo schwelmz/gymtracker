@@ -9,7 +9,10 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface FoodDao {
-    @Query("SELECT * FROM food")
+    @Query("SELECT * FROM food WHERE timestamp >= :startOfDay AND timestamp < :endOfDay ORDER BY timestamp DESC")
+    fun getFoodForDay(startOfDay: Long, endOfDay: Long): Flow<List<Food>>
+
+    @Query("SELECT * FROM food ORDER BY timestamp DESC")
     fun getAllFood(): Flow<List<Food>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -20,5 +23,4 @@ interface FoodDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(foods: List<Food>)
-
 }

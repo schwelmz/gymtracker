@@ -25,12 +25,14 @@ import com.example.gymtracker.ui.screens.NutritionScreen
 import com.example.gymtracker.ui.screens.WorkoutCalendarDayScreen
 import com.example.gymtracker.ui.screens.WorkoutModifyScreen
 import androidx.compose.runtime.rememberCoroutineScope
+import com.example.gymtracker.ui.screens.FoodDiaryScreen
 import com.example.gymtracker.viewmodel.FoodScannerUiState
 import com.example.gymtracker.viewmodel.FoodScannerViewModel
 import com.example.gymtracker.viewmodel.FoodViewModel
 import kotlinx.coroutines.CoroutineScope
 import java.time.LocalDate
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.remember
 
 object AppRoutes {
     // Home Graph
@@ -53,6 +55,7 @@ object AppRoutes {
     // Nutrition Graph
     const val NUTRITION_SCREEN = "nutrition_screen"
     const val FOOD_SCANNER_SCREEN = "food_scanner_screen"
+    const val FOOD_DIARY_SCREEN = "food_diary_screen"
 
     // Settings Graph
     const val SETTINGS_SCREEN = "settings_screen"
@@ -148,17 +151,19 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
 //        }
 
         // =====================================================================
-        // WORKOUT NAVIGATION GRAPH
+        // WORKOUT NAVIGATION GRAPH (CORRECTED)
         // =====================================================================
         navigation(
             startDestination = AppRoutes.WORKOUT_SCREEN,
             route = BottomBarDestination.Workout.route
         ) {
-            composable(route = AppRoutes.WORKOUT_SCREEN) {
-                // --- THIS IS THE UPDATED SECTION ---
-                // Provide the same data to WorkoutScreen as you did for HomeScreen
-                val workoutViewModel: WorkoutViewModel = viewModel()
-                val exerciseViewModel: ExerciseViewModel = viewModel()
+            composable(route = AppRoutes.WORKOUT_SCREEN) { navBackStackEntry -> // FIX: Explicitly name the parameter
+                val parentEntry = remember(navBackStackEntry) {
+                    navController.getBackStackEntry(BottomBarDestination.Workout.route)
+                }
+                val workoutViewModel: WorkoutViewModel = viewModel(parentEntry)
+                val exerciseViewModel: ExerciseViewModel = viewModel(parentEntry)
+
                 val sessions by workoutViewModel.allSessions.collectAsState(initial = emptyList())
                 val exercises by exerciseViewModel.allExercises.collectAsState(initial = emptyList())
                 val workoutDates by workoutViewModel.workoutDates.collectAsState(initial = emptySet())
@@ -175,9 +180,7 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
                     onSessionClicked = { exerciseName ->
                         navController.navigate(AppRoutes.STATS_SCREEN.replace("{exerciseName}", exerciseName))
                     },
-                    onDeleteSession = { session ->
-                        workoutViewModel.deleteSession(session)
-                    },
+                    onDeleteSession = { session -> scope.launch { workoutViewModel.deleteSession(session) } },
                     onModifySession = { session ->
                         val route = AppRoutes.WORKOUT_MODIFY_SCREEN.replace("{sessionId}", session.id.toString())
                         navController.navigate(route)
@@ -186,14 +189,16 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
                     onExerciseClicked = { exerciseName ->
                         navController.navigate(AppRoutes.STATS_SCREEN.replace("{exerciseName}", exerciseName))
                     },
-                    onDeleteExercise = { exercise ->
-                        exerciseViewModel.deleteExercise(exercise)
-                    }
+                    onDeleteExercise = { exercise -> scope.launch { exerciseViewModel.deleteExercise(exercise) } }
                 )
             }
-            composable(route = AppRoutes.WORKOUT_CALENDAR_DAY_SCREEN) { backStackEntry ->
-                val day = backStackEntry.arguments?.getString("day")
-                val workoutViewModel: WorkoutViewModel = viewModel()
+            composable(route = AppRoutes.WORKOUT_CALENDAR_DAY_SCREEN) { navBackStackEntry -> // FIX: Explicit name
+                val day = navBackStackEntry.arguments?.getString("day")
+                val parentEntry = remember(navBackStackEntry) {
+                    navController.getBackStackEntry(BottomBarDestination.Workout.route)
+                }
+                val workoutViewModel: WorkoutViewModel = viewModel(parentEntry)
+
                 val sessions by workoutViewModel.allSessions.collectAsState(initial = emptyList())
                 WorkoutCalendarDayScreen(
                     day = day,
@@ -201,17 +206,15 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
                     onSessionClicked = { exerciseName ->
                         navController.navigate(AppRoutes.STATS_SCREEN.replace("{exerciseName}", exerciseName))
                     },
-                    onDeleteSession = { session ->
-                        workoutViewModel.deleteSession(session)
-                    },
+                    onDeleteSession = { session -> scope.launch { workoutViewModel.deleteSession(session) } },
                     onModifySession = { session ->
                         val route = AppRoutes.WORKOUT_MODIFY_SCREEN.replace("{sessionId}", session.id.toString())
                         navController.navigate(route)
                     }
                 )
             }
-            composable(route = AppRoutes.WORKOUT_MODIFY_SCREEN) { backStackEntry ->
-                val sessionId = backStackEntry.arguments?.getString("sessionId")?.toIntOrNull()
+            composable(route = AppRoutes.WORKOUT_MODIFY_SCREEN) { navBackStackEntry ->
+                val sessionId = navBackStackEntry.arguments?.getString("sessionId")?.toIntOrNull()
                 if (sessionId != null) {
                     WorkoutModifyScreen(
                         sessionId = sessionId,
@@ -219,11 +222,17 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
                     )
                 }
             }
-            composable(route = AppRoutes.ADD_EXERCISE_SCREEN) {
-                val viewModel: ExerciseViewModel = viewModel()
+            composable(route = AppRoutes.ADD_EXERCISE_SCREEN) { navBackStackEntry -> // FIX: Explicitly name the parameter
+                val parentEntry = remember(navBackStackEntry) {
+                    navController.getBackStackEntry(BottomBarDestination.Workout.route)
+                }
+                val viewModel: ExerciseViewModel = viewModel(parentEntry)
+
                 AddExerciseScreen(
                     onSave = { name, description, imageUri ->
-                        viewModel.addCustomExercise(name, description, imageUri)
+                        scope.launch {
+                            viewModel.addCustomExercise(name, description, imageUri)
+                        }
                         navController.popBackStack()
                     },
                     onNavigateUp = { navController.popBackStack() }
@@ -232,52 +241,57 @@ fun AppNavigation(modifier: Modifier = Modifier, navController: NavHostControlle
         }
 
         // =====================================================================
-        // SCANNER NAVIGATION GRAPH (NEW)
+        // NUTRITION NAVIGATION GRAPH (CORRECTED)
         // =====================================================================
         navigation(
             startDestination = AppRoutes.NUTRITION_SCREEN,
             route = BottomBarDestination.Nutrition.route
         ) {
-            composable(route = AppRoutes.NUTRITION_SCREEN) {
-                val foodViewModel: FoodViewModel = viewModel()
-                val scannerViewModel: FoodScannerViewModel = viewModel()
+            composable(route = AppRoutes.NUTRITION_SCREEN) { navBackStackEntry -> // FIX: Explicit name
+                val parentEntry = remember(navBackStackEntry) {
+                    navController.getBackStackEntry(BottomBarDestination.Nutrition.route)
+                }
+                val foodViewModel: FoodViewModel = viewModel(parentEntry)
+
                 NutritionScreen(
-                    foodViewModel,
+                    viewModel = foodViewModel,
                     onDeleteFoodEntry = { food ->
                         scope.launch {
                             foodViewModel.deleteFood(food)
                         }
-                    }
+                    },
+                    onNavigateToDiary = { navController.navigate(AppRoutes.FOOD_DIARY_SCREEN) },
+                    onNavigateToScanner = { navController.navigate(AppRoutes.FOOD_SCANNER_SCREEN) }
                 )
             }
-            composable ( route = AppRoutes.FOOD_SCANNER_SCREEN) {
-                val foodViewModel: FoodViewModel = viewModel()
-                val scannerViewModel: FoodScannerViewModel = viewModel()
+            composable(route = AppRoutes.FOOD_SCANNER_SCREEN) { navBackStackEntry -> // FIX: Explicit name
+                val parentEntry = remember(navBackStackEntry) {
+                    navController.getBackStackEntry(BottomBarDestination.Nutrition.route)
+                }
+                val foodViewModel: FoodViewModel = viewModel(parentEntry)
+                val scannerViewModel: FoodScannerViewModel = viewModel(parentEntry)
+
                 FoodScannerScreen(
                     foodViewModel = foodViewModel,
                     scannerViewModel = scannerViewModel,
                     onSave = {
-                        val uiState = scannerViewModel.uiState.value
-                        if (uiState is FoodScannerUiState.Success) {
-                            val product = uiState.product
-                            val food = com.example.gymtracker.data.Food(
-                                barcode = uiState.barcode,
-                                name = product.name ?: "Unknown Product",
-                                calories = product.nutriments?.energyKcalPer100g?.toInt() ?: 0,
-                                carbs = product.nutriments?.sugarsPer100g?.toInt() ?: 0,
-                                protein = product.nutriments?.proteinsPer100g?.toInt() ?: 0,
-                                fat = product.nutriments?.fatPer100g?.toInt() ?: 0,
-                                imageUri = product.imageUrl
-                            )
-                            scope.launch {
-                                foodViewModel.insertFood(food)
-                            }
-                            navController.popBackStack(AppRoutes.NUTRITION_SCREEN, inclusive = false)
-                        }
+                        navController.popBackStack()
                     }
                 )
             }
+            composable(route = AppRoutes.FOOD_DIARY_SCREEN) { navBackStackEntry -> // FIX: Explicit name
+                val parentEntry = remember(navBackStackEntry) {
+                    navController.getBackStackEntry(BottomBarDestination.Nutrition.route)
+                }
+                val foodViewModel: FoodViewModel = viewModel(parentEntry)
+
+                FoodDiaryScreen(
+                    viewModel = foodViewModel,
+                    onNavigateUp = { navController.popBackStack() }
+                )
+            }
         }
+
         // =====================================================================
         // SETTINGS NAVIGATION GRAPH
         // =====================================================================

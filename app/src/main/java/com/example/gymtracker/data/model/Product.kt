@@ -12,6 +12,7 @@ import kotlinx.serialization.Serializable
 data class Product(
     // The @SerialName annotation is used when the JSON key name is different from
     // the variable name, or if it contains characters not allowed in Kotlin variable names (like '-').
+    val code: String?,
     @SerialName("product_name_en")
     val name: String? = "No name found",
 
@@ -41,6 +42,9 @@ data class Nutriments(
 
     @SerialName("proteins_100g")
     val proteinsPer100g: Double? = 0.0,
+
+    @SerialName("carbohydrates_100g")
+    val carbohydratesPer100g: Double? = 0.0,
 
     @SerialName("fat_100g")
     val fatPer100g: Double? = 0.0
