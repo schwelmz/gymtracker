@@ -9,6 +9,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -95,8 +96,30 @@ fun HomeScreen(
         item {
             when (healthState) {
                 is HomeUiState.Idle -> CircularProgressIndicator()
-                is HomeUiState.HealthConnectNotInstalled -> { /* ... unchanged ... */ }
-                is HomeUiState.PermissionsNotGranted -> { /* ... unchanged ... */ }
+                // --- THIS SECTION IS RESTORED ---
+                is HomeUiState.HealthConnectNotInstalled -> {
+                    PermissionCard(
+                        title = "Health Connect Not Installed",
+                        description = "To view your health stats, please install the Health Connect app.",
+                        buttonText = "Install",
+                        onButtonClick = {
+                            val intent = Intent(Intent.ACTION_VIEW).apply {
+                                data = Uri.parse("market://details?id=com.google.android.apps.healthdata")
+                                setPackage("com.android.vending")
+                            }
+                            context.startActivity(intent)
+                        }
+                    )
+                }
+                is HomeUiState.PermissionsNotGranted -> {
+                    PermissionCard(
+                        title = "Permissions Required",
+                        description = "This app needs permission to read your health data. Tap below to grant access.",
+                        buttonText = "Grant Permissions",
+                        onButtonClick = onGrantPermissionsClick
+                    )
+                }
+                // --- END OF RESTORED SECTION ---
                 is HomeUiState.Success -> {
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         CalorieBudgetGraph(
@@ -264,29 +287,26 @@ fun CalorieBudgetGraph(
             }
 
             Spacer(modifier = Modifier.height(8.dp))
+            // --- CORRECTED ---
             LinearProgressIndicator(
-                progress = progress,
+                progress = progress, // Removed the curly braces
                 modifier = Modifier.fillMaxWidth().height(12.dp).clip(MaterialTheme.shapes.small),
                 color = progressBarColor,
                 trackColor = MaterialTheme.colorScheme.surfaceVariant
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            // --- THIS ROW IS THE ONLY PART THAT HAS BEEN CHANGED ---
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 CalorieStat(label = "Intake", value = "$intake")
-                // "Goal" is now second
                 Box(modifier = Modifier.clickable(onClick = onGoalClick).padding(4.dp)) {
                     CalorieStat(label = "Goal", value = "$goal")
                 }
-                // "Burned" is now third
                 CalorieStat(label = "Burned", value = "$burned")
                 CalorieStat(label = "Leftover", value = "$leftover", valueColor = leftoverTextColor)
             }
         }
     }
 }
-// --- MODIFIED: HealthStatsGrid now handles clicks and adds progress bar ---
 @Composable
 fun HealthStatsGrid(stats: TodayHealthStats, stepsGoal: Int, onStepsGoalClick: () -> Unit) {
     val progress = (stats.steps.toFloat() / max(1f, stepsGoal.toFloat())).coerceIn(0f, 1f)
@@ -310,8 +330,9 @@ fun HealthStatsGrid(stats: TodayHealthStats, stepsGoal: Int, onStepsGoalClick: (
                             .padding(horizontal = 4.dp)
                     ) {
                         Text(text = "Steps", style = MaterialTheme.typography.labelLarge)
+                        // --- CORRECTED ---
                         LinearProgressIndicator(
-                            progress = progress,
+                            progress = progress, // Removed the curly braces
                             modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -319,7 +340,6 @@ fun HealthStatsGrid(stats: TodayHealthStats, stepsGoal: Int, onStepsGoalClick: (
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
                         Text(text = "Distance", style = MaterialTheme.typography.labelLarge)
-                        // This spacer helps align the text with the progress bar in the other column
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(text = "%.2f km".format(stats.distanceMeters / 1000), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                     }
@@ -329,7 +349,6 @@ fun HealthStatsGrid(stats: TodayHealthStats, stepsGoal: Int, onStepsGoalClick: (
     }
 }
 
-// --- MODIFIED: MacroSummaryCard handles clicks ---
 @Composable
 fun MacroSummaryCard(
     protein: Int, carbs: Int, fat: Int,
@@ -351,7 +370,6 @@ fun MacroSummaryCard(
     }
 }
 
-// --- MODIFIED: MacroStat now includes a progress bar and is clickable ---
 @Composable
 private fun MacroStat(label: String, value: Int, goal: Int, onClick: () -> Unit) {
     val progress = (value.toFloat() / max(1f, goal.toFloat())).coerceIn(0f, 1f)
@@ -360,8 +378,9 @@ private fun MacroStat(label: String, value: Int, goal: Int, onClick: () -> Unit)
         modifier = Modifier.clickable(onClick = onClick).padding(8.dp)
     ) {
         Text(text = label, style = MaterialTheme.typography.labelLarge)
+        // --- CORRECTED ---
         LinearProgressIndicator(
-            progress = progress,
+            progress = progress, // Removed the curly braces
             modifier = Modifier.width(80.dp).padding(vertical = 4.dp),
             color = MaterialTheme.colorScheme.primary
         )
