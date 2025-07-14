@@ -70,7 +70,7 @@ object AppRoutes {
 
     // Nutrition Graph
     const val NUTRITION_SCREEN = "nutrition_screen"
-    const val FOOD_SCANNER_SCREEN = "food_scanner_screen"
+    const val FOOD_SCANNER_SCREEN = "food_scanner_screen?open_camera={open_camera}"
     const val FOOD_DIARY_SCREEN = "food_diary_screen"
 
     // Settings Graph
@@ -241,7 +241,8 @@ fun AppNavigation(
                     scannerViewModel = scannerViewModel,
                     onSave = {
                         navController.popBackStack()
-                    }
+                    },
+                    shouldOpenCameraDirectly = true
                 )
             }
             composable(route = AppRoutes.FOOD_DIARY_SCREEN) { navBackStackEntry -> // FIX: Explicit name

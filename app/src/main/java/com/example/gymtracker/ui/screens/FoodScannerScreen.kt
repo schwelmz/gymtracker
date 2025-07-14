@@ -27,11 +27,33 @@ import com.example.gymtracker.viewmodel.FoodViewModel
 fun FoodScannerScreen(
     scannerViewModel: FoodScannerViewModel = viewModel(),
     foodViewModel: FoodViewModel = viewModel(),
+    // 1. ACCEPT THE ARGUMENT FROM THE NAVIGATION GRAPH
+    shouldOpenCameraDirectly: Boolean,
     onSave: () -> Unit
 ) {
     val uiState by scannerViewModel.uiState.collectAsState()
     var showScanner by remember { mutableStateOf(false) }
     val cameraPermissionState = rememberPermissionState(android.Manifest.permission.CAMERA)
+
+    // --- 2. USE LaunchedEffect TO OPEN THE SCANNER ON SCREEN ENTRY ---
+    // This will only run once when the screen is first composed.
+    LaunchedEffect(Unit) {
+        if (shouldOpenCameraDirectly) {
+            if (cameraPermissionState.status.isGranted) {
+                showScanner = true
+            } else {
+                cameraPermissionState.launchPermissionRequest()
+            }
+        }
+    }
+
+    // This effect will run AFTER the permission is granted or denied
+    LaunchedEffect(cameraPermissionState.status) {
+        if (cameraPermissionState.status.isGranted && shouldOpenCameraDirectly) {
+            showScanner = true
+        }
+    }
+
 
     Box(
         modifier = Modifier
@@ -53,8 +75,6 @@ fun FoodScannerScreen(
                     ProductDetails(
                         product = state.product,
                         onAddFood = { grams ->
-                            // --- THIS IS THE CORRECTED LINE ---
-                            // Call the new, correct function in the ViewModel
                             foodViewModel.addScannedFood(state.product, grams)
                             onSave()
                         }
@@ -66,6 +86,8 @@ fun FoodScannerScreen(
             }
         }
 
+        // 3. This button is still here for manual scanning if the user
+        // arrives on this screen without the 'open_camera' flag.
         Button(
             onClick = {
                 if (cameraPermissionState.status.isGranted) {
@@ -87,6 +109,7 @@ fun FoodScannerScreen(
         }
     }
 }
+
 
 @Composable
 fun ProductDetails(product: Product, onAddFood: (Int) -> Unit) {

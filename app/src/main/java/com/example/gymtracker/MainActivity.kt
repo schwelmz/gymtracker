@@ -102,16 +102,19 @@ fun GymApp() {
             }
             // Show FAB for the Nutrition screen with the custom icon and text
             if (currentRoute == AppRoutes.NUTRITION_SCREEN) {
-                FloatingActionButton(onClick = { navController.navigate(AppRoutes.FOOD_SCANNER_SCREEN) }) {
-                    Box(contentAlignment = Alignment.Center) {
-                        // Layer 1: The background icon
-                        Icon(
-                            painter = painterResource(id = R.drawable.ean_icon),
-                            contentDescription = "Scan Food Item", // Accessibility description
-                            modifier = Modifier.size(42.dp),
-                            tint = Color.Unspecified
-                        )
+                FloatingActionButton(
+                    onClick = {
+                        // Navigate to the scanner screen and pass 'true' to open the camera
+                        val route = AppRoutes.FOOD_SCANNER_SCREEN.replace("{open_camera}", "true")
+                        navController.navigate(route)
                     }
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ean_icon),
+                        contentDescription = "Scan Food Item",
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
                 }
             }
         },

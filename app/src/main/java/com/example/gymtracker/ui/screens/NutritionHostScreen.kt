@@ -10,9 +10,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.gymtracker.ui.AppRoutes
 import com.example.gymtracker.viewmodel.FoodScannerViewModel
 import com.example.gymtracker.viewmodel.FoodViewModel
@@ -64,11 +66,26 @@ fun NutritionNavHost(
                 onNavigateToCustomFood = { navController.navigate(AppRoutes.CUSTOM_FOOD_LIST_SCREEN) }
             )
         }
-        composable(route = AppRoutes.FOOD_SCANNER_SCREEN) {
+
+        composable(
+            // Use the new route definition
+            route = AppRoutes.FOOD_SCANNER_SCREEN,
+            // Define the argument with a default value of 'false'
+            arguments = listOf(navArgument("open_camera") {
+                type = NavType.BoolType
+                defaultValue = false
+            })
+        ) { backStackEntry ->
+            // Get the boolean argument from the backstack entry
+            val shouldOpenCamera = backStackEntry.arguments?.getBoolean("open_camera") ?: false
+
             val scannerViewModel: FoodScannerViewModel = viewModel()
+            // Assuming foodViewModel is hoisted and passed in
+
             FoodScannerScreen(
                 foodViewModel = foodViewModel,
                 scannerViewModel = scannerViewModel,
+                shouldOpenCameraDirectly = shouldOpenCamera, // Pass the boolean here
                 onSave = {
                     navController.popBackStack()
                 }
