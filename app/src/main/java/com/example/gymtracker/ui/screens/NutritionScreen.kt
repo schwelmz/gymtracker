@@ -1,6 +1,5 @@
 package com.example.gymtracker.ui.screens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,32 +11,65 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import com.example.gymtracker.R
-import com.example.gymtracker.data.FoodLogWithDetails // <-- IMPORT THE NEW DATA CLASS
+import com.example.gymtracker.data.FoodLogWithDetails
+import com.example.gymtracker.ui.components.DateTimePickerDialog
+import com.example.gymtracker.ui.components.FoodCard // Assuming FoodCard is in components
 import com.example.gymtracker.viewmodel.FoodViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NutritionScreen(
     viewModel: FoodViewModel,
-    // 1. UPDATE THE FUNCTION SIGNATURE
-    onDeleteFoodEntry: (FoodLogWithDetails) -> Unit,
+    // Note: The signature is now simpler because the actions are handled internally
     onNavigateToDiary: () -> Unit,
     onNavigateToScanner: () -> Unit,
     onNavigateToCustomFood: () -> Unit
 ) {
+    val scope = rememberCoroutineScope()
+    // 1. USE THE NEW UNIFIED DATA MODEL
+    val todaysFoodLogs by viewModel.todayFoodLogs.collectAsState(initial = emptyList())
+
+    // --- STATE MANAGEMENT FOR EDIT/DELETE ACTIONS ---
+    var showOptionsDialog by remember { mutableStateOf(false) }
+    var showDateTimePicker by remember { mutableStateOf(false) }
+    var selectedLog by remember { mutableStateOf<FoodLogWithDetails?>(null) }
+
+    // --- DIALOGS ---
+    if (showOptionsDialog && selectedLog != null) {
+        OptionsDialog(
+            foodName = selectedLog!!.name,
+            onDismiss = { showOptionsDialog = false },
+            onEditClick = {
+                showOptionsDialog = false
+                showDateTimePicker = true
+            },
+            onDeleteClick = {
+                scope.launch { viewModel.deleteFoodLog(selectedLog!!.logId) }
+                showOptionsDialog = false
+            }
+        )
+    }
+
+    if (showDateTimePicker && selectedLog != null) {
+        DateTimePickerDialog(
+            initialTimestamp = selectedLog!!.timestamp,
+            onDismiss = { showDateTimePicker = false },
+            onDateTimeSelected = { newTimestamp ->
+                viewModel.updateLogTimestamp(selectedLog!!.logId, newTimestamp)
+                showDateTimePicker = false
+            }
+        )
+    }
+
+
     Scaffold { padding ->
         Column(modifier = Modifier
             .fillMaxSize()
             .padding(padding)) {
-            // 2. USE THE NEW STATE FLOW FROM THE VIEWMODEL
-            val todaysFoodLogs by viewModel.todayFoodLogs.collectAsState(initial = emptyList())
 
-            // 3. UPDATE THE AGGREGATE CALCULATIONS
             val totalCalories = remember(todaysFoodLogs) { todaysFoodLogs.sumOf { it.calories } }
             val totalProtein = remember(todaysFoodLogs) { todaysFoodLogs.sumOf { it.protein } }
             val totalCarbs = remember(todaysFoodLogs) { todaysFoodLogs.sumOf { it.carbs } }
@@ -138,9 +170,15 @@ fun NutritionScreen(
                     }
                 }
 
-                // 4. UPDATE THE LAZYCOLUMN ITEMS
-                items(todaysFoodLogs) { foodLog ->
-                    FoodCard(foodLog = foodLog, onDelete = { onDeleteFoodEntry(foodLog) })
+                // 2. UPDATE LAZYCOLUMN ITEMS
+                items(todaysFoodLogs, key = { it.logId }) { foodLog ->
+                    FoodCard(
+                        foodLog = foodLog,
+                        onLongPress = {
+                            selectedLog = foodLog
+                            showOptionsDialog = true
+                        }
+                    )
                 }
 
                 item {
@@ -151,6 +189,9 @@ fun NutritionScreen(
     }
 }
 
+/**
+ * A small, reusable composable to display a single macronutrient stat.
+ */
 @Composable
 private fun MacroStat(label: String, value: Int) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -159,79 +200,30 @@ private fun MacroStat(label: String, value: Int) {
     }
 }
 
-// 5. UPDATE THE FOODCARD TO USE THE NEW DATA CLASS
+/**
+ * A dialog that gives the user the choice to Edit or Delete.
+ * This can be moved to a shared components file if needed.
+ */
 @Composable
-fun FoodCard(
-    foodLog: FoodLogWithDetails,
-    onDelete: () -> Unit = {}
+private fun OptionsDialog(
+    foodName: String,
+    onDismiss: () -> Unit,
+    onEditClick: () -> Unit,
+    onDeleteClick: () -> Unit
 ) {
-    var showDialog by remember { mutableStateOf(false) }
-    val haptic = LocalHapticFeedback.current
-
-    if (showDialog) {
-        AlertDialog(
-            onDismissRequest = { showDialog = false },
-            title = { Text("Delete Food Entry") },
-            text = { Text("Are you sure you want to delete this food entry?") },
-            confirmButton = {
-                Button(onClick = {
-                    showDialog = false
-                    onDelete()
-                }) {
-                    Text("Delete")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDialog = false }) {
-                    Text("Cancel")
-                }
-            }
-        )
-    }
-
-    val cardHeight = 120.dp
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
-            .height(cardHeight)
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onLongPress = {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        showDialog = true
-                    }
-                )
-            }
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            val imageWidth = 95.dp
-            if (!foodLog.imageUrl.isNullOrBlank()) {
-                AsyncImage(
-                    model = foodLog.imageUrl,
-                    contentDescription = foodLog.name,
-                    modifier = Modifier
-                        .width(imageWidth)
-                        .height(cardHeight)
-                )
-            } else {
-                Image(
-                    painter = painterResource(id = R.drawable.outline_picture_in_picture_center_24),
-                    contentDescription = foodLog.name,
-                    modifier = Modifier
-                        .width(imageWidth)
-                        .height(cardHeight)
-                        .padding(16.dp)
-                )
-            }
-
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(text = foodLog.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(text = "Weight: ${foodLog.grams}g", style = MaterialTheme.typography.bodyMedium)
-                Text(text = "Calories: ${foodLog.calories}", style = MaterialTheme.typography.bodyMedium)
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(foodName) },
+        text = { Text("What would you like to do?") },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        },
+        confirmButton = {
+            Row {
+                TextButton(onClick = onEditClick) { Text("Edit Time") }
+                Spacer(modifier = Modifier.width(8.dp))
+                TextButton(onClick = onDeleteClick) { Text("Delete") }
             }
         }
-    }
+    )
 }

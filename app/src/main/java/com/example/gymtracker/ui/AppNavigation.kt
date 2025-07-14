@@ -2,6 +2,7 @@ package com.example.gymtracker.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -17,7 +18,7 @@ import com.example.gymtracker.ui.screens.WorkoutLogScreen
 import com.example.gymtracker.viewmodel.ExerciseViewModel
 import com.example.gymtracker.viewmodel.WorkoutViewModel
 import com.example.gymtracker.ui.screens.FoodScannerScreen
-
+import com.example.gymtracker.data.UserGoals
 import com.example.gymtracker.ui.screens.AboutScreen
 import com.example.gymtracker.ui.screens.SettingsScreen
 import androidx.compose.ui.platform.LocalUriHandler
@@ -42,6 +43,7 @@ import com.example.gymtracker.ui.screens.RecentWorkoutsView
 import com.example.gymtracker.ui.screens.SettingsHostScreen
 import com.example.gymtracker.ui.screens.WorkoutCalendarView
 import com.example.gymtracker.ui.screens.WorkoutHostScreen
+import com.example.gymtracker.viewmodel.GoalsViewModel
 import com.example.gymtracker.viewmodel.HomeViewModel
 
 object AppRoutes {
@@ -84,7 +86,9 @@ fun AppNavigation(
     onGrantPermissionsClick: () -> Unit) {
 
     val scope = rememberCoroutineScope()
-
+    val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory)
+    val foodViewModel: FoodViewModel = viewModel(factory = FoodViewModel.Factory)
+    val goalsViewModel: GoalsViewModel = viewModel(factory = GoalsViewModel.Factory)
     // The start destination is the route of the Home graph.
     NavHost(
         navController = navController,
@@ -103,7 +107,10 @@ fun AppNavigation(
             composable(route = AppRoutes.HOME_SCREEN) {
                 HomeHostScreen(
                     mainNavController = navController,
-                    onGrantPermissionsClick = onGrantPermissionsClick
+                    onGrantPermissionsClick = onGrantPermissionsClick,
+                    homeViewModel = homeViewModel,
+                    foodViewModel = foodViewModel,
+                    goalsViewModel = goalsViewModel
                 )
             }
 
@@ -219,7 +226,7 @@ fun AppNavigation(
             route = BottomBarDestination.Nutrition.route
         ) {
             composable(route = AppRoutes.NUTRITION_SCREEN) {
-                NutritionHostScreen(mainNavController = navController)
+                NutritionHostScreen(mainNavController = navController,foodViewModel = foodViewModel, goalsViewModel = goalsViewModel)
             }
             composable(route = AppRoutes.FOOD_SCANNER_SCREEN) { navBackStackEntry -> // FIX: Explicit name
                 val parentEntry = remember(navBackStackEntry) {
@@ -241,9 +248,9 @@ fun AppNavigation(
                     navController.getBackStackEntry(BottomBarDestination.Nutrition.route)
                 }
                 val foodViewModel: FoodViewModel = viewModel(parentEntry)
-
                 FoodDiaryScreen(
                     viewModel = foodViewModel,
+                    calorieGoal = 2000,
                     onNavigateUp = { navController.popBackStack() }
                 )
             }

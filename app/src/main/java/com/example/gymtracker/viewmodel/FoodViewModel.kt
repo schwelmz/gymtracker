@@ -76,7 +76,11 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
             logFood(template, grams)
         }
     }
-
+    fun updateLogTimestamp(logId: Int, newTimestamp: Long) {
+        viewModelScope.launch {
+            logDao.updateTimestamp(logId, newTimestamp)
+        }
+    }
     /**
      * Logs an entry for a predefined or custom food template.
      */

@@ -4,57 +4,67 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.gymtracker.ui.AppRoutes
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.gymtracker.data.FoodLogWithDetails // <-- IMPORT THE CORRECT CLASS
 import com.example.gymtracker.viewmodel.FoodScannerViewModel
 import com.example.gymtracker.viewmodel.FoodViewModel
+import com.example.gymtracker.viewmodel.GoalsViewModel
 import kotlinx.coroutines.launch
 
 @Composable
-fun NutritionHostScreen(mainNavController: NavHostController) {
+fun NutritionHostScreen(
+    mainNavController: NavHostController,
+    // 1. Accept both required ViewModels
+    foodViewModel: FoodViewModel,
+    goalsViewModel: GoalsViewModel
+) {
     val nutritionRailNavController = rememberNavController()
 
     Row(modifier = Modifier.fillMaxSize()) {
         Surface(modifier = Modifier.fillMaxSize()) {
-            NutritionNavHost(navController = nutritionRailNavController, mainNavController = mainNavController)
+            // 2. Pass them down to the NavHost
+            NutritionNavHost(
+                navController = nutritionRailNavController,
+                mainNavController = mainNavController,
+                foodViewModel = foodViewModel,
+                goalsViewModel = goalsViewModel
+            )
         }
     }
 }
 
 @Composable
-fun NutritionNavHost(navController: NavHostController, mainNavController: NavHostController) {
+fun NutritionNavHost(
+    navController: NavHostController,
+    mainNavController: NavHostController,
+    // 3. Accept both ViewModels with explicit types
+    foodViewModel: FoodViewModel,
+    goalsViewModel: GoalsViewModel
+) {
     val scope = rememberCoroutineScope()
-    // --- IMPORTANT: Assume you create your FoodViewModel at a higher level (like MainActivity)
-    // and pass it down. If you create it here with viewModel(), you might get different instances.
-    // For this fix, I'll keep viewModel() as is, but this is a point for future refactoring.
-    val foodViewModel: FoodViewModel = viewModel(factory = FoodViewModel.Factory)
+
+    // 4. Collect the goals state here to be used by child screens
+    val goalsState by goalsViewModel.uiState.collectAsState()
+    val calorieGoal = goalsState.calorieGoal
 
     NavHost(navController = navController, startDestination = AppRoutes.NUTRITION_SCREEN) {
         composable(route = AppRoutes.NUTRITION_SCREEN) {
             NutritionScreen(
                 viewModel = foodViewModel,
-                // --- THIS IS THE CORRECTED SECTION ---
-                // The lambda now accepts the new `FoodLogWithDetails` object
-                onDeleteFoodEntry = { foodLog ->
-                    scope.launch {
-                        // We call the new `deleteFoodLog` function with the log's ID
-                        foodViewModel.deleteFoodLog(foodLog.logId)
-                    }
-                },
                 onNavigateToDiary = { navController.navigate(AppRoutes.FOOD_DIARY_SCREEN) },
                 onNavigateToScanner = { navController.navigate(AppRoutes.FOOD_SCANNER_SCREEN) },
                 onNavigateToCustomFood = { navController.navigate(AppRoutes.CUSTOM_FOOD_LIST_SCREEN) }
             )
         }
         composable(route = AppRoutes.FOOD_SCANNER_SCREEN) {
-            // Re-use the same foodViewModel instance for consistency
             val scannerViewModel: FoodScannerViewModel = viewModel()
             FoodScannerScreen(
                 foodViewModel = foodViewModel,
@@ -65,9 +75,11 @@ fun NutritionNavHost(navController: NavHostController, mainNavController: NavHos
             )
         }
         composable(route = AppRoutes.FOOD_DIARY_SCREEN) {
+            // 5. Pass the collected calorieGoal to the FoodDiaryScreen
             FoodDiaryScreen(
                 viewModel = foodViewModel,
-                onNavigateUp = { navController.popBackStack() }
+                onNavigateUp = { navController.popBackStack() },
+                calorieGoal = calorieGoal
             )
         }
         composable(route = AppRoutes.CUSTOM_FOOD_LIST_SCREEN) {

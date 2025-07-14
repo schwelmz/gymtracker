@@ -62,7 +62,8 @@ interface FoodLogDao {
     """)
     fun getAllLogsWithDetails(): Flow<List<FoodLogWithDetails>>
 
-
+    @Query("UPDATE food_logs SET timestamp = :newTimestamp WHERE id = :logId")
+    suspend fun updateTimestamp(logId: Int, newTimestamp: Long)
     @Query("DELETE FROM food_logs WHERE id = :logId")
     suspend fun delete(logId: Int)
 }
