@@ -9,7 +9,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,15 +40,18 @@ fun HomeScreen(
     val healthState = state.healthUiState
     val goals = state.userGoals
 
-    val todaysFoodEntries by foodViewModel.todayFood.collectAsState(initial = emptyList())
-    val totalCaloriesIntake = remember(todaysFoodEntries) { todaysFoodEntries.sumOf { it.calories } }
-    val totalProtein = remember(todaysFoodEntries) { todaysFoodEntries.sumOf { it.protein } }
-    val totalCarbs = remember(todaysFoodEntries) { todaysFoodEntries.sumOf { it.carbs } }
-    val totalFat = remember(todaysFoodEntries) { todaysFoodEntries.sumOf { it.fat } }
+    // --- 1. THIS IS THE CORRECTED SECTION ---
+    // Use the new `todayFoodLogs` property and the `FoodLogWithDetails` data class
+    val todaysFoodLogs by foodViewModel.todayFoodLogs.collectAsState(initial = emptyList())
+    // The sumOf logic remains the same as the property names are the same in FoodLogWithDetails
+    val totalCaloriesIntake = remember(todaysFoodLogs) { todaysFoodLogs.sumOf { it.calories } }
+    val totalProtein = remember(todaysFoodLogs) { todaysFoodLogs.sumOf { it.protein } }
+    val totalCarbs = remember(todaysFoodLogs) { todaysFoodLogs.sumOf { it.carbs } }
+    val totalFat = remember(todaysFoodLogs) { todaysFoodLogs.sumOf { it.fat } }
+    // --- END OF CORRECTION ---
 
     val context = LocalContext.current
 
-    // --- State for the Goal Setting Dialog ---
     var showGoalDialog by remember { mutableStateOf(false) }
     var dialogTitle by remember { mutableStateOf("") }
     var dialogCurrentValue by remember { mutableStateOf("") }
@@ -67,7 +69,6 @@ fun HomeScreen(
         )
     }
 
-    // Function to launch the dialog
     val launchGoalDialog = { title: String, currentValue: Int, onSaveAction: (Int) -> Unit ->
         dialogTitle = title
         dialogCurrentValue = currentValue.toString()
@@ -96,7 +97,6 @@ fun HomeScreen(
         item {
             when (healthState) {
                 is HomeUiState.Idle -> CircularProgressIndicator()
-                // --- THIS SECTION IS RESTORED ---
                 is HomeUiState.HealthConnectNotInstalled -> {
                     PermissionCard(
                         title = "Health Connect Not Installed",
@@ -119,7 +119,6 @@ fun HomeScreen(
                         onButtonClick = onGrantPermissionsClick
                     )
                 }
-                // --- END OF RESTORED SECTION ---
                 is HomeUiState.Success -> {
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         CalorieBudgetGraph(
@@ -287,15 +286,12 @@ fun CalorieBudgetGraph(
             }
 
             Spacer(modifier = Modifier.height(8.dp))
-            // --- CORRECTED ---
+            // --- 2. THIS IS THE CORRECTED SYNTAX ---
             LinearProgressIndicator(
-                progress = {
-                    progress // Removed the curly braces
-                },
+                progress = progress,
                 modifier = Modifier.fillMaxWidth().height(12.dp).clip(MaterialTheme.shapes.small),
                 color = progressBarColor,
-                trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant
             )
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -333,15 +329,10 @@ fun HealthStatsGrid(stats: TodayHealthStats, stepsGoal: Int, onStepsGoalClick: (
                             .padding(horizontal = 4.dp)
                     ) {
                         Text(text = "Steps", style = MaterialTheme.typography.labelLarge)
-                        // --- CORRECTED ---
                         LinearProgressIndicator(
-                            progress = {
-                                progress // Removed the curly braces
-                            },
+                            progress = progress,
                             modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                            color = MaterialTheme.colorScheme.primary,
-                            trackColor = ProgressIndicatorDefaults.linearTrackColor,
-                            strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
+                            color = MaterialTheme.colorScheme.primary
                         )
                         Text(text = "${stats.steps} / $stepsGoal", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
                     }
@@ -385,15 +376,10 @@ private fun MacroStat(label: String, value: Int, goal: Int, onClick: () -> Unit)
         modifier = Modifier.clickable(onClick = onClick).padding(8.dp)
     ) {
         Text(text = label, style = MaterialTheme.typography.labelLarge)
-        // --- CORRECTED ---
         LinearProgressIndicator(
-            progress = {
-                progress // Removed the curly braces
-            },
+            progress = progress,
             modifier = Modifier.width(80.dp).padding(vertical = 4.dp),
-            color = MaterialTheme.colorScheme.primary,
-            trackColor = ProgressIndicatorDefaults.linearTrackColor,
-            strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
+            color = MaterialTheme.colorScheme.primary
         )
         Text(text = "${value}g / ${goal}g", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
     }
@@ -447,7 +433,6 @@ fun PermissionCard(
     }
 }
 
-// --- PREVIEWS UPDATED FOR NEW SIGNATURES ---
 @Preview(showBackground = true)
 @Composable
 fun CalorieBudgetGraphPreview_UnderBudget() {
@@ -456,9 +441,9 @@ fun CalorieBudgetGraphPreview_UnderBudget() {
             intake = 1850,
             burned = 450,
             goal = 2200,
-            calorieMode = CalorieMode.DEFICIT, // Provide a mode for the preview
+            calorieMode = CalorieMode.DEFICIT,
             onGoalClick = {},
-            onModeChange = {} // Provide an empty lambda
+            onModeChange = {}
         )
     }
 }
@@ -471,9 +456,9 @@ fun CalorieBudgetGraphPreview_OverBudget() {
             intake = 2500,
             burned = 300,
             goal = 2200,
-            calorieMode = CalorieMode.SURPLUS, // Provide a mode for the preview
+            calorieMode = CalorieMode.SURPLUS,
             onGoalClick = {},
-            onModeChange = {} // Provide an empty lambda
+            onModeChange = {}
         )
     }
 }
@@ -489,7 +474,7 @@ fun HealthStatsGridPreview() {
                 caloriesBurned = 350.0
             ),
             stepsGoal = 10000,
-            onStepsGoalClick = {} // Pass an empty lambda for the preview
+            onStepsGoalClick = {}
         )
     }
 }
@@ -505,7 +490,7 @@ fun MacroSummaryCardPreview() {
             proteinGoal = 150,
             carbGoal = 250,
             fatGoal = 70,
-            onProteinGoalClick = {}, // Pass empty lambdas for the preview
+            onProteinGoalClick = {},
             onCarbGoalClick = {},
             onFatGoalClick = {}
         )

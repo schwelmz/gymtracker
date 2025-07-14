@@ -9,13 +9,15 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 
 // You must increment the version number for the runtime migration
-@Database(entities = [WorkoutSession::class, Exercise::class, Food::class, CustomFood::class], version = 10) // <-- 1. ENSURE CustomFood::class IS HERE
+@Database(entities = [WorkoutSession::class, Exercise::class,FoodTemplate::class, FoodLog::class  ], version = 11) // <-- 1. ENSURE CustomFood::class IS HERE
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun workoutDao(): WorkoutDao
     abstract fun exerciseDao(): ExerciseDao
-    abstract fun foodDao(): FoodDao
-    abstract fun customFoodDao(): CustomFoodDao // <-- 2. ENSURE THIS LINE IS HERE
+
+    abstract fun foodTemplateDao(): FoodTemplateDao
+
+    abstract fun foodLogDao(): FoodLogDao
 
     companion object {
         @Volatile

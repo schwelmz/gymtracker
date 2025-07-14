@@ -45,7 +45,7 @@ fun FoodDiaryScreen(viewModel: FoodViewModel, onNavigateUp: () -> Unit) {
             items(foodHistory) { food ->
                 // You can reuse your FoodCard here if it's accessible,
                 // or create a new summary composable.
-                FoodCard(food = food)
+                FoodCard(foodLog = food)
             }
         }
     }

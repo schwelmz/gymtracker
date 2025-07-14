@@ -10,12 +10,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.gymtracker.ui.AppRoutes
-import com.example.gymtracker.ui.components.AppNavigationRail
-import com.example.gymtracker.ui.components.RailNavItem
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.gymtracker.data.FoodLogWithDetails // <-- IMPORT THE CORRECT CLASS
 import com.example.gymtracker.viewmodel.FoodScannerViewModel
 import com.example.gymtracker.viewmodel.FoodViewModel
 import kotlinx.coroutines.launch
@@ -24,18 +21,7 @@ import kotlinx.coroutines.launch
 fun NutritionHostScreen(mainNavController: NavHostController) {
     val nutritionRailNavController = rememberNavController()
 
-    val nutritionNavItems = listOf(
-        RailNavItem(id = "diary", title = "Food Diary", route = AppRoutes.FOOD_DIARY_SCREEN),
-        RailNavItem(id = "scanner", title = "Food Scanner", route = AppRoutes.FOOD_SCANNER_SCREEN),
-        RailNavItem(id = "custom_food", title = "Custom Foods", route = AppRoutes.CUSTOM_FOOD_LIST_SCREEN)
-    )
-
     Row(modifier = Modifier.fillMaxSize()) {
-//        AppNavigationRail(
-//            items = nutritionNavItems,
-//            selectedItemId = nutritionRailNavController.currentDestination?.route ?: AppRoutes.FOOD_DIARY_SCREEN,
-//            onItemSelected = { route -> nutritionRailNavController.navigate(route) }
-//        )
         Surface(modifier = Modifier.fillMaxSize()) {
             NutritionNavHost(navController = nutritionRailNavController, mainNavController = mainNavController)
         }
@@ -45,14 +31,21 @@ fun NutritionHostScreen(mainNavController: NavHostController) {
 @Composable
 fun NutritionNavHost(navController: NavHostController, mainNavController: NavHostController) {
     val scope = rememberCoroutineScope()
+    // --- IMPORTANT: Assume you create your FoodViewModel at a higher level (like MainActivity)
+    // and pass it down. If you create it here with viewModel(), you might get different instances.
+    // For this fix, I'll keep viewModel() as is, but this is a point for future refactoring.
+    val foodViewModel: FoodViewModel = viewModel(factory = FoodViewModel.Factory)
+
     NavHost(navController = navController, startDestination = AppRoutes.NUTRITION_SCREEN) {
-        composable(route = AppRoutes.NUTRITION_SCREEN) { // This will be the default for the rail
-            val foodViewModel: FoodViewModel = viewModel()
+        composable(route = AppRoutes.NUTRITION_SCREEN) {
             NutritionScreen(
                 viewModel = foodViewModel,
-                onDeleteFoodEntry = { food ->
+                // --- THIS IS THE CORRECTED SECTION ---
+                // The lambda now accepts the new `FoodLogWithDetails` object
+                onDeleteFoodEntry = { foodLog ->
                     scope.launch {
-                        foodViewModel.deleteFood(food)
+                        // We call the new `deleteFoodLog` function with the log's ID
+                        foodViewModel.deleteFoodLog(foodLog.logId)
                     }
                 },
                 onNavigateToDiary = { navController.navigate(AppRoutes.FOOD_DIARY_SCREEN) },
@@ -61,9 +54,8 @@ fun NutritionNavHost(navController: NavHostController, mainNavController: NavHos
             )
         }
         composable(route = AppRoutes.FOOD_SCANNER_SCREEN) {
-            val foodViewModel: FoodViewModel = viewModel()
+            // Re-use the same foodViewModel instance for consistency
             val scannerViewModel: FoodScannerViewModel = viewModel()
-
             FoodScannerScreen(
                 foodViewModel = foodViewModel,
                 scannerViewModel = scannerViewModel,
@@ -73,24 +65,19 @@ fun NutritionNavHost(navController: NavHostController, mainNavController: NavHos
             )
         }
         composable(route = AppRoutes.FOOD_DIARY_SCREEN) {
-            val foodViewModel: FoodViewModel = viewModel()
-
             FoodDiaryScreen(
                 viewModel = foodViewModel,
                 onNavigateUp = { navController.popBackStack() }
             )
         }
         composable(route = AppRoutes.CUSTOM_FOOD_LIST_SCREEN) {
-            val foodViewModel: FoodViewModel = viewModel()
             CustomFoodListScreen(
                 viewModel = foodViewModel,
                 onNavigateUp = { navController.popBackStack() },
                 onNavigateToAddCustomFood = { navController.navigate(AppRoutes.ADD_CUSTOM_FOOD_SCREEN) }
             )
         }
-
         composable(route = AppRoutes.ADD_CUSTOM_FOOD_SCREEN) {
-            val foodViewModel: FoodViewModel = viewModel()
             AddCustomFoodScreen(
                 viewModel = foodViewModel,
                 onNavigateUp = { navController.popBackStack() }

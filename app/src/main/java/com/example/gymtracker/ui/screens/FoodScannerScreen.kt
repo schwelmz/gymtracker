@@ -53,7 +53,9 @@ fun FoodScannerScreen(
                     ProductDetails(
                         product = state.product,
                         onAddFood = { grams ->
-                            foodViewModel.addFood(state.product, grams)
+                            // --- THIS IS THE CORRECTED LINE ---
+                            // Call the new, correct function in the ViewModel
+                            foodViewModel.addScannedFood(state.product, grams)
                             onSave()
                         }
                     )

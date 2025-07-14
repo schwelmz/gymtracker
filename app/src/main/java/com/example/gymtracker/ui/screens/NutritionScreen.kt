@@ -5,11 +5,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,30 +17,36 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.gymtracker.R
-import com.example.gymtracker.data.Food
+import com.example.gymtracker.data.FoodLogWithDetails // <-- IMPORT THE NEW DATA CLASS
 import com.example.gymtracker.viewmodel.FoodViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NutritionScreen(
     viewModel: FoodViewModel,
-    onDeleteFoodEntry: (Food) -> Unit,
+    // 1. UPDATE THE FUNCTION SIGNATURE
+    onDeleteFoodEntry: (FoodLogWithDetails) -> Unit,
     onNavigateToDiary: () -> Unit,
     onNavigateToScanner: () -> Unit,
     onNavigateToCustomFood: () -> Unit
 ) {
-    Scaffold(
-    ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            val todaysFoodEntries by viewModel.todayFood.collectAsState(initial = emptyList())
+    Scaffold { padding ->
+        Column(modifier = Modifier
+            .fillMaxSize()
+            .padding(padding)) {
+            // 2. USE THE NEW STATE FLOW FROM THE VIEWMODEL
+            val todaysFoodLogs by viewModel.todayFoodLogs.collectAsState(initial = emptyList())
 
-            val totalCalories = remember(todaysFoodEntries) { todaysFoodEntries.sumOf { it.calories } }
-            val totalProtein = remember(todaysFoodEntries) { todaysFoodEntries.sumOf { it.protein } }
-            val totalCarbs = remember(todaysFoodEntries) { todaysFoodEntries.sumOf { it.carbs } }
-            val totalFat = remember(todaysFoodEntries) { todaysFoodEntries.sumOf { it.fat } }
+            // 3. UPDATE THE AGGREGATE CALCULATIONS
+            val totalCalories = remember(todaysFoodLogs) { todaysFoodLogs.sumOf { it.calories } }
+            val totalProtein = remember(todaysFoodLogs) { todaysFoodLogs.sumOf { it.protein } }
+            val totalCarbs = remember(todaysFoodLogs) { todaysFoodLogs.sumOf { it.carbs } }
+            val totalFat = remember(todaysFoodLogs) { todaysFoodLogs.sumOf { it.fat } }
 
             LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 item {
@@ -59,13 +61,17 @@ fun NutritionScreen(
 
                 item {
                     Card(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 24.dp),
                         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 12.dp)
                             ) {
                                 Text(
                                     text = "Today's Total Calories",
@@ -79,12 +85,13 @@ fun NutritionScreen(
                                 )
                             }
                             HorizontalDivider(
-                                Modifier,
-                                DividerDefaults.Thickness,
-                                DividerDefaults.color
+                                thickness = DividerDefaults.Thickness,
+                                color = DividerDefaults.color
                             )
                             Row(
-                                modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 12.dp),
                                 horizontalArrangement = Arrangement.SpaceAround
                             ) {
                                 MacroStat(label = "Protein", value = totalProtein)
@@ -95,7 +102,6 @@ fun NutritionScreen(
                     }
                 }
 
-                // --- BUTTONS SECTION (MOVED) ---
                 item {
                     Row(
                         modifier = Modifier
@@ -118,7 +124,6 @@ fun NutritionScreen(
                     }
                 }
 
-                // Title for the food list
                 item {
                     Row(
                         modifier = Modifier
@@ -133,11 +138,11 @@ fun NutritionScreen(
                     }
                 }
 
-                items(todaysFoodEntries) { food ->
-                    FoodCard(food = food, onDelete = { onDeleteFoodEntry(food) })
+                // 4. UPDATE THE LAZYCOLUMN ITEMS
+                items(todaysFoodLogs) { foodLog ->
+                    FoodCard(foodLog = foodLog, onDelete = { onDeleteFoodEntry(foodLog) })
                 }
 
-                // Spacer at the end so list items don't hide behind the FAB
                 item {
                     Spacer(modifier = Modifier.height(96.dp))
                 }
@@ -146,9 +151,6 @@ fun NutritionScreen(
     }
 }
 
-/**
- * A small, reusable composable to display a single macronutrient stat.
- */
 @Composable
 private fun MacroStat(label: String, value: Int) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -157,10 +159,10 @@ private fun MacroStat(label: String, value: Int) {
     }
 }
 
-
+// 5. UPDATE THE FOODCARD TO USE THE NEW DATA CLASS
 @Composable
 fun FoodCard(
-    food: Food,
+    foodLog: FoodLogWithDetails,
     onDelete: () -> Unit = {}
 ) {
     var showDialog by remember { mutableStateOf(false) }
@@ -180,7 +182,7 @@ fun FoodCard(
                 }
             },
             dismissButton = {
-                Button(onClick = { showDialog = false }) {
+                TextButton(onClick = { showDialog = false }) {
                     Text("Cancel")
                 }
             }
@@ -205,10 +207,10 @@ fun FoodCard(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             val imageWidth = 95.dp
-            if (!food.imageUri.isNullOrBlank()) {
+            if (!foodLog.imageUrl.isNullOrBlank()) {
                 AsyncImage(
-                    model = food.imageUri,
-                    contentDescription = food.name,
+                    model = foodLog.imageUrl,
+                    contentDescription = foodLog.name,
                     modifier = Modifier
                         .width(imageWidth)
                         .height(cardHeight)
@@ -216,7 +218,7 @@ fun FoodCard(
             } else {
                 Image(
                     painter = painterResource(id = R.drawable.outline_picture_in_picture_center_24),
-                    contentDescription = food.name,
+                    contentDescription = foodLog.name,
                     modifier = Modifier
                         .width(imageWidth)
                         .height(cardHeight)
@@ -225,10 +227,10 @@ fun FoodCard(
             }
 
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(text = food.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(text = foodLog.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(text = "Weight: ${food.grams}g", style = MaterialTheme.typography.bodyMedium)
-                Text(text = "Calories: ${food.calories}", style = MaterialTheme.typography.bodyMedium)
+                Text(text = "Weight: ${foodLog.grams}g", style = MaterialTheme.typography.bodyMedium)
+                Text(text = "Calories: ${foodLog.calories}", style = MaterialTheme.typography.bodyMedium)
             }
         }
     }

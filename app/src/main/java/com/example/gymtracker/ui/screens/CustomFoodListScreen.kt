@@ -16,7 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.example.gymtracker.data.CustomFood
+import com.example.gymtracker.data.FoodTemplate // <-- IMPORT THE CORRECT CLASS
 import com.example.gymtracker.viewmodel.FoodViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -26,22 +26,24 @@ fun CustomFoodListScreen(
     onNavigateUp: () -> Unit,
     onNavigateToAddCustomFood: () -> Unit
 ) {
-    // --- STATE MANAGEMENT ---
-    val allCustomFoods by viewModel.allCustomFoods.collectAsState(initial = emptyList())
+    // --- 1. STATE MANAGEMENT (CORRECTED) ---
+    // Use the new `allFoodTemplates` Flow from the ViewModel
+    val allFoodTemplates by viewModel.allFoodTemplates.collectAsState(initial = emptyList())
     var searchQuery by remember { mutableStateOf("") }
 
-    val filteredFoods = remember(searchQuery, allCustomFoods) {
+    val filteredFoods = remember(searchQuery, allFoodTemplates) {
         if (searchQuery.isBlank()) {
-            allCustomFoods
+            allFoodTemplates
         } else {
-            allCustomFoods.filter {
+            allFoodTemplates.filter {
                 it.name.contains(searchQuery, ignoreCase = true)
             }
         }
     }
 
     var showLogDialog by remember { mutableStateOf(false) }
-    var selectedFood by remember { mutableStateOf<CustomFood?>(null) }
+    // Use the new FoodTemplate class for the selected food state
+    var selectedFood by remember { mutableStateOf<FoodTemplate?>(null) }
     var grams by remember { mutableStateOf("") }
 
     if (showLogDialog && selectedFood != null) {
@@ -62,7 +64,8 @@ fun CustomFoodListScreen(
                     onClick = {
                         val gramsInt = grams.toIntOrNull()
                         if (gramsInt != null) {
-                            viewModel.addCustomFoodEntry(selectedFood!!, gramsInt)
+                            // Call the new, correct function in the ViewModel
+                            viewModel.logFood(selectedFood!!, gramsInt)
                             showLogDialog = false
                             onNavigateUp() // Go back after logging the food
                         }
@@ -89,12 +92,9 @@ fun CustomFoodListScreen(
                 }
             )
         },
-        // --- THIS IS THE CORRECTED SECTION ---
         floatingActionButton = {
-            // Wrap the FAB in a Box and apply an offset.
-            // A negative 'y' value moves the button up.
             Box(
-                modifier = Modifier.offset(y = (-52).dp) // Adjust this value as needed
+                modifier = Modifier.offset(y = (-50).dp)
             ) {
                 FloatingActionButton(
                     onClick = onNavigateToAddCustomFood,
@@ -125,13 +125,15 @@ fun CustomFoodListScreen(
             LazyColumn(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
             ) {
-                items(filteredFoods) { food ->
+                // --- 3. DISPLAY FILTERED LIST (CORRECTED) ---
+                // Iterate over the list of FoodTemplates
+                items(filteredFoods) { foodTemplate ->
                     ListItem(
-                        headlineContent = { Text(food.name, fontWeight = FontWeight.Bold) },
-                        supportingContent = { Text("${food.caloriesPer100g} kcal per 100g") },
+                        headlineContent = { Text(foodTemplate.name, fontWeight = FontWeight.Bold) },
+                        supportingContent = { Text("${foodTemplate.caloriesPer100g} kcal per 100g") },
                         modifier = Modifier.clickable {
-                            selectedFood = food
-                            grams = "100" // Default to 100g
+                            selectedFood = foodTemplate // Set the selected FoodTemplate
+                            grams = "100"
                             showLogDialog = true
                         }
                     )

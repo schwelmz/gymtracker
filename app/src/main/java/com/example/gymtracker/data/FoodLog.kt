@@ -1,0 +1,26 @@
+package com.example.gymtracker.data
+
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.PrimaryKey
+
+/**
+ * Represents a single instance of a food being logged by the user.
+ * It contains the amount and a timestamp, and references a FoodTemplate.
+ */
+@Entity(
+    tableName = "food_logs",
+    foreignKeys = [ForeignKey(
+        entity = FoodTemplate::class,
+        parentColumns = ["id"],
+        childColumns = ["templateId"],
+        onDelete = ForeignKey.CASCADE // If a template is deleted, its logs are also deleted.
+    )]
+)
+data class FoodLog(
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
+    val templateId: Int, // Foreign key linking to the FoodTemplate
+    val grams: Int,
+    val timestamp: Long
+)
