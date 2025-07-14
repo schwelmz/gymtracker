@@ -5,33 +5,38 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.gymtracker.ui.AppRoutes
-import com.example.gymtracker.ui.components.AppNavigationRail
-import com.example.gymtracker.ui.components.RailNavItem
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.gymtracker.viewmodel.HomeViewModel
 import com.example.gymtracker.viewmodel.FoodViewModel
+import com.example.gymtracker.viewmodel.GoalsViewModel
+import com.example.gymtracker.viewmodel.HomeViewModel
 
 @Composable
-fun HomeHostScreen(mainNavController: NavHostController, onGrantPermissionsClick: () -> Unit) {
+fun HomeHostScreen(
+    mainNavController: NavHostController,
+    // 1. Accept all the necessary ViewModels
+    homeViewModel: HomeViewModel,
+    foodViewModel: FoodViewModel,
+    goalsViewModel: GoalsViewModel,
+    onGrantPermissionsClick: () -> Unit
+) {
     val homeRailNavController = rememberNavController()
 
-    val homeNavItems = listOf(
-        RailNavItem(id = "overview", title = "Overview", route = AppRoutes.HOME_SCREEN)
-    )
-
     Row(modifier = Modifier.fillMaxSize()) {
-//        AppNavigationRail(
-//            items = homeNavItems,
-//            selectedItemId = homeRailNavController.currentDestination?.route ?: AppRoutes.HOME_SCREEN,
-//            onItemSelected = { route -> homeRailNavController.navigate(route) }
-//        )
         Surface(modifier = Modifier.fillMaxSize()) {
-            HomeNavHost(navController = homeRailNavController, mainNavController = mainNavController, onGrantPermissionsClick = onGrantPermissionsClick)
+            // 2. Pass the ViewModels down to the NavHost
+            HomeNavHost(
+                navController = homeRailNavController,
+                mainNavController = mainNavController,
+                homeViewModel = homeViewModel,
+                foodViewModel = foodViewModel,
+                goalsViewModel = goalsViewModel,
+                onGrantPermissionsClick = onGrantPermissionsClick
+            )
         }
     }
 }
@@ -40,16 +45,19 @@ fun HomeHostScreen(mainNavController: NavHostController, onGrantPermissionsClick
 fun HomeNavHost(
     navController: NavHostController,
     mainNavController: NavHostController,
+    // 3. Define the function signature with explicit types for all ViewModels
+    homeViewModel: HomeViewModel,
+    foodViewModel: FoodViewModel,
+    goalsViewModel: GoalsViewModel,
     onGrantPermissionsClick: () -> Unit
 ) {
     NavHost(navController = navController, startDestination = AppRoutes.HOME_SCREEN) {
         composable(route = AppRoutes.HOME_SCREEN) {
-            val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory)
-            val foodViewModel: FoodViewModel = viewModel(factory = FoodViewModel.Factory)
-
+            // 4. Pass all the received ViewModel instances to the HomeScreen
             HomeScreen(
                 homeViewModel = homeViewModel,
                 foodViewModel = foodViewModel,
+                goalsViewModel = goalsViewModel,
                 onGrantPermissionsClick = onGrantPermissionsClick
             )
         }
