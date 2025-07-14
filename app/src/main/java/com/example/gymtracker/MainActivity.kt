@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -90,10 +92,9 @@ fun GymApp() {
                     Box(contentAlignment = Alignment.Center) {
                         // Layer 1: The background icon
                         Icon(
-                            painter = painterResource(id = R.drawable.dumbell_icon),
-                            contentDescription = "Add Workout", // Accessibility description
-                            modifier = Modifier.size(42.dp),
-                            tint = Color.Unspecified
+                            imageVector = Icons.Default.Add, // Use the standard "Add" (plus) icon
+                            contentDescription = "Add"  // You can keep or adjust the size
+                            // No tint is needed here, it will inherit the correct color automatically
                         )
                     }
                 }
