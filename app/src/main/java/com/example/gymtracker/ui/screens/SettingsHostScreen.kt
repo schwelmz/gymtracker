@@ -1,9 +1,12 @@
 package com.example.gymtracker.ui.screens
 
+import SettingsScreen
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -13,6 +16,8 @@ import com.example.gymtracker.ui.AppRoutes
 import com.example.gymtracker.ui.components.AppNavigationRail
 import com.example.gymtracker.ui.components.RailNavItem
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.gymtracker.viewmodel.SettingsViewModel
 
 @Composable
 fun SettingsHostScreen(mainNavController: NavHostController) {
@@ -41,14 +46,17 @@ fun SettingsNavHost(navController: NavHostController, mainNavController: NavHost
         composable(route = AppRoutes.SETTINGS_SCREEN) {
             val uriHandler = LocalUriHandler.current
             val donationUrl = "https://www.buymeacoffee.com/your-username"
-
+            val settingsViewModel: SettingsViewModel = viewModel()
+            val currentLanguage by settingsViewModel.language.collectAsState()
             SettingsScreen(
                 onNavigateToAbout = {
                     navController.navigate(AppRoutes.ABOUT_SCREEN)
                 },
                 onNavigateToDonate = {
                     uriHandler.openUri(donationUrl)
-                }
+                },
+                currentLanguage = currentLanguage,
+                onLanguageSelected = { settingsViewModel.setLanguage(it) }
             )
         }
         composable(route = AppRoutes.ABOUT_SCREEN) {

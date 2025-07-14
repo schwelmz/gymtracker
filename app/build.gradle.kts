@@ -47,6 +47,7 @@ android {
 }
 
 dependencies {
+    implementation("androidx.datastore:datastore-preferences:1.1.7")
     implementation("com.google.guava:guava:32.1.3-android")
     implementation("androidx.health.connect:connect-client:1.1.0-rc02")
     implementation("androidx.concurrent:concurrent-futures-ktx:1.1.0")

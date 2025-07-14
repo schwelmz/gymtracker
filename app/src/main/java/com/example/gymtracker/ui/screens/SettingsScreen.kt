@@ -1,22 +1,25 @@
-package com.example.gymtracker.ui.screens
-
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onNavigateToAbout: () -> Unit,
-    onNavigateToDonate: () -> Unit // <-- 1. Add new lambda parameter
+    onNavigateToDonate: () -> Unit,
+    currentLanguage: String,
+    onLanguageSelected: (String) -> Unit
 ) {
+    val languages = listOf("English", "Deutsch", "Español")
+    var showDialog by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("Settings") })
@@ -31,28 +34,55 @@ fun SettingsScreen(
                 ListItem(
                     headlineContent = { Text("About") },
                     leadingContent = {
-                        Icon(
-                            Icons.Filled.Info,
-                            contentDescription = "About"
-                        )
+                        Icon(Icons.Filled.Info, contentDescription = "About")
                     },
                     modifier = Modifier.clickable(onClick = onNavigateToAbout)
                 )
             }
 
-            // --- 2. ADD THE NEW LIST ITEM FOR DONATION ---
             item {
                 ListItem(
                     headlineContent = { Text("Support the App") },
                     leadingContent = {
-                        Icon(
-                            Icons.Filled.Favorite,
-                            contentDescription = "Donate"
-                        )
+                        Icon(Icons.Filled.Favorite, contentDescription = "Donate")
                     },
                     modifier = Modifier.clickable(onClick = onNavigateToDonate)
                 )
             }
+
+            item {
+                ListItem(
+                    headlineContent = { Text("Language: $currentLanguage") },
+                    leadingContent = {
+                        Icon(Icons.Filled.Info, contentDescription = "Language")
+                    },
+                    modifier = Modifier.clickable { showDialog = true }
+                )
+            }
+        }
+
+        if (showDialog) {
+            AlertDialog(
+                onDismissRequest = { showDialog = false },
+                confirmButton = {},
+                title = { Text("Choose Language") },
+                text = {
+                    Column {
+                        languages.forEach { language ->
+                            Text(
+                                text = language,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(8.dp)
+                                    .clickable {
+                                        onLanguageSelected(language)
+                                        showDialog = false
+                                    }
+                            )
+                        }
+                    }
+                }
+            )
         }
     }
 }
