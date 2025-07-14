@@ -12,5 +12,6 @@ import java.time.LocalDate
 data class WeightEntry(
     @PrimaryKey
     val date: LocalDate,
-    val weight: Float // Use Float for precision (e.g., 80.5 kg)
+    val weight: Float, // Use Float for precision (e.g., 80.5 kg)
+    val imageUri: String? // <-- ADD THIS LINE
 )

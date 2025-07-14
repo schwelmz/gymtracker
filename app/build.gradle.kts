@@ -82,20 +82,21 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     implementation("com.google.code.gson:gson:2.13.1")
     // Charting Library - Vico
+    implementation("com.patrykandpatrick.vico:core:1.1.0")
     implementation("com.patrykandpatrick.vico:compose-m3:1.13.0")
     implementation("androidx.compose.ui:ui-text-google-fonts:1.6.0")
     // Image Loading - Coil
     implementation("io.coil-kt:coil-compose:2.6.0")
 
     // Accompanist Permissions (ensure you get the latest version)
-    implementation("com.google.accompanist:accompanist-permissions:0.34.0")
+    implementation("com.google.accompanist:accompanist-permissions:0.37.3")
     // For Google's ML Kit Barcode Scanning
     implementation("com.google.mlkit:barcode-scanning:17.2.0")
     // For CameraX to display a camera preview
-    implementation("androidx.camera:camera-core:1.3.3")
-    implementation("androidx.camera:camera-camera2:1.3.3")
-    implementation("androidx.camera:camera-lifecycle:1.3.3")
-    implementation("androidx.camera:camera-view:1.3.3")
+    implementation("androidx.camera:camera-core:1.4.2")
+    implementation("androidx.camera:camera-camera2:1.4.2")
+    implementation("androidx.camera:camera-lifecycle:1.4.2")
+    implementation("androidx.camera:camera-view:1.4.2")
     // For Accompanist Permissions to easily handle camera permission
     implementation("com.google.accompanist:accompanist-permissions:0.34.0")
 
@@ -107,12 +108,12 @@ dependencies {
     implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0")
 
     // For Coil (displaying images from a URL)
-    implementation("io.coil-kt:coil-compose:2.6.0")
-    implementation("androidx.camera:camera-core:1.3.3-ktx")
+    implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation("androidx.camera:camera-core:1.4.2")
 
     // Calendar Library
     implementation("com.kizitonwose.calendar:compose:2.7.0")
     //Desugaring
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
     implementation("androidx.datastore:datastore-preferences:1.1.7")
 }

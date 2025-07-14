@@ -14,9 +14,10 @@ class WeightViewModel(application: Application) : AndroidViewModel(application) 
 
     val allWeightEntries: Flow<List<WeightEntry>> = weightDao.getAllEntries()
 
-    fun addOrUpdateWeight(date: LocalDate, weight: Float) {
+    // Updated to accept the image URI
+    fun addOrUpdateWeight(date: LocalDate, weight: Float, imageUri: String?) {
         viewModelScope.launch {
-            val entry = WeightEntry(date = date, weight = weight)
+            val entry = WeightEntry(date = date, weight = weight, imageUri = imageUri)
             weightDao.insert(entry)
         }
     }
