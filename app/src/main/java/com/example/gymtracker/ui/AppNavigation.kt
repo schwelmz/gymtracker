@@ -42,6 +42,7 @@ import com.example.gymtracker.ui.screens.HomeHostScreen
 import com.example.gymtracker.ui.screens.NutritionHostScreen
 import com.example.gymtracker.ui.screens.RecentWorkoutsView
 import com.example.gymtracker.ui.screens.SettingsHostScreen
+import com.example.gymtracker.ui.screens.WeightHistoryScreen
 import com.example.gymtracker.ui.screens.WorkoutCalendarView
 import com.example.gymtracker.ui.screens.WorkoutHostScreen
 import com.example.gymtracker.viewmodel.GoalsViewModel
@@ -54,6 +55,7 @@ object AppRoutes {
     const val ADD_WORKOUT_SCREEN = "add_workout"
     const val WORKOUT_LOG_SCREEN = "workout_log/{exerciseName}"
     const val STATS_SCREEN = "stats/{exerciseName}"
+    const val WEIGHT_HISTORY_SCREEN = "weight_history_screen"
 
     // Exercises Graph
 
@@ -113,8 +115,13 @@ fun AppNavigation(
                     onGrantPermissionsClick = onGrantPermissionsClick,
                     homeViewModel = homeViewModel,
                     foodViewModel = foodViewModel,
-                    goalsViewModel = goalsViewModel
+                    goalsViewModel = goalsViewModel,
+                    onNavigateToWeightHistory = { navController.navigate(AppRoutes.WEIGHT_HISTORY_SCREEN) }
                 )
+            }
+
+            composable(route = AppRoutes.WEIGHT_HISTORY_SCREEN) {
+                WeightHistoryScreen(onNavigateUp = { navController.popBackStack() })
             }
 
             // The routes you navigate to FROM the home screen remain the same.

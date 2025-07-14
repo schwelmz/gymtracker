@@ -5,6 +5,7 @@ import androidx.room.PrimaryKey
 import androidx.room.TypeConverter
 import com.google.firebase.crashlytics.buildtools.reloc.com.google.common.reflect.TypeToken
 import com.google.gson.Gson
+import java.time.LocalDate
 import java.util.Date
 
 // Represents a single set of an exercise (e.g., 10 reps at 50 kg)
@@ -29,7 +30,15 @@ class Converters {
     fun fromDate(date: Date?): Long? {
         return date?.time
     }
+    @TypeConverter
+    fun toLocalDate(value: Long?): LocalDate? {
+        return value?.let { LocalDate.ofEpochDay(it) }
+    }
 
+    @TypeConverter
+    fun fromLocalDate(date: LocalDate?): Long? {
+        return date?.toEpochDay()
+    }
     @TypeConverter
     fun toDate(timestamp: Long?): Date? {
         return timestamp?.let { Date(it) }

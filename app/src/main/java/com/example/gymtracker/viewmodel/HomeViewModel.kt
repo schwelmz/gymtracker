@@ -10,6 +10,8 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.gymtracker.data.HealthConnectManager
 import com.example.gymtracker.data.HealthDataRepository
 import com.example.gymtracker.data.TodayHealthStats
+import com.example.gymtracker.data.WeightEntry
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -28,10 +30,11 @@ sealed interface HomeUiState {
 
 open class HomeViewModel(
     application: Application,
-    private val healthDataRepository: HealthDataRepository
+    private val healthDataRepository: HealthDataRepository,
+    private val weightViewModel: WeightViewModel
     // `userGoalsRepository` is removed from the constructor
 ) : AndroidViewModel(application) {
-
+    val weightEntries: Flow<List<WeightEntry>> = weightViewModel.allWeightEntries
     // This state flow now only deals with health data.
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Idle)
     open val uiState = _uiState.asStateFlow()
@@ -79,7 +82,10 @@ open class HomeViewModel(
                     val application = checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])
                     val healthDataRepository = HealthDataRepository(application)
                     // We no longer create or pass UserGoalsRepository here.
-                    return HomeViewModel(application, healthDataRepository) as T
+                    return HomeViewModel(
+                        application, healthDataRepository,
+                        weightViewModel = WeightViewModel(application)
+                    ) as T
                 }
                 throw IllegalArgumentException("Unknown ViewModel class")
             }

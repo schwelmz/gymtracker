@@ -25,23 +25,26 @@ import androidx.compose.ui.unit.dp
 import com.example.gymtracker.R
 import com.example.gymtracker.data.CalorieMode
 import com.example.gymtracker.data.TodayHealthStats
+import com.example.gymtracker.data.WeightEntry
 import com.example.gymtracker.ui.theme.AppTheme
 import com.example.gymtracker.viewmodel.FoodViewModel
 import com.example.gymtracker.viewmodel.GoalsViewModel
 import com.example.gymtracker.viewmodel.HomeUiState
 import com.example.gymtracker.viewmodel.HomeViewModel
 import java.lang.Float.max
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun HomeScreen(
     homeViewModel: HomeViewModel,
     foodViewModel: FoodViewModel,
-    goalsViewModel: GoalsViewModel, // <-- 1. ACCEPT THE NEW VIEWMODEL
-    onGrantPermissionsClick: () -> Unit
+    goalsViewModel: GoalsViewModel,
+    onGrantPermissionsClick: () -> Unit,
+    onNavigateToWeightHistory: () -> Unit
 ) {
     val healthState by homeViewModel.uiState.collectAsState()
-    // 2. COLLECT GOALS STATE FROM THE CORRECT VIEWMODEL
     val goals by goalsViewModel.uiState.collectAsState()
+    val weightEntries by homeViewModel.weightEntries.collectAsState(initial = emptyList())
 
     val todaysFoodLogs by foodViewModel.todayFoodLogs.collectAsState(initial = emptyList())
     val totalCaloriesIntake = remember(todaysFoodLogs) { todaysFoodLogs.sumOf { it.calories } }
@@ -94,16 +97,35 @@ fun HomeScreen(
             )
         }
         item {
-            when (healthState) {
+            when (val state = healthState) {
                 is HomeUiState.Idle -> CircularProgressIndicator()
-                is HomeUiState.HealthConnectNotInstalled -> { /* ... */ }
-                is HomeUiState.PermissionsNotGranted -> { /* ... */ }
+                is HomeUiState.HealthConnectNotInstalled -> {
+                    PermissionCard(
+                        title = "Health Connect Not Installed",
+                        description = "To view your health stats, please install the Health Connect app.",
+                        buttonText = "Install",
+                        onButtonClick = {
+                            val intent = Intent(Intent.ACTION_VIEW).apply {
+                                data = Uri.parse("market://details?id=com.google.android.apps.healthdata")
+                                setPackage("com.android.vending")
+                            }
+                            context.startActivity(intent)
+                        }
+                    )
+                }
+                is HomeUiState.PermissionsNotGranted -> {
+                    PermissionCard(
+                        title = "Permissions Required",
+                        description = "This app needs permission to read your health data. Tap below to grant access.",
+                        buttonText = "Grant Permissions",
+                        onButtonClick = onGrantPermissionsClick
+                    )
+                }
                 is HomeUiState.Success -> {
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        // 3. UPDATE ALL CALLS TO USE goalsViewModel
                         CalorieBudgetGraph(
                             intake = totalCaloriesIntake,
-                            burned = (healthState as HomeUiState.Success).stats.caloriesBurned.toInt(),
+                            burned = state.stats.caloriesBurned.toInt(), // Use the state variable
                             goal = goals.calorieGoal,
                             calorieMode = goals.calorieMode,
                             onGoalClick = {
@@ -115,6 +137,7 @@ fun HomeScreen(
                                 goalsViewModel.updateUserGoal(calorieMode = newMode)
                             }
                         )
+
                         MacroSummaryCard(
                             protein = totalProtein,
                             carbs = totalCarbs,
@@ -139,7 +162,7 @@ fun HomeScreen(
                             }
                         )
                         HealthStatsGrid(
-                            stats = (healthState as HomeUiState.Success).stats,
+                            stats = state.stats, // Use the state variable
                             stepsGoal = goals.stepsGoal,
                             onStepsGoalClick = {
                                 launchGoalDialog("Set Daily Step Goal", goals.stepsGoal) {
@@ -147,12 +170,56 @@ fun HomeScreen(
                                 }
                             }
                         )
+
+                        WeightTrackerCard(
+                            weightEntries = weightEntries,
+                            onNavigateToWeightHistory = onNavigateToWeightHistory
+                        )
                     }
                 }
             }
         }
     }
 }
+
+@Composable
+fun WeightTrackerCard(
+    weightEntries: List<WeightEntry>,
+    onNavigateToWeightHistory: () -> Unit
+) {
+    val latestEntry = weightEntries.firstOrNull()
+    val formatter = remember { DateTimeFormatter.ofPattern("d MMM yyyy") }
+
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text("Weight Tracker", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(8.dp))
+            if (latestEntry != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text("Latest Weight", style = MaterialTheme.typography.labelLarge)
+                        Text("%.1f kg".format(latestEntry.weight), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                        Text(latestEntry.date.format(formatter), style = MaterialTheme.typography.bodySmall)
+                    }
+                    Button(onClick = onNavigateToWeightHistory) {
+                        Text("View History")
+                    }
+                }
+            } else {
+                Text("No weight entries yet.", style = MaterialTheme.typography.bodyMedium)
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(onClick = onNavigateToWeightHistory) {
+                    Text("Add Weight")
+                }
+            }
+        }
+    }
+}
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -271,11 +338,11 @@ fun CalorieBudgetGraph(
             Spacer(modifier = Modifier.height(8.dp))
             // --- 2. THIS IS THE CORRECTED SYNTAX ---
             LinearProgressIndicator(
-            progress = { progress },
-            modifier = Modifier.fillMaxWidth().height(12.dp).clip(MaterialTheme.shapes.small),
-            color = progressBarColor,
-            trackColor = MaterialTheme.colorScheme.surfaceVariant,
-            strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
+                progress = { progress },
+                modifier = Modifier.fillMaxWidth().height(12.dp).clip(MaterialTheme.shapes.small),
+                color = progressBarColor,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
             )
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -314,11 +381,11 @@ fun HealthStatsGrid(stats: TodayHealthStats, stepsGoal: Int, onStepsGoalClick: (
                     ) {
                         Text(text = "Steps", style = MaterialTheme.typography.labelLarge)
                         LinearProgressIndicator(
-                        progress = { progress },
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                        color = MaterialTheme.colorScheme.primary,
-                        trackColor = ProgressIndicatorDefaults.linearTrackColor,
-                        strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
+                            progress = { progress },
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                            color = MaterialTheme.colorScheme.primary,
+                            trackColor = ProgressIndicatorDefaults.linearTrackColor,
+                            strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
                         )
                         Text(text = "${stats.steps} / $stepsGoal", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
                     }
@@ -363,11 +430,11 @@ private fun MacroStat(label: String, value: Int, goal: Int, onClick: () -> Unit)
     ) {
         Text(text = label, style = MaterialTheme.typography.labelLarge)
         LinearProgressIndicator(
-        progress = { progress },
-        modifier = Modifier.width(80.dp).padding(vertical = 4.dp),
-        color = MaterialTheme.colorScheme.primary,
-        trackColor = ProgressIndicatorDefaults.linearTrackColor,
-        strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
+            progress = { progress },
+            modifier = Modifier.width(80.dp).padding(vertical = 4.dp),
+            color = MaterialTheme.colorScheme.primary,
+            trackColor = ProgressIndicatorDefaults.linearTrackColor,
+            strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
         )
         Text(text = "${value}g / ${goal}g", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
     }

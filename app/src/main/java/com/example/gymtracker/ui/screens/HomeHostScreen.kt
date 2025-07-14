@@ -22,7 +22,8 @@ fun HomeHostScreen(
     homeViewModel: HomeViewModel,
     foodViewModel: FoodViewModel,
     goalsViewModel: GoalsViewModel,
-    onGrantPermissionsClick: () -> Unit
+    onGrantPermissionsClick: () -> Unit,
+    onNavigateToWeightHistory: () -> Unit
 ) {
     val homeRailNavController = rememberNavController()
 
@@ -35,7 +36,8 @@ fun HomeHostScreen(
                 homeViewModel = homeViewModel,
                 foodViewModel = foodViewModel,
                 goalsViewModel = goalsViewModel,
-                onGrantPermissionsClick = onGrantPermissionsClick
+                onGrantPermissionsClick = onGrantPermissionsClick,
+                onNavigateToWeightHistory = onNavigateToWeightHistory
             )
         }
     }
@@ -49,7 +51,8 @@ fun HomeNavHost(
     homeViewModel: HomeViewModel,
     foodViewModel: FoodViewModel,
     goalsViewModel: GoalsViewModel,
-    onGrantPermissionsClick: () -> Unit
+    onGrantPermissionsClick: () -> Unit,
+    onNavigateToWeightHistory: () -> Unit
 ) {
     NavHost(navController = navController, startDestination = AppRoutes.HOME_SCREEN) {
         composable(route = AppRoutes.HOME_SCREEN) {
@@ -58,7 +61,8 @@ fun HomeNavHost(
                 homeViewModel = homeViewModel,
                 foodViewModel = foodViewModel,
                 goalsViewModel = goalsViewModel,
-                onGrantPermissionsClick = onGrantPermissionsClick
+                onGrantPermissionsClick = onGrantPermissionsClick,
+                onNavigateToWeightHistory = onNavigateToWeightHistory
             )
         }
     }
