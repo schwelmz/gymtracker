@@ -18,6 +18,7 @@ import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.gymtracker.data.CalorieMode
 import com.example.gymtracker.data.FoodLogWithDetails
 import com.example.gymtracker.ui.components.FoodCard
 import com.example.gymtracker.viewmodel.FoodViewModel
@@ -42,6 +43,7 @@ enum class ChartTimeSpan(val days: Long, val title: String) {
 fun FoodDiaryScreen(
     viewModel: FoodViewModel,
     calorieGoal: Int,
+    calorieMode: CalorieMode,
     onNavigateUp: () -> Unit
 ) {
     val foodHistory by viewModel.allFoodHistory.collectAsState(initial = emptyList())
@@ -143,6 +145,7 @@ fun FoodDiaryScreen(
                     LineChart(
                         data = chartData,
                         calorieGoal = calorieGoal,
+                        calorieMode = calorieMode,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(250.dp)
@@ -238,6 +241,7 @@ private fun OptionsDialog(
 fun LineChart(
     data: List<Pair<LocalDate, Int>>,
     calorieGoal: Int,
+    calorieMode: CalorieMode,
     modifier: Modifier = Modifier
 ) {
     val density = LocalDensity.current
@@ -246,7 +250,10 @@ fun LineChart(
     val primaryColor = MaterialTheme.colorScheme.primary
     val goalColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f)
     val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
-
+    val goalLabel = when (calorieMode) {
+        CalorieMode.DEFICIT -> "Limit"
+        CalorieMode.SURPLUS -> "Goal"
+    }
     val labelStyle = TextStyle(fontSize = 12.sp, color = onSurfaceVariant)
 
     Canvas(modifier = modifier) {
@@ -286,7 +293,8 @@ fun LineChart(
             color = goalColor,
             style = Stroke(width = 4f, cap = StrokeCap.Round, pathEffect = PathEffect.dashPathEffect(floatArrayOf(15f, 15f), 0f))
         )
-        val goalLabelText = textMeasurer.measure("Goal", style = labelStyle.copy(color = goalColor, fontWeight = FontWeight.Bold))
+
+        val goalLabelText = textMeasurer.measure(goalLabel, style = labelStyle.copy(color = goalColor, fontWeight = FontWeight.Bold))
         drawText(
             textLayoutResult = goalLabelText,
             topLeft = Offset(yAxisLabelPadding + 4.dp.toPx(), goalY - goalLabelText.size.height - 4.dp.toPx())

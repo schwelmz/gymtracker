@@ -54,7 +54,7 @@ fun NutritionNavHost(
     // 4. Collect the goals state here to be used by child screens
     val goalsState by goalsViewModel.uiState.collectAsState()
     val calorieGoal = goalsState.calorieGoal
-
+    val calorieMode = goalsState.calorieMode
     NavHost(navController = navController, startDestination = AppRoutes.NUTRITION_SCREEN) {
         composable(route = AppRoutes.NUTRITION_SCREEN) {
             NutritionScreen(
@@ -79,7 +79,8 @@ fun NutritionNavHost(
             FoodDiaryScreen(
                 viewModel = foodViewModel,
                 onNavigateUp = { navController.popBackStack() },
-                calorieGoal = calorieGoal
+                calorieGoal = calorieGoal,
+                calorieMode = calorieMode
             )
         }
         composable(route = AppRoutes.CUSTOM_FOOD_LIST_SCREEN) {

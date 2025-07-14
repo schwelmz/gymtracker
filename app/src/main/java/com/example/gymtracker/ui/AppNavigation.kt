@@ -34,6 +34,7 @@ import kotlinx.coroutines.CoroutineScope
 import java.time.LocalDate
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.remember
+import com.example.gymtracker.data.CalorieMode
 import com.example.gymtracker.ui.screens.AddCustomFoodScreen
 import com.example.gymtracker.ui.screens.AllExercisesView
 import com.example.gymtracker.ui.screens.CustomFoodListScreen
@@ -251,7 +252,8 @@ fun AppNavigation(
                 FoodDiaryScreen(
                     viewModel = foodViewModel,
                     calorieGoal = 2000,
-                    onNavigateUp = { navController.popBackStack() }
+                    onNavigateUp = { navController.popBackStack() },
+                    calorieMode = CalorieMode.SURPLUS
                 )
             }
             // Add the new destinations

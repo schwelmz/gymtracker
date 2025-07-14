@@ -218,7 +218,10 @@ fun CalorieBudgetGraph(
     val leftoverTextColor = if (isGoalAchieved) Color(0xFF4CAF50) else Color.Red
 
     var menuExpanded by remember { mutableStateOf(false) }
-
+    val goalLabel = when (calorieMode) {
+        CalorieMode.DEFICIT -> "Limit"
+        CalorieMode.SURPLUS -> "Goal"
+    }
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -279,7 +282,7 @@ fun CalorieBudgetGraph(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 CalorieStat(label = "Intake", value = "$intake")
                 Box(modifier = Modifier.clickable(onClick = onGoalClick).padding(4.dp)) {
-                    CalorieStat(label = "Goal", value = "$goal")
+                    CalorieStat(label = goalLabel, value = "$goal")
                 }
                 CalorieStat(label = "Burned", value = "$burned")
                 CalorieStat(label = "Leftover", value = "$leftover", valueColor = leftoverTextColor)
