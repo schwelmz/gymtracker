@@ -14,13 +14,17 @@ import androidx.room.PrimaryKey
         entity = FoodTemplate::class,
         parentColumns = ["id"],
         childColumns = ["templateId"],
-        onDelete = ForeignKey.CASCADE // If a template is deleted, its logs are also deleted.
+        onDelete = ForeignKey.CASCADE
     )]
 )
 data class FoodLog(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    val templateId: Int, // Foreign key linking to the FoodTemplate
+    val templateId: Int,
     val grams: Int,
+    val calories: Int,
+    val protein: Int,
+    val carbs: Int,
+    val fat: Int,
     val timestamp: Long
 )

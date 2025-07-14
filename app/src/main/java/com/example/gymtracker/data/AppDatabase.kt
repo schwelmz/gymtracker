@@ -10,7 +10,7 @@ import kotlinx.coroutines.Dispatchers
 
 // You must increment the version number for the runtime migration
 @Database(entities = [WorkoutSession::class, Exercise::class,FoodTemplate::class, FoodLog::class,WeightEntry::class, Recipe::class, RecipeIngredient::class,WorkoutPlan::class,
-    WorkoutPlanExerciseCrossRef::class], version = 14) // <-- 1. ENSURE CustomFood::class IS HERE
+    WorkoutPlanExerciseCrossRef::class], version = 15) // <-- 1. ENSURE CustomFood::class IS HERE
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun workoutDao(): WorkoutDao

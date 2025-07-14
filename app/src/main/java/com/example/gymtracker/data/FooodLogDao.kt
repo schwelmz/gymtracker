@@ -67,4 +67,15 @@ interface FoodLogDao {
     suspend fun updateTimestamp(logId: Int, newTimestamp: Long)
     @Query("DELETE FROM food_logs WHERE id = :logId")
     suspend fun delete(logId: Int)
+
+    @Query("UPDATE food_logs SET grams = :grams, calories = :calories, protein = :protein, carbs = :carbs, fat = :fat WHERE id = :logId")
+    suspend fun updateFoodLogFull(
+        logId: Int,
+        grams: Int,
+        calories: Int,
+        protein: Int,
+        carbs: Int,
+        fat: Int
+    )
+
 }

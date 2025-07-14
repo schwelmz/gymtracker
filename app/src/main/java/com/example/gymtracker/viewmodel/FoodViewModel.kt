@@ -15,7 +15,7 @@ import java.util.Calendar
 class FoodViewModel(application: Application) : AndroidViewModel(application) {
     private val templateDao = AppDatabase.getDatabase(application).foodTemplateDao()
     private val logDao = AppDatabase.getDatabase(application).foodLogDao()
-
+    private val foodLogDao = AppDatabase.getDatabase(application).foodLogDao()
     val todayFoodLogs: Flow<List<FoodLogWithDetails>>
     val allFoodHistory: Flow<List<FoodLogWithDetails>>
     val allFoodTemplates: Flow<List<FoodTemplate>>
@@ -134,6 +134,18 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
             logDao.updateGrams(logId, newGrams)
         }
     }
+    fun updateFoodLog(
+        logId: Int,
+        grams: Int,
+        calories: Int,
+        protein: Int,
+        carbs: Int,
+        fat: Int
+    ) {
+        viewModelScope.launch {
+            foodLogDao.updateFoodLogFull(logId, grams, calories, protein, carbs, fat)
+        }
+    }
     /**
      * Logs an entry for a predefined or custom food template.
      */
@@ -142,7 +154,12 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
             val log = FoodLog(
                 templateId = template.id,
                 grams = grams,
-                timestamp = System.currentTimeMillis()
+                timestamp = System.currentTimeMillis(),
+                id = 0,
+                calories = 0,
+                protein = 0,
+                carbs = 0,
+                fat = 0
             )
             logDao.insert(log)
         }

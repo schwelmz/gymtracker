@@ -69,11 +69,24 @@ fun NutritionScreen(
     }
 
     if (showGramsEditor && selectedLog != null) {
-        GramsEditDialog(
+        EditFoodLogDialog(
             initialGrams = selectedLog!!.grams,
+            initialCalories = selectedLog!!.calories,
+            initialProtein = selectedLog!!.protein,
+            initialCarbs = selectedLog!!.carbs,
+            initialFat = selectedLog!!.fat,
             onDismiss = { showGramsEditor = false },
-            onSave = { newGrams ->
-                scope.launch { viewModel.updateLogGrams(selectedLog!!.logId, newGrams) }
+            onSave = { newGrams, newCalories, newProtein, newCarbs, newFat ->
+                scope.launch {
+                    viewModel.updateFoodLog(
+                        logId = selectedLog!!.logId,
+                        grams = newGrams,
+                        calories = newCalories,
+                        protein = newProtein,
+                        carbs = newCarbs,
+                        fat = newFat
+                    )
+                }
                 showGramsEditor = false
             }
         )
@@ -234,7 +247,7 @@ private fun OptionsDialog(
         confirmButton = {
             Row {
                 // Add the new button
-                TextButton(onClick = onEditGramsClick) { Text("Edit Grams") }
+                TextButton(onClick = onEditGramsClick) { Text("Edit Stats") }
                 Spacer(modifier = Modifier.width(8.dp))
                 TextButton(onClick = onEditClick) { Text("Edit Time") }
                 Spacer(modifier = Modifier.width(8.dp))
@@ -243,48 +256,85 @@ private fun OptionsDialog(
         }
     )
 }
-/**
- * A dialog that gives the user the choice to Edit or Delete.
- * This can be moved to a shared components file if needed.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun GramsEditDialog(
+private fun EditFoodLogDialog(
     initialGrams: Int,
+    initialCalories: Int,
+    initialProtein: Int,
+    initialCarbs: Int,
+    initialFat: Int,
     onDismiss: () -> Unit,
-    onSave: (Int) -> Unit
+    onSave: (newGrams: Int, newCalories: Int, newProtein: Int, newCarbs: Int, newFat: Int) -> Unit
 ) {
     var grams by remember { mutableStateOf(initialGrams.toString()) }
+    var calories by remember { mutableStateOf(initialCalories.toString()) }
+    var protein by remember { mutableStateOf(initialProtein.toString()) }
+    var carbs by remember { mutableStateOf(initialCarbs.toString()) }
+    var fat by remember { mutableStateOf(initialFat.toString()) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Edit Grams") },
+        title = { Text("Edit Nutritional Info") },
         text = {
-            OutlinedTextField(
-                value = grams,
-                onValueChange = { grams = it.filter { char -> char.isDigit() } },
-                label = { Text("New weight (g)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                singleLine = true
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = grams,
+                    onValueChange = { grams = it.filter { c -> c.isDigit() } },
+                    label = { Text("Grams") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = calories,
+                    onValueChange = { calories = it.filter { c -> c.isDigit() } },
+                    label = { Text("Calories") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = protein,
+                    onValueChange = { protein = it.filter { c -> c.isDigit() } },
+                    label = { Text("Protein (g)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = carbs,
+                    onValueChange = { carbs = it.filter { c -> c.isDigit() } },
+                    label = { Text("Carbs (g)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = fat,
+                    onValueChange = { fat = it.filter { c -> c.isDigit() } },
+                    label = { Text("Fat (g)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true
+                )
+            }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    val newGrams = grams.toIntOrNull()
-                    if (newGrams != null) {
-                        onSave(newGrams)
+                    val g = grams.toIntOrNull()
+                    val c = calories.toIntOrNull()
+                    val p = protein.toIntOrNull()
+                    val carb = carbs.toIntOrNull()
+                    val f = fat.toIntOrNull()
+
+                    if (g != null && c != null && p != null && carb != null && f != null) {
+                        onSave(g, c, p, carb, f)
                     }
                 },
-                enabled = grams.isNotBlank()
+                enabled = listOf(grams, calories, protein, carbs, fat).all { it.isNotBlank() }
             ) {
                 Text("Save")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
+            TextButton(onClick = onDismiss) { Text("Cancel") }
         }
     )
 }
