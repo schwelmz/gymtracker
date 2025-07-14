@@ -4,6 +4,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
@@ -16,6 +17,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.gymtracker.data.CalorieMode
@@ -53,6 +55,7 @@ fun FoodDiaryScreen(
     var showDateTimePicker by remember { mutableStateOf(false) }
     var selectedLog by remember { mutableStateOf<FoodLogWithDetails?>(null) }
     var selectedTimeSpan by remember { mutableStateOf(ChartTimeSpan.WEEK) }
+    var showGramsEditor by remember { mutableStateOf(false) }
 
     if (showOptionsDialog && selectedLog != null) {
         OptionsDialog(
@@ -62,13 +65,26 @@ fun FoodDiaryScreen(
                 showOptionsDialog = false
                 showDateTimePicker = true
             },
+            onEditGramsClick = {
+                showOptionsDialog = false
+                showGramsEditor = true
+            },
             onDeleteClick = {
                 scope.launch { viewModel.deleteFoodLog(selectedLog!!.logId) }
                 showOptionsDialog = false
             }
         )
     }
-
+    if (showGramsEditor && selectedLog != null) {
+        GramsEditDialog(
+            initialGrams = selectedLog!!.grams,
+            onDismiss = { showGramsEditor = false },
+            onSave = { newGrams ->
+                viewModel.updateLogGrams(selectedLog!!.logId, newGrams)
+                showGramsEditor = false
+            }
+        )
+    }
     if (showDateTimePicker && selectedLog != null) {
         DateTimePickerDialog(
             initialTimestamp = selectedLog!!.timestamp,
@@ -193,7 +209,47 @@ fun FoodDiaryScreen(
         }
     }
 }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun GramsEditDialog(
+    initialGrams: Int,
+    onDismiss: () -> Unit,
+    onSave: (Int) -> Unit
+) {
+    var grams by remember { mutableStateOf(initialGrams.toString()) }
 
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit Grams") },
+        text = {
+            OutlinedTextField(
+                value = grams,
+                onValueChange = { grams = it.filter { char -> char.isDigit() } },
+                label = { Text("New weight (g)") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                singleLine = true
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val newGrams = grams.toIntOrNull()
+                    if (newGrams != null) {
+                        onSave(newGrams)
+                    }
+                },
+                enabled = grams.isNotBlank()
+            ) {
+                Text("Save")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
 @Composable
 fun TimeSpanSelector(
     selectedTimeSpan: ChartTimeSpan,
@@ -215,6 +271,7 @@ private fun OptionsDialog(
     foodName: String,
     onDismiss: () -> Unit,
     onEditClick: () -> Unit,
+    onEditGramsClick: ()->Unit,
     onDeleteClick: () -> Unit
 ) {
     AlertDialog(
@@ -225,7 +282,9 @@ private fun OptionsDialog(
             TextButton(onClick = onDismiss) { Text("Cancel") }
         },
         confirmButton = {
-            Row {
+            Row{
+                TextButton(onClick = onEditGramsClick) { Text("Edit Grams") }
+                Spacer(modifier = Modifier.width(8.dp))
                 TextButton(onClick = onEditClick) { Text("Edit Time") }
                 Spacer(modifier = Modifier.width(8.dp))
                 TextButton(onClick = onDeleteClick) { Text("Delete") }

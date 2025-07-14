@@ -4,6 +4,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -12,6 +13,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.gymtracker.data.FoodLogWithDetails
 import com.example.gymtracker.ui.components.DateTimePickerDialog
@@ -36,7 +38,7 @@ fun NutritionScreen(
     var showOptionsDialog by remember { mutableStateOf(false) }
     var showDateTimePicker by remember { mutableStateOf(false) }
     var selectedLog by remember { mutableStateOf<FoodLogWithDetails?>(null) }
-
+    var showGramsEditor by remember { mutableStateOf(false) }
     // --- DIALOGS ---
     if (showOptionsDialog && selectedLog != null) {
         OptionsDialog(
@@ -45,6 +47,10 @@ fun NutritionScreen(
             onEditClick = {
                 showOptionsDialog = false
                 showDateTimePicker = true
+            },
+            onEditGramsClick = {
+                showOptionsDialog = false
+                showGramsEditor = true
             },
             onDeleteClick = {
                 scope.launch { viewModel.deleteFoodLog(selectedLog!!.logId) }
@@ -64,7 +70,16 @@ fun NutritionScreen(
         )
     }
 
-
+    if (showGramsEditor && selectedLog != null) {
+        GramsEditDialog(
+            initialGrams = selectedLog!!.grams,
+            onDismiss = { showGramsEditor = false },
+            onSave = { newGrams ->
+                scope.launch { viewModel.updateLogGrams(selectedLog!!.logId, newGrams) }
+                showGramsEditor = false
+            }
+        )
+    }
     Scaffold { padding ->
         Column(modifier = Modifier
             .fillMaxSize()
@@ -199,15 +214,11 @@ private fun MacroStat(label: String, value: Int) {
         Text(text = "${value}g", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
     }
 }
-
-/**
- * A dialog that gives the user the choice to Edit or Delete.
- * This can be moved to a shared components file if needed.
- */
 @Composable
 private fun OptionsDialog(
     foodName: String,
     onDismiss: () -> Unit,
+    onEditGramsClick: () -> Unit, // <-- ADD NEW PARAMETER
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
@@ -220,9 +231,57 @@ private fun OptionsDialog(
         },
         confirmButton = {
             Row {
+                // Add the new button
+                TextButton(onClick = onEditGramsClick) { Text("Edit Grams") }
+                Spacer(modifier = Modifier.width(8.dp))
                 TextButton(onClick = onEditClick) { Text("Edit Time") }
                 Spacer(modifier = Modifier.width(8.dp))
                 TextButton(onClick = onDeleteClick) { Text("Delete") }
+            }
+        }
+    )
+}
+/**
+ * A dialog that gives the user the choice to Edit or Delete.
+ * This can be moved to a shared components file if needed.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun GramsEditDialog(
+    initialGrams: Int,
+    onDismiss: () -> Unit,
+    onSave: (Int) -> Unit
+) {
+    var grams by remember { mutableStateOf(initialGrams.toString()) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit Grams") },
+        text = {
+            OutlinedTextField(
+                value = grams,
+                onValueChange = { grams = it.filter { char -> char.isDigit() } },
+                label = { Text("New weight (g)") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                singleLine = true
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val newGrams = grams.toIntOrNull()
+                    if (newGrams != null) {
+                        onSave(newGrams)
+                    }
+                },
+                enabled = grams.isNotBlank()
+            ) {
+                Text("Save")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
             }
         }
     )
