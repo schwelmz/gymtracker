@@ -26,9 +26,9 @@ import java.time.LocalDate
 @Composable
 fun WorkoutHostScreen(mainNavController: NavHostController) {
     val workoutNavItems = listOf(
-        RailNavItem(id = "recent", title = "Recent Workouts", route = AppRoutes.WORKOUT_RECENT_SCREEN),
-        RailNavItem(id = "calendar", title = "Workout Calendar", route = AppRoutes.WORKOUT_CALENDAR_VIEW_SCREEN),
-        RailNavItem(id = "exercises", title = "All Exercises", route = AppRoutes.WORKOUT_ALL_EXERCISES_SCREEN)
+        RailNavItem(id = "recent", title = "Recent", route = AppRoutes.WORKOUT_RECENT_SCREEN),
+        RailNavItem(id = "calendar", title = "Calendar", route = AppRoutes.WORKOUT_CALENDAR_VIEW_SCREEN),
+        RailNavItem(id = "exercises", title = "Exercises", route = AppRoutes.WORKOUT_ALL_EXERCISES_SCREEN)
     )
 
     val pagerState = rememberPagerState { workoutNavItems.size }
