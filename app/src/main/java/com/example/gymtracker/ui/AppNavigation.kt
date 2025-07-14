@@ -41,8 +41,10 @@ import com.example.gymtracker.ui.screens.AddCustomFoodScreen
 import com.example.gymtracker.ui.screens.AddEditRecipeScreen
 import com.example.gymtracker.ui.screens.AllExercisesView
 import com.example.gymtracker.ui.screens.CustomFoodListScreen
+import com.example.gymtracker.ui.screens.ExercisePickerScreen
 import com.example.gymtracker.ui.screens.HomeHostScreen
 import com.example.gymtracker.ui.screens.NutritionHostScreen
+import com.example.gymtracker.ui.screens.PlanWorkoutLogScreen
 import com.example.gymtracker.ui.screens.RecentWorkoutsView
 import com.example.gymtracker.ui.screens.SettingsHostScreen
 import com.example.gymtracker.ui.screens.WeightHistoryScreen
@@ -74,7 +76,7 @@ object AppRoutes {
     const val WORKOUT_CALENDAR_VIEW_SCREEN = "workout_calendar_view_screen"
     const val WORKOUT_ALL_EXERCISES_SCREEN = "workout_all_exercises_screen"
     const val WORKOUT_PLANS_SCREEN = "workout_plans_screen"
-
+    const val EXERCISE_PICKER_SCREEN = "exercise_picker/{planId}"
     // Nutrition Graph
     const val NUTRITION_SCREEN = "nutrition_screen"
     const val FOOD_SCANNER_SCREEN = "food_scanner_screen?open_camera={open_camera}"
@@ -86,6 +88,7 @@ object AppRoutes {
     const val ABOUT_SCREEN = "about_screen"
     const val CUSTOM_FOOD_LIST_SCREEN = "custom_food_list_screen"
     const val ADD_CUSTOM_FOOD_SCREEN = "add_custom_food_screen"
+    const val PLAN_WORKOUT_LOG_SCREEN = "plan_workout_log_screen/{planId}"
 }
 
 @Composable
@@ -195,6 +198,19 @@ fun AppNavigation(
                     onNavigateUp = { navController.popBackStack() }
                 )
             }
+            composable(
+                route = AppRoutes.PLAN_WORKOUT_LOG_SCREEN,
+                arguments = listOf(navArgument("planId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val planId = backStackEntry.arguments?.getInt("planId") ?: -1
+                PlanWorkoutLogScreen(
+                    planId = planId,
+                    onExerciseSelected = { exerciseName ->
+                        navController.navigate(AppRoutes.WORKOUT_LOG_SCREEN.replace("{exerciseName}", exerciseName))
+                    }
+                )
+            }
+
             composable(route = AppRoutes.WORKOUT_CALENDAR_DAY_SCREEN) { navBackStackEntry -> // FIX: Explicit name
                 val day = navBackStackEntry.arguments?.getString("day")
                 val parentEntry = remember(navBackStackEntry) {
@@ -225,6 +241,17 @@ fun AppNavigation(
                     )
                 }
             }
+            composable(
+                route = AppRoutes.EXERCISE_PICKER_SCREEN,
+                arguments = listOf(navArgument("planId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val planId = backStackEntry.arguments?.getInt("planId") ?: return@composable
+                ExercisePickerScreen(
+                    planId = planId,
+                    onNavigateUp = { navController.popBackStack() }
+                )
+            }
+
             composable(route = AppRoutes.STATS_SCREEN) { backStackEntry ->
                 val exerciseName = backStackEntry.arguments?.getString("exerciseName") ?: "Unknown"
                 val viewModel: WorkoutViewModel = viewModel()

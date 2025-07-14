@@ -95,8 +95,18 @@ fun WorkoutHostScreen(mainNavController: NavHostController) {
                         )
                     }
                     AppRoutes.WORKOUT_PLANS_SCREEN -> {
-                        WorkoutPlansView()
+                        WorkoutPlansView(
+                            onExercisePicker = { plan ->
+                                val route = AppRoutes.EXERCISE_PICKER_SCREEN.replace("{planId}", plan.id.toString())
+                                mainNavController.navigate(route)
+                            },
+                            onLogWorkoutForPlan = { plan ->
+                                val route = AppRoutes.PLAN_WORKOUT_LOG_SCREEN.replace("{planId}", plan.id.toString())
+                                mainNavController.navigate(route)
+                            }
+                        )
                     }
+
                 }
             }
         }

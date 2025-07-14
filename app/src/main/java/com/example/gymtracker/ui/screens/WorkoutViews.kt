@@ -14,6 +14,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import cardHeight
 import com.example.gymtracker.data.Exercise
+import com.example.gymtracker.data.WorkoutPlan
 import com.example.gymtracker.data.WorkoutSession
 import com.example.gymtracker.ui.components.WorkoutCalendar
 import java.text.SimpleDateFormat
@@ -207,7 +208,10 @@ fun AllExercisesView(
 }
 
 @Composable
-fun WorkoutPlansView(){
+fun WorkoutPlansView(
+    onExercisePicker: (WorkoutPlan) -> Unit,
+    onLogWorkoutForPlan: (WorkoutPlan) -> Unit
+){
     LazyColumn {
         item {
             Box(
@@ -229,19 +233,23 @@ fun WorkoutPlansView(){
             }
         }
         item {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        top = headlineTopPadding,
-                        bottom = headlineBottomPadding,
-                        end = 16.dp
-                    ),
-                contentAlignment = Alignment.CenterEnd // Aligns content to the end (right)
+//            Box(
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .padding(
+//                        top = headlineTopPadding,
+//                        bottom = headlineBottomPadding,
+//                        end = 16.dp
+//                    ),
+//                contentAlignment = Alignment.CenterEnd // Aligns content to the end (right)
+//            )
+//            {
+//                Text("work in progress...")
+//            }
+            WorkoutPlanScreen(
+                onExercisePicker = onExercisePicker,
+                onLogWorkoutForPlan = onLogWorkoutForPlan
             )
-            {
-                Text("work in progress...")
-            }
         }
     }
 }
