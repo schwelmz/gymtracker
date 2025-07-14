@@ -15,6 +15,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -29,6 +30,9 @@ import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.util.*
 
+val headlineTopPadding = 64.dp
+val headlineBottomPadding = 32.dp
+
 @Composable
 fun RecentWorkoutsView(
     sessions: List<WorkoutSession>,
@@ -37,33 +41,53 @@ fun RecentWorkoutsView(
     onModifySession: (WorkoutSession) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    LazyColumn(modifier = modifier.padding(horizontal = 16.dp)) {
+    LazyColumn (
+    ){
         item {
-            Text(
-                text = "Recent Workouts",
-                style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.secondary,
-                modifier = Modifier.padding(top = 20.dp, bottom = 20.dp)
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        top = headlineTopPadding,
+                        bottom = headlineBottomPadding,
+                        end = 16.dp
+                    ),
+                contentAlignment = Alignment.CenterEnd // Aligns content to the end (right)
+            ) {
+                Text(
+                    text = "Recent Workouts",
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = MaterialTheme.colorScheme.secondary
+                    // textAlign can be removed if the Box handles the alignment
+                )
+            }
         }
         if (sessions.isEmpty()) {
             item {
                 Text(
-                    "No workouts recorded yet.",
-                    modifier = Modifier.padding(16.dp)
+                    "No workouts recorded yet."
                 )
             }
         } else {
             val sessionDates = sessions.map { it.date }.distinct().sortedByDescending { it.time }
-            items(items = sessionDates.take(2)) { sessionDate ->
+            items(items = sessionDates) { sessionDate ->
                 Text(
-                    text = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(sessionDate),
+                    text = SimpleDateFormat(
+                        "MMM dd, yyyy",
+                        Locale.getDefault()
+                    ).format(sessionDate),
                     style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(bottom = 16.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
                 )
-                LazyRow(modifier = Modifier.padding(bottom = 16.dp)) {
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                ) {
                     val filteredSessions = sessions.filter { it.date == sessionDate }
-                    items(filteredSessions) { session ->
+                    items(filteredSessions.take(10)) { session ->
                         val totalSets = session.sets.size
                         val totalReps = session.sets.sumOf { it.reps }
                         val details = "$totalSets sets, Total Reps: $totalReps"
@@ -87,19 +111,46 @@ fun WorkoutCalendarView(
     onNavigateToWorkoutCalendarDay: (LocalDate) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    LazyColumn(modifier = modifier.padding(horizontal = 16.dp)) {
+    LazyColumn {
         item {
-            Text(
-                text = "Workout Calendar",
-                style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.secondary,
-                modifier = Modifier.padding(top = 20.dp, bottom = 20.dp)
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        top = headlineTopPadding,
+                        bottom = headlineBottomPadding,
+                        end = 16.dp
+                    ),
+                contentAlignment = Alignment.CenterEnd // Aligns content to the end (right)
+            ) {
+                Text(
+                    text = "Calendar",
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = MaterialTheme.colorScheme.secondary
+                    // textAlign can be removed if the Box handles the alignment
+                )
+            }
+        }
+        item {
+            Card (
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                ),
+                modifier = Modifier.height(100.dp).fillMaxWidth().padding(bottom = 32.dp)
+            ) {
+                Text(
+                    "You have a ... day Streak!",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.tertiary,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(20.dp)
+                )
+
+            }
         }
         item {
             WorkoutCalendar(
                 workoutDates = workoutDates,
-                modifier = Modifier.padding(top = 16.dp),
                 onDayClicked = { date -> onNavigateToWorkoutCalendarDay(date) }
             )
         }
@@ -116,12 +167,23 @@ fun AllExercisesView(
 ) {
     LazyColumn(modifier = modifier.padding(horizontal = 16.dp)) {
         item {
-            Text(
-                text = "All Exercises",
-                style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.secondary,
-                modifier = Modifier.padding(top = 20.dp, bottom = 20.dp)
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        top = headlineTopPadding,
+                        bottom = headlineBottomPadding,
+                        end = 16.dp
+                    ),
+                contentAlignment = Alignment.CenterEnd // Aligns content to the end (right)
+            ) {
+                Text(
+                    text = "All Exercises",
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = MaterialTheme.colorScheme.secondary
+                    // textAlign can be removed if the Box handles the alignment
+                )
+            }
         }
         item {
             Card(
@@ -132,7 +194,9 @@ fun AllExercisesView(
                     .padding(vertical = 8.dp)
             ) {
                 Box(
-                    modifier = Modifier.fillMaxSize().padding(16.dp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -217,6 +281,7 @@ fun WorkoutSessionCard(
 }
 
 val cardHeight = 95.dp
+
 @Composable
 fun ExerciseCard(
     exercise: Exercise,
@@ -272,8 +337,7 @@ fun ExerciseCard(
                         .width(imageWidth)
                         .height(cardHeight)
                 )
-            }
-            else if (exercise.imageResId != null) {
+            } else if (exercise.imageResId != null) {
                 Image(
                     painter = painterResource(id = exercise.imageResId),
                     contentDescription = exercise.name,
@@ -281,8 +345,7 @@ fun ExerciseCard(
                         .width(imageWidth)
                         .height(cardHeight)
                 )
-            }
-            else {
+            } else {
                 Image(
                     painter = painterResource(id = R.drawable.outline_picture_in_picture_center_24),
                     contentDescription = exercise.name,

@@ -32,16 +32,16 @@ fun AppNavigationRail(
             .background(MaterialTheme.colorScheme.surface)
             .width(50.dp), // A narrow width for the rail itself
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically)
+        verticalArrangement = Arrangement.spacedBy(0.dp, Alignment.CenterVertically)
     ) {
         items.forEach { item ->
             val isSelected = item.id == selectedItemId
             val indicatorColor by animateColorAsState(
-                if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
+                if (isSelected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent,
                 label = "indicatorColor"
             )
             val textColor by animateColorAsState(
-                if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+                if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface,
                 label = "textColor"
             )
 
