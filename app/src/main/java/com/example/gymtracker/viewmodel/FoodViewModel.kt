@@ -81,6 +81,54 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
             logDao.updateTimestamp(logId, newTimestamp)
         }
     }
+    suspend fun getOrCreateTemplateFromProduct(product: Product): FoodTemplate {
+        val barcode = product.code ?: return FoodTemplate(
+            name = "Unknown", caloriesPer100g = 0,
+            id =0,
+            barcode =null,
+            imageUrl = null,
+            proteinPer100g = 0,
+            carbsPer100g =0,
+            fatPer100g = 0
+        )
+        var template = templateDao.getByBarcode(barcode)
+        if (template == null) {
+            val newTemplate = FoodTemplate(
+                barcode = barcode,
+                name = findBestName(product),
+                imageUrl = product.imageUrl,
+                caloriesPer100g = product.nutriments?.energyKcalPer100g?.toInt() ?: 0,
+                proteinPer100g = product.nutriments?.proteinsPer100g?.toInt() ?: 0,
+                carbsPer100g = product.nutriments?.carbohydratesPer100g?.toInt() ?: 0,
+                fatPer100g = product.nutriments?.fatPer100g?.toInt() ?: 0
+            )
+            val id = templateDao.insert(newTemplate).toInt()
+            template = newTemplate.copy(id = id)
+        }
+        return template
+    }
+    fun addScannedFoodWithCustomName(product: Product, grams: Int, customName: String) {
+        viewModelScope.launch {
+            val barcode = product.code ?: return@launch
+            var template = templateDao.getByBarcode(barcode)
+
+            if (template == null) {
+                val newTemplate = FoodTemplate(
+                    barcode = barcode,
+                    name = customName,
+                    imageUrl = product.imageUrl,
+                    caloriesPer100g = product.nutriments?.energyKcalPer100g?.toInt() ?: 0,
+                    proteinPer100g = product.nutriments?.proteinsPer100g?.toInt() ?: 0,
+                    carbsPer100g = product.nutriments?.carbohydratesPer100g?.toInt() ?: 0,
+                    fatPer100g = product.nutriments?.fatPer100g?.toInt() ?: 0
+                )
+                val newId = templateDao.insert(newTemplate).toInt()
+                template = newTemplate.copy(id = newId)
+            }
+
+            logFood(template, grams)
+        }
+    }
     fun updateLogGrams(logId: Int, newGrams: Int) {
         viewModelScope.launch {
             logDao.updateGrams(logId, newGrams)

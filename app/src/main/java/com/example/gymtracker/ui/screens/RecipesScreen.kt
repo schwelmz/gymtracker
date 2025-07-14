@@ -1,51 +1,164 @@
 package com.example.gymtracker.ui.screens
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.gymtracker.data.RecipeWithDetails
+import com.example.gymtracker.viewmodel.FoodViewModel
+import com.example.gymtracker.viewmodel.RecipeViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RecipesScreen(){
-    LazyColumn {
-        item {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        top = headlineTopPadding,
-                        bottom = headlineBottomPadding,
-                        end = 16.dp
-                    ),
-                contentAlignment = Alignment.CenterEnd // Aligns content to the end (right)
+fun RecipesScreen(
+    recipeViewModel: RecipeViewModel = viewModel(factory = RecipeViewModel.Factory),
+    foodViewModel: FoodViewModel,
+    onNavigateToAddRecipe: () -> Unit,
+    onNavigateToRecipeDetails: (Int) -> Unit
+) {
+    val recipes by recipeViewModel.allRecipes.collectAsState(initial = emptyList())
+    var recipeToDelete by remember { mutableStateOf<RecipeWithDetails?>(null) }
+
+    Scaffold { padding ->
+        Column(modifier = Modifier.padding(padding)) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(
-                    text = "Recipes",
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = MaterialTheme.colorScheme.secondary
-                    // textAlign can be removed if the Box handles the alignment
-                )
+                item {
+                    Text(
+                        text = "Your Recipes",
+                        style = MaterialTheme.typography.headlineLarge,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                }
+
+                item {
+                    Button(
+                        onClick = onNavigateToAddRecipe,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Add Recipe")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                if (recipes.isEmpty()) {
+                    item {
+                        Text(
+                            text = "No recipes found.",
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(32.dp),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                } else {
+                    items(recipes, key = { it.recipe.id }) { recipe ->
+                        RecipeCard(
+                            recipe = recipe,
+                            onClick = { onNavigateToRecipeDetails(recipe.recipe.id) },
+                            onUseRecipe = { usedRecipe ->
+                                usedRecipe.ingredients.forEach { ingredient ->
+                                    foodViewModel.logFood(
+                                        template = ingredient.foodTemplate,
+                                        grams = ingredient.grams
+                                    )
+                                }
+                            },
+                            onLongPress = {
+                                recipeToDelete = recipe
+                            }
+                        )
+                    }
+                }
             }
         }
-        item {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        top = headlineTopPadding,
-                        bottom = headlineBottomPadding,
-                        end = 16.dp
-                    ),
-                contentAlignment = Alignment.CenterEnd // Aligns content to the end (right)
+
+        // Confirm delete dialog
+        recipeToDelete?.let { recipe ->
+            AlertDialog(
+                onDismissRequest = { recipeToDelete = null },
+                title = { Text("Delete Recipe") },
+                text = { Text("Are you sure you want to delete \"${recipe.recipe.name}\"?") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        recipeViewModel.deleteRecipe(recipe.recipe)
+                        recipeToDelete = null
+                    }) {
+                        Text("Delete")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { recipeToDelete = null }) {
+                        Text("Cancel")
+                    }
+                }
             )
-            {
-                Text("work in progress...")
+        }
+    }
+}
+
+@Composable
+fun RecipeCard(
+    recipe: RecipeWithDetails,
+    onClick: () -> Unit,
+    onUseRecipe: (RecipeWithDetails) -> Unit,
+    onLongPress: () -> Unit
+) {
+    val totalCalories = recipe.ingredients.sumOf {
+        (it.foodTemplate.caloriesPer100g * it.grams) / 100
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongPress
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = recipe.recipe.name,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = "$totalCalories kcal • ${recipe.ingredients.size} ingredients",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            recipe.recipe.instructions?.takeIf { it.isNotBlank() }?.let {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Spacer(Modifier.height(8.dp))
+            Button(
+                onClick = { onUseRecipe(recipe) },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Use Recipe")
             }
         }
     }

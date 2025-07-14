@@ -17,8 +17,19 @@ class WeightViewModel(application: Application) : AndroidViewModel(application) 
     // Updated to accept the image URI
     fun addOrUpdateWeight(date: LocalDate, weight: Float, imageUri: String?) {
         viewModelScope.launch {
-            val entry = WeightEntry(date = date, weight = weight, imageUri = imageUri)
-            weightDao.insert(entry)
+            val existingEntry = weightDao.getByDate(date)
+
+            if (existingEntry != null) {
+                // Update existing entry if any value has changed
+                if (existingEntry.weight != weight || existingEntry.imageUri != imageUri) {
+                    val updatedEntry = existingEntry.copy(weight = weight, imageUri = imageUri)
+                    weightDao.updateWeight(updatedEntry)
+                }
+            } else {
+                // Insert new entry if none exists for the given date
+                val newEntry = WeightEntry(date = date, weight = weight, imageUri = imageUri)
+                weightDao.insert(newEntry)
+            }
         }
     }
 

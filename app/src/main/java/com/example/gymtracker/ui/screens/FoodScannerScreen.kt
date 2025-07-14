@@ -13,6 +13,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.example.gymtracker.data.FoodTemplate
 import com.example.gymtracker.data.model.Product
 import com.example.gymtracker.ui.components.BarcodeScannerView
 import com.example.gymtracker.viewmodel.FoodScannerUiState
@@ -71,14 +72,37 @@ fun FoodScannerScreen(
                 is FoodScannerUiState.Loading -> {
                     CircularProgressIndicator()
                 }
+//                is FoodScannerUiState.Success -> {
+//                    ProductDetails(
+//                        product = state.product,
+//                        onAddFood = { grams ->
+//                            foodViewModel.addScannedFood(state.product, grams)
+//                            onSave()
+//                        }
+//                    )
+//                }
                 is FoodScannerUiState.Success -> {
-                    ProductDetails(
-                        product = state.product,
-                        onAddFood = { grams ->
-                            foodViewModel.addScannedFood(state.product, grams)
-                            onSave()
-                        }
-                    )
+                    // Keep a remembered state for the FoodTemplate
+                    var template by remember { mutableStateOf<FoodTemplate?>(null) }
+
+                    // Automatically create the FoodTemplate only once
+                    LaunchedEffect(state.product) {
+                        val createdTemplate = foodViewModel.getOrCreateTemplateFromProduct(state.product)
+                        template = createdTemplate
+                    }
+
+                    // Only show UI once template is ready
+                    if (template != null) {
+                        ProductDetails(
+                            product = state.product,
+                            onAddFood = { grams, name ->
+                                foodViewModel.addScannedFoodWithCustomName(state.product, grams, name)
+                                onSave()
+                            }
+                        )
+                    } else {
+                        CircularProgressIndicator()
+                    }
                 }
                 is FoodScannerUiState.Error -> {
                     Text("Error: ${state.message}", color = MaterialTheme.colorScheme.error)
@@ -112,10 +136,10 @@ fun FoodScannerScreen(
 
 
 @Composable
-fun ProductDetails(product: Product, onAddFood: (Int) -> Unit) {
+fun ProductDetails(product: Product, onAddFood: (Int, String) -> Unit) {
     var grams by remember { mutableStateOf("100") }
 
-    val displayName = remember(product) {
+    val defaultName = remember(product) {
         if (!product.name.isNullOrBlank()) {
             product.name.split("–", "-").firstOrNull()?.trim() ?: product.name
         } else if (!product.genericName.isNullOrBlank()) {
@@ -125,6 +149,9 @@ fun ProductDetails(product: Product, onAddFood: (Int) -> Unit) {
         }
     }
 
+    var customName by remember { mutableStateOf("") }
+    val isUnknown = defaultName == "Unknown Product"
+    val displayName = if (isUnknown) customName else defaultName
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -140,20 +167,30 @@ fun ProductDetails(product: Product, onAddFood: (Int) -> Unit) {
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text(
-            text = displayName,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center
-        )
-
-        if (!product.brands.isNullOrBlank()) {
+        if (isUnknown) {
+            OutlinedTextField(
+                value = customName,
+                onValueChange = { customName = it },
+                label = { Text("Enter Product Name") },
+                modifier = Modifier.fillMaxWidth()
+            )
+        } else {
             Text(
-                text = product.brands,
+                text = displayName,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+        }
+
+        product.brands?.takeIf { it.isNotBlank() }?.let {
+            Text(
+                text = it,
                 style = MaterialTheme.typography.titleMedium,
                 textAlign = TextAlign.Center
             )
         }
+
         Spacer(modifier = Modifier.height(16.dp))
         product.nutriments?.let {
             Text("Energy (per 100g): ${it.energyKcalPer100g} kcal")
@@ -163,18 +200,25 @@ fun ProductDetails(product: Product, onAddFood: (Int) -> Unit) {
             Text("Proteins (per 100g): ${it.proteinsPer100g} g")
             Text("Fat (per 100g): ${it.fatPer100g} g")
         }
+
         Spacer(modifier = Modifier.height(16.dp))
         OutlinedTextField(
             value = grams,
-            onValueChange = { grams = it },
+            onValueChange = { grams = it.filter { c -> c.isDigit() } },
             label = { Text("Grams") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
         )
+
         Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = {
-            val gramsInt = grams.toIntOrNull() ?: 100
-            onAddFood(gramsInt)
-        }) {
+        Button(
+            onClick = {
+                val gramsInt = grams.toIntOrNull() ?: 100
+                if (!isUnknown || customName.isNotBlank()) {
+                    onAddFood(gramsInt, displayName)
+                }
+            },
+            enabled = !isUnknown || customName.isNotBlank()
+        ) {
             Text("Add Food")
         }
     }

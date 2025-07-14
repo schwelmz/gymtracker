@@ -83,15 +83,31 @@ fun WeightHistoryScreen(
         WeightEntryDialog(
             initialEntry = selectedEntry,
             onDismiss = { showEntryDialog = false },
+//            onSave = { newDate, newWeight, imagePath ->
+//                // This logic now ONLY handles saving the data. It no longer closes the dialog.
+//                // This allows for auto-saving in the background.
+//                val entryToUpdate = selectedEntry
+//                if (entryToUpdate != null && entryToUpdate.date != newDate) {
+//                    weightViewModel.deleteWeight(entryToUpdate)
+//                }
+//                weightViewModel.addOrUpdateWeight(newDate, newWeight, imagePath)
+//            }
             onSave = { newDate, newWeight, imagePath ->
-                // This logic now ONLY handles saving the data. It no longer closes the dialog.
-                // This allows for auto-saving in the background.
-                val entryToUpdate = selectedEntry
-                if (entryToUpdate != null && entryToUpdate.date != newDate) {
-                    weightViewModel.deleteWeight(entryToUpdate)
+                selectedEntry?.let { oldEntry ->
+                    // If the date was changed, delete the old one
+                    if (oldEntry.date != newDate) {
+                        weightViewModel.deleteWeight(oldEntry)
+                    }
                 }
-                weightViewModel.addOrUpdateWeight(newDate, newWeight, imagePath)
-            },
+
+                // Always add/update the new data
+                weightViewModel.addOrUpdateWeight(
+                    date = newDate,
+                    weight = newWeight,
+                    imageUri = imagePath
+                )
+            }
+            ,
             onDelete = { entry ->
                 // This logic now ONLY handles deleting the data.
                 entry.imageUri?.let { path ->
@@ -158,6 +174,7 @@ fun WeightHistoryScreen(
     }
 }
 
+
 private fun copyUriToInternalStorage(context: Context, uri: Uri): String? {
     return try {
         val inputStream = context.contentResolver.openInputStream(uri) ?: return null
@@ -191,32 +208,36 @@ fun WeightEntryDialog(
     val dialogTitle = if (isEditing) "Edit Entry" else "Add Weight"
     val context = LocalContext.current
 
-    val initialWeight = remember(initialEntry) { initialEntry?.let { "%.1f".format(it.weight) } ?: "" }
-    val initialDate = remember(initialEntry) { initialEntry?.date ?: LocalDate.now() }
-    val initialImagePath = remember(initialEntry) { initialEntry?.imageUri }
+    val initialWeight = initialEntry?.weight
+    val initialDate = initialEntry?.date ?: LocalDate.now()
+    val initialImagePath = initialEntry?.imageUri
 
-    var weight by remember(initialEntry) { mutableStateOf(initialWeight) }
-    var date by remember(initialEntry) { mutableStateOf(initialDate) }
-    var imagePath by remember(initialEntry) { mutableStateOf(initialImagePath) }
+    var weightInput by remember { mutableStateOf(initialWeight?.toString() ?: "") }
+    var date by remember { mutableStateOf(initialDate) }
+    var imagePath by remember { mutableStateOf(initialImagePath) }
 
-    val weightIsValid = weight.isNotBlank() && weight.toFloatOrNull() != null
-    val hasChanges = weight != initialWeight || date != initialDate || imagePath != initialImagePath
-    val isSaveEnabled = weightIsValid && hasChanges
+    val parsedWeight = weightInput.toFloatOrNull()
+    val weightIsValid = parsedWeight != null
+
+    val hasChanges = weightIsValid && (
+            parsedWeight != initialWeight ||
+                    date != initialDate ||
+                    imagePath != initialImagePath
+            )
+
+    val isSaveEnabled = hasChanges
 
     var showDatePicker by remember { mutableStateOf(false) }
     val formatter = remember { DateTimeFormatter.ofPattern("d MMM yyyy") }
 
     // --- Auto-Save Logic ---
-    LaunchedEffect(weight, date, imagePath) {
-        // Only auto-save if editing an existing entry and there are valid changes.
+    LaunchedEffect(parsedWeight, date, imagePath) {
         if (isEditing && isSaveEnabled) {
-            // Debounce: wait for 1 second of inactivity before saving.
             delay(1000)
-            weight.toFloatOrNull()?.let { newWeight ->
-                onSave(date, newWeight, imagePath)
-            }
+            onSave(date, parsedWeight!!, imagePath)
         }
     }
+
     // --- End Auto-Save Logic ---
 
     val tempImageFile = remember {
@@ -281,20 +302,20 @@ fun WeightEntryDialog(
                     Text(date.format(formatter))
                 }
                 OutlinedTextField(
-                    value = weight,
-                    onValueChange = { weight = it.filter { c -> c.isDigit() || c == '.' } },
+                    value = weightInput,
+                    onValueChange = { weightInput = it.filter { c -> c.isDigit() || c == '.' } },
                     label = { Text("Weight (kg)") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()
                 )
+
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    // Manually save and then dismiss the dialog.
-                    weight.toFloatOrNull()?.let {
+                    parsedWeight?.let {
                         onSave(date, it, imagePath)
                         onDismiss()
                     }

@@ -24,6 +24,7 @@ import com.example.gymtracker.ui.components.RailNavItem
 import com.example.gymtracker.viewmodel.FoodScannerViewModel
 import com.example.gymtracker.viewmodel.FoodViewModel
 import com.example.gymtracker.viewmodel.GoalsViewModel
+import com.example.gymtracker.viewmodel.RecipeViewModel
 import kotlinx.coroutines.launch
 
 @Composable
@@ -31,6 +32,7 @@ fun NutritionHostScreen(
     mainNavController: NavHostController,
     // 1. Accept both required ViewModels
     foodViewModel: FoodViewModel,
+    recipeViewModel: RecipeViewModel,
     goalsViewModel: GoalsViewModel
 ) {
     val nutritionNavItems = listOf(
@@ -77,6 +79,7 @@ fun NutritionHostScreen(
                             onNavigateToCustomFood = { mainNavController.navigate(AppRoutes.CUSTOM_FOOD_LIST_SCREEN) }
                         )
                     }
+
                     AppRoutes.FOOD_DIARY_SCREEN -> {
                         FoodDiaryScreen(
                             viewModel = foodViewModel,
@@ -87,7 +90,30 @@ fun NutritionHostScreen(
                     }
 
                     AppRoutes.RECIPE_SCREEN -> {
-                        RecipesScreen()
+                        RecipesScreen(
+                            recipeViewModel = recipeViewModel,
+                            onNavigateToAddRecipe = {
+                                // Navigate to the add screen without an ID
+                                mainNavController.navigate(
+                                    AppRoutes.RECIPE_ADD_EDIT_SCREEN.replace(
+                                        "{recipeId}",
+                                        "-1"
+                                    )
+                                )
+                            },
+                            onNavigateToRecipeDetails = { recipeId ->
+                                // --- THIS IS THE CORRECTED NAVIGATION LOGIC ---
+                                // Navigate to the edit screen with the recipe's ID
+                                mainNavController.navigate(
+                                    AppRoutes.RECIPE_ADD_EDIT_SCREEN.replace(
+                                        "{recipeId}",
+                                        recipeId.toString()
+                                    )
+                                )
+
+                            },
+                            foodViewModel = foodViewModel
+                        )
                     }
                 }
             }

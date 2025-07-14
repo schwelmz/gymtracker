@@ -34,8 +34,11 @@ import kotlinx.coroutines.CoroutineScope
 import java.time.LocalDate
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.remember
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.example.gymtracker.data.CalorieMode
 import com.example.gymtracker.ui.screens.AddCustomFoodScreen
+import com.example.gymtracker.ui.screens.AddEditRecipeScreen
 import com.example.gymtracker.ui.screens.AllExercisesView
 import com.example.gymtracker.ui.screens.CustomFoodListScreen
 import com.example.gymtracker.ui.screens.HomeHostScreen
@@ -47,6 +50,7 @@ import com.example.gymtracker.ui.screens.WorkoutCalendarView
 import com.example.gymtracker.ui.screens.WorkoutHostScreen
 import com.example.gymtracker.viewmodel.GoalsViewModel
 import com.example.gymtracker.viewmodel.HomeViewModel
+import com.example.gymtracker.viewmodel.RecipeViewModel
 
 object AppRoutes {
     // Home Graph
@@ -76,7 +80,7 @@ object AppRoutes {
     const val FOOD_SCANNER_SCREEN = "food_scanner_screen?open_camera={open_camera}"
     const val FOOD_DIARY_SCREEN = "food_diary_screen"
     const val RECIPE_SCREEN = "recipe_screen"
-
+    const val RECIPE_ADD_EDIT_SCREEN = "recipe_add_edit_screen/{recipeId}"
     // Settings Graph
     const val SETTINGS_SCREEN = "settings_screen"
     const val ABOUT_SCREEN = "about_screen"
@@ -94,6 +98,7 @@ fun AppNavigation(
     val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory)
     val foodViewModel: FoodViewModel = viewModel(factory = FoodViewModel.Factory)
     val goalsViewModel: GoalsViewModel = viewModel(factory = GoalsViewModel.Factory)
+    val recipeViewModel: RecipeViewModel = viewModel(factory = RecipeViewModel.Factory)
     // The start destination is the route of the Home graph.
     NavHost(
         navController = navController,
@@ -236,7 +241,12 @@ fun AppNavigation(
             route = BottomBarDestination.Nutrition.route
         ) {
             composable(route = AppRoutes.NUTRITION_SCREEN) {
-                NutritionHostScreen(mainNavController = navController, foodViewModel = foodViewModel, goalsViewModel = goalsViewModel)
+                NutritionHostScreen(
+                    mainNavController = navController,
+                    foodViewModel = foodViewModel,
+                    goalsViewModel = goalsViewModel,
+                    recipeViewModel = recipeViewModel
+                )
             }
             composable(route = AppRoutes.FOOD_SCANNER_SCREEN) { navBackStackEntry -> // FIX: Explicit name
                 val parentEntry = remember(navBackStackEntry) {
@@ -252,6 +262,16 @@ fun AppNavigation(
                         navController.popBackStack()
                     },
                     shouldOpenCameraDirectly = true
+                )
+            }
+            composable(
+                route = AppRoutes.RECIPE_ADD_EDIT_SCREEN,
+                arguments = listOf(navArgument("recipeId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val recipeId = backStackEntry.arguments?.getInt("recipeId") ?: -1
+                AddEditRecipeScreen(
+                    recipeId = recipeId,
+                    onNavigateUp = { navController.popBackStack() }
                 )
             }
 //            composable(route = AppRoutes.FOOD_DIARY_SCREEN) { navBackStackEntry -> // FIX: Explicit name
