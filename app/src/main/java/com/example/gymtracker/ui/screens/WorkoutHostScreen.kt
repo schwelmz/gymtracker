@@ -10,7 +10,6 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.composable
 import com.example.gymtracker.ui.AppRoutes
 import com.example.gymtracker.ui.components.AppNavigationRail
 import com.example.gymtracker.ui.components.RailNavItem
@@ -28,7 +27,8 @@ fun WorkoutHostScreen(mainNavController: NavHostController) {
     val workoutNavItems = listOf(
         RailNavItem(id = "recent", title = "Recent", route = AppRoutes.WORKOUT_RECENT_SCREEN),
         RailNavItem(id = "calendar", title = "Calendar", route = AppRoutes.WORKOUT_CALENDAR_VIEW_SCREEN),
-        RailNavItem(id = "exercises", title = "Exercises", route = AppRoutes.WORKOUT_ALL_EXERCISES_SCREEN)
+        RailNavItem(id = "exercises", title = "Exercises", route = AppRoutes.WORKOUT_ALL_EXERCISES_SCREEN),
+        RailNavItem(id = "plans", title = "Plans", route = AppRoutes.WORKOUT_PLANS_SCREEN)
     )
 
     val pagerState = rememberPagerState { workoutNavItems.size }
@@ -94,8 +94,8 @@ fun WorkoutHostScreen(mainNavController: NavHostController) {
                             onDeleteExercise = { exercise -> scope.launch { exerciseViewModel.deleteExercise(exercise) } }
                         )
                     }
-                    else -> {
-                        Text("Unknown Workout Screen")
+                    AppRoutes.WORKOUT_PLANS_SCREEN -> {
+                        WorkoutPlansView()
                     }
                 }
             }

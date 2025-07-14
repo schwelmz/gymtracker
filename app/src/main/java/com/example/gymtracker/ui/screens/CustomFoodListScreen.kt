@@ -94,7 +94,7 @@ fun CustomFoodListScreen(
         },
         floatingActionButton = {
             Box(
-                modifier = Modifier.offset(y = (-50).dp)
+                //modifier = Modifier.offset(y = (-50).dp)
             ) {
                 FloatingActionButton(
                     onClick = onNavigateToAddCustomFood,

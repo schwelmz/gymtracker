@@ -26,8 +26,6 @@ import kotlinx.coroutines.launch
 fun NutritionScreen(
     viewModel: FoodViewModel,
     // Note: The signature is now simpler because the actions are handled internally
-    onNavigateToDiary: () -> Unit,
-    onNavigateToScanner: () -> Unit,
     onNavigateToCustomFood: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -83,7 +81,8 @@ fun NutritionScreen(
     Scaffold { padding ->
         Column(modifier = Modifier
             .fillMaxSize()
-            .padding(padding)) {
+            //.padding(padding)
+        ) {
 
             val totalCalories = remember(todaysFoodLogs) { todaysFoodLogs.sumOf { it.calories } }
             val totalProtein = remember(todaysFoodLogs) { todaysFoodLogs.sumOf { it.protein } }
@@ -97,13 +96,22 @@ fun NutritionScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 item {
-                    Text(
-                        text = "Today's Summary",
-                        style = MaterialTheme.typography.headlineLarge,
-                        color = MaterialTheme.colorScheme.secondary,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(top = 50.dp, bottom = 20.dp)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                top = headlineTopPadding,
+                                bottom = headlineBottomPadding,
+                            ),
+                        contentAlignment = Alignment.CenterEnd // Aligns content to the end (right)
+                    ) {
+                        Text(
+                            text = "Today's Summary",
+                            style = MaterialTheme.typography.headlineLarge,
+                            color = MaterialTheme.colorScheme.secondary
+                            // textAlign can be removed if the Box handles the alignment
+                        )
+                    }
                 }
 
                 item {
@@ -161,12 +169,6 @@ fun NutritionScreen(
                             modifier = Modifier.weight(1f)
                         ) {
                             Text("Add Food")
-                        }
-                        Button(
-                            onClick = { onNavigateToDiary() },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("Diary")
                         }
                     }
                 }

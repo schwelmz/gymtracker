@@ -2,8 +2,11 @@ package com.example.gymtracker.ui.screens
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.pager.VerticalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -16,6 +19,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.gymtracker.ui.AppRoutes
+import com.example.gymtracker.ui.components.AppNavigationRail
+import com.example.gymtracker.ui.components.RailNavItem
 import com.example.gymtracker.viewmodel.FoodScannerViewModel
 import com.example.gymtracker.viewmodel.FoodViewModel
 import com.example.gymtracker.viewmodel.GoalsViewModel
@@ -28,90 +33,65 @@ fun NutritionHostScreen(
     foodViewModel: FoodViewModel,
     goalsViewModel: GoalsViewModel
 ) {
-    val nutritionRailNavController = rememberNavController()
-
-    Row(modifier = Modifier.fillMaxSize()) {
-        Surface(modifier = Modifier.fillMaxSize()) {
-            // 2. Pass them down to the NavHost
-            NutritionNavHost(
-                navController = nutritionRailNavController,
-                mainNavController = mainNavController,
-                foodViewModel = foodViewModel,
-                goalsViewModel = goalsViewModel
-            )
-        }
-    }
-}
-
-@Composable
-fun NutritionNavHost(
-    navController: NavHostController,
-    mainNavController: NavHostController,
-    // 3. Accept both ViewModels with explicit types
-    foodViewModel: FoodViewModel,
-    goalsViewModel: GoalsViewModel
-) {
+    val nutritionNavItems = listOf(
+        RailNavItem(id = "today", title = "Today", route = AppRoutes.NUTRITION_SCREEN),
+        RailNavItem(id = "diary", title = "Diary", route = AppRoutes.FOOD_DIARY_SCREEN),
+        RailNavItem(id = "recipes", title = "Recipes", route = AppRoutes.RECIPE_SCREEN)
+    )
+    val pagerState = rememberPagerState { nutritionNavItems.size }
     val scope = rememberCoroutineScope()
 
-    // 4. Collect the goals state here to be used by child screens
-    val goalsState by goalsViewModel.uiState.collectAsState()
-    val calorieGoal = goalsState.calorieGoal
-    val calorieMode = goalsState.calorieMode
-    NavHost(navController = navController, startDestination = AppRoutes.NUTRITION_SCREEN) {
-        composable(route = AppRoutes.NUTRITION_SCREEN) {
-            NutritionScreen(
-                viewModel = foodViewModel,
-                onNavigateToDiary = { navController.navigate(AppRoutes.FOOD_DIARY_SCREEN) },
-                onNavigateToScanner = { navController.navigate(AppRoutes.FOOD_SCANNER_SCREEN) },
-                onNavigateToCustomFood = { navController.navigate(AppRoutes.CUSTOM_FOOD_LIST_SCREEN) }
-            )
-        }
+    // Synchronize pager state with rail selection
+    LaunchedEffect(pagerState.currentPage) {
+    }
 
-        composable(
-            // Use the new route definition
-            route = AppRoutes.FOOD_SCANNER_SCREEN,
-            // Define the argument with a default value of 'false'
-            arguments = listOf(navArgument("open_camera") {
-                type = NavType.BoolType
-                defaultValue = false
-            })
-        ) { backStackEntry ->
-            // Get the boolean argument from the backstack entry
-            val shouldOpenCamera = backStackEntry.arguments?.getBoolean("open_camera") ?: false
+    //val nutritionRailNavController = rememberNavController()
 
-            val scannerViewModel: FoodScannerViewModel = viewModel()
-            // Assuming foodViewModel is hoisted and passed in
-
-            FoodScannerScreen(
-                foodViewModel = foodViewModel,
-                scannerViewModel = scannerViewModel,
-                shouldOpenCameraDirectly = shouldOpenCamera, // Pass the boolean here
-                onSave = {
-                    navController.popBackStack()
+    Row(modifier = Modifier.fillMaxSize()) {
+        AppNavigationRail(
+            items = nutritionNavItems,
+            selectedItemId = nutritionNavItems[pagerState.currentPage].id, // Use id for selection
+            onItemSelected = { route ->
+                val index = nutritionNavItems.indexOfFirst { it.route == route }
+                if (index != -1) {
+                    scope.launch {
+                        pagerState.animateScrollToPage(index)
+                    }
                 }
-            )
-        }
-        composable(route = AppRoutes.FOOD_DIARY_SCREEN) {
-            // 5. Pass the collected calorieGoal to the FoodDiaryScreen
-            FoodDiaryScreen(
-                viewModel = foodViewModel,
-                onNavigateUp = { navController.popBackStack() },
-                calorieGoal = calorieGoal,
-                calorieMode = calorieMode
-            )
-        }
-        composable(route = AppRoutes.CUSTOM_FOOD_LIST_SCREEN) {
-            CustomFoodListScreen(
-                viewModel = foodViewModel,
-                onNavigateUp = { navController.popBackStack() },
-                onNavigateToAddCustomFood = { navController.navigate(AppRoutes.ADD_CUSTOM_FOOD_SCREEN) }
-            )
-        }
-        composable(route = AppRoutes.ADD_CUSTOM_FOOD_SCREEN) {
-            AddCustomFoodScreen(
-                viewModel = foodViewModel,
-                onNavigateUp = { navController.popBackStack() }
-            )
+            }
+        )
+        Surface(modifier = Modifier.fillMaxSize()) {
+            VerticalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
+//                val foodViewModel: FoodViewModel = viewModel()
+//                val goalsViewModel: GoalsViewModel = viewModel()
+                val goalsState by goalsViewModel.uiState.collectAsState()
+                val calorieGoal = goalsState.calorieGoal
+                val calorieMode = goalsState.calorieMode
+
+                when (nutritionNavItems[page].route) {
+                    AppRoutes.NUTRITION_SCREEN -> {
+                        NutritionScreen(
+                            viewModel = foodViewModel,
+//                            onNavigateToDiary = { mainNavController.navigate(AppRoutes.FOOD_DIARY_SCREEN) },
+//                            onNavigateToScanner = { mainNavController.navigate(AppRoutes.FOOD_SCANNER_SCREEN) },
+                            onNavigateToCustomFood = { mainNavController.navigate(AppRoutes.CUSTOM_FOOD_LIST_SCREEN) }
+                        )
+                    }
+                    AppRoutes.FOOD_DIARY_SCREEN -> {
+                        FoodDiaryScreen(
+                            viewModel = foodViewModel,
+                            onNavigateUp = { mainNavController.popBackStack() },
+                            calorieGoal = calorieGoal,
+                            calorieMode = calorieMode
+                        )
+                    }
+
+                    AppRoutes.RECIPE_SCREEN -> {
+                        RecipesScreen()
+                    }
+                }
+            }
         }
     }
 }
+

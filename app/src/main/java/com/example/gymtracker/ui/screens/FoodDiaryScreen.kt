@@ -126,22 +126,30 @@ fun FoodDiaryScreen(
     }
     // --- END OF CORRECTION ---
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Food Diary") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateUp) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
-        }
-    ) { padding ->
+    Scaffold { padding ->
         LazyColumn(
-            modifier = Modifier.padding(padding),
+            //modifier = Modifier.padding(padding),
             contentPadding = PaddingValues(vertical = 8.dp)
         ) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            top = headlineTopPadding,
+                            bottom = headlineBottomPadding,
+                            end = 16.dp
+                        ),
+                    contentAlignment = Alignment.CenterEnd // Aligns content to the end (right)
+                ) {
+                    Text(
+                        text = "Food Diary",
+                        style = MaterialTheme.typography.headlineLarge,
+                        color = MaterialTheme.colorScheme.secondary
+                        // textAlign can be removed if the Box handles the alignment
+                    )
+                }
+            }
             item {
                 TimeSpanSelector(
                     selectedTimeSpan = selectedTimeSpan,
