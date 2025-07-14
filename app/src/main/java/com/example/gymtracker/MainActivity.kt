@@ -112,7 +112,7 @@ fun GymApp() {
                     Icon(
                         painter = painterResource(id = R.drawable.ean_icon),
                         contentDescription = "Scan Food Item",
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(42.dp),
                         tint = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }
