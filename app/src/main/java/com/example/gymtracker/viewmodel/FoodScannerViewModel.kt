@@ -36,4 +36,8 @@ class FoodScannerViewModel : ViewModel() {
             }
         }
     }
+
+    fun resetState() {
+        _uiState.value = FoodScannerUiState.Idle
+    }
 }

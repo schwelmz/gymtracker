@@ -11,51 +11,53 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.gymtracker.R
 import com.example.gymtracker.data.model.FoodTemplate
+import com.example.gymtracker.viewmodel.AddEditRecipeViewModel
 import com.example.gymtracker.viewmodel.RecipeViewModel
+import com.example.gymtracker.viewmodel.ScannerResultViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEditRecipeScreen(
     recipeId: Int,
+    // The main RecipeViewModel is still needed for the food template list
     recipeViewModel: RecipeViewModel = viewModel(factory = RecipeViewModel.Factory),
-    onNavigateUp: () -> Unit
+    // The new ViewModel for this screen's state
+    addEditRecipeViewModel: AddEditRecipeViewModel = viewModel(factory = AddEditRecipeViewModel.Factory(recipeId)),
+    scannerResultViewModel: ScannerResultViewModel = viewModel(),
+    onNavigateUp: () -> Unit,
+    onNavigateToScanner: () -> Unit
 ) {
     val isEditing = recipeId != -1
     val title = if (isEditing) "Edit Recipe" else "Add Recipe"
 
-    // State for all food templates, needed for the add ingredient dialog
+    // State for the food template search dialog
     val allFoodTemplates by recipeViewModel.allFoodTemplates.collectAsState(initial = emptyList())
-    val allRecipes by recipeViewModel.allRecipes.collectAsState(initial = emptyList())
-
-    // State for the UI inputs
-    var name by remember { mutableStateOf("") }
-    var instructions by remember { mutableStateOf("") }
-    var ingredients by remember { mutableStateOf<Map<FoodTemplate, Int>>(emptyMap()) }
     var showAddIngredientDialog by remember { mutableStateOf(false) }
 
-    // This effect runs when the screen is first displayed or if recipeId changes.
-    // It loads the existing recipe data when in "edit" mode.
-    LaunchedEffect(allRecipes) {
-        if (isEditing) {
-            val existingRecipe = allRecipes.find { it.recipe.id == recipeId }
-            if (existingRecipe != null) {
-                name = existingRecipe.recipe.name
-                instructions = existingRecipe.recipe.instructions ?: ""
-                ingredients = existingRecipe.ingredients.associate { it.foodTemplate to it.grams }
-            }
+    // Observe the result from the scanner and pass it to the ViewModel
+    val scannedIngredient by scannerResultViewModel.scannedIngredient.collectAsState()
+    LaunchedEffect(scannedIngredient) {
+        scannedIngredient?.let { (template, grams) ->
+            addEditRecipeViewModel.addIngredient(template, grams)
+            showAddIngredientDialog = false // Close the dialog after scanning
+            scannerResultViewModel.consumeScannedIngredient() // Clear the result
         }
     }
 
     // The save button is enabled only if the recipe has a name and at least one ingredient.
-    val isSaveEnabled by remember(name, ingredients) {
-        derivedStateOf { name.isNotBlank() && ingredients.isNotEmpty() }
+    val isSaveEnabled by remember(addEditRecipeViewModel.recipeName, addEditRecipeViewModel.recipeIngredients) {
+        derivedStateOf {
+            addEditRecipeViewModel.recipeName.isNotBlank() && addEditRecipeViewModel.recipeIngredients.isNotEmpty()
+        }
     }
 
     if (showAddIngredientDialog) {
@@ -63,9 +65,10 @@ fun AddEditRecipeScreen(
             allFoodTemplates = allFoodTemplates,
             onDismiss = { showAddIngredientDialog = false },
             onIngredientSelected = { foodTemplate, grams ->
-                ingredients = ingredients + (foodTemplate to grams)
+                addEditRecipeViewModel.addIngredient(foodTemplate, grams)
                 showAddIngredientDialog = false
-            }
+            },
+            onNavigateToScanner = onNavigateToScanner
         )
     }
 
@@ -81,8 +84,7 @@ fun AddEditRecipeScreen(
                 actions = {
                     TextButton(
                         onClick = {
-                            val existingRecipeDetails = if (isEditing) allRecipes.find { it.recipe.id == recipeId } else null
-                            recipeViewModel.addOrUpdateRecipe(name, instructions, ingredients, existingRecipeDetails)
+                            addEditRecipeViewModel.saveRecipe()
                             onNavigateUp()
                         },
                         enabled = isSaveEnabled
@@ -102,8 +104,8 @@ fun AddEditRecipeScreen(
         ) {
             item {
                 OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
+                    value = addEditRecipeViewModel.recipeName,
+                    onValueChange = { addEditRecipeViewModel.recipeName = it },
                     label = { Text("Recipe Name") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -113,8 +115,8 @@ fun AddEditRecipeScreen(
 
             item {
                 OutlinedTextField(
-                    value = instructions,
-                    onValueChange = { instructions = it },
+                    value = addEditRecipeViewModel.recipeInstructions,
+                    onValueChange = { addEditRecipeViewModel.recipeInstructions = it },
                     label = { Text("Instructions (Optional)") },
                     modifier = Modifier.fillMaxWidth().height(150.dp)
                 )
@@ -133,7 +135,7 @@ fun AddEditRecipeScreen(
                 }
             }
 
-            if (ingredients.isEmpty()){
+            if (addEditRecipeViewModel.recipeIngredients.isEmpty()){
                 item {
                     Text(
                         text = "No ingredients added yet.",
@@ -144,11 +146,11 @@ fun AddEditRecipeScreen(
                 }
             }
 
-            items(ingredients.toList(), key = { (template, _) -> template.id }) { (template, grams) ->
+            items(addEditRecipeViewModel.recipeIngredients.toList(), key = { (template, _) -> template.id }) { (template, grams) ->
                 IngredientListItem(
                     template = template,
                     grams = grams,
-                    onRemove = { ingredients = ingredients - template }
+                    onRemove = { addEditRecipeViewModel.removeIngredient(template) }
                 )
                 HorizontalDivider()
             }
@@ -178,7 +180,8 @@ fun IngredientListItem(template: FoodTemplate, grams: Int, onRemove: () -> Unit)
 fun AddIngredientDialog(
     allFoodTemplates: List<FoodTemplate>,
     onDismiss: () -> Unit,
-    onIngredientSelected: (FoodTemplate, Int) -> Unit
+    onIngredientSelected: (FoodTemplate, Int) -> Unit,
+    onNavigateToScanner: () -> Unit
 ) {
     var searchText by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
@@ -202,38 +205,65 @@ fun AddIngredientDialog(
         title = { Text("Add Ingredient") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                ExposedDropdownMenuBox(
-                    expanded = expanded,
-                    onExpandedChange = { expanded = !expanded }
+                // Row for Search Bar and Scan Button
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    OutlinedTextField(
-                        value = searchText,
-                        onValueChange = {
-                            searchText = it
-                            expanded = true
-                        },
-                        label = { Text("Search food") },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor(),
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) }
-                    )
-                    ExposedDropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
-                    ) {
-                        filteredTemplates.forEach { template ->
-                            DropdownMenuItem(
-                                text = { Text(template.name) },
-                                onClick = {
-                                    selectedTemplate = template
-                                    searchText = template.name
-                                    expanded = false
-                                }
+                    // Search Bar with Dropdown
+                    Box(modifier = Modifier.weight(1f)) {
+                        ExposedDropdownMenuBox(
+                            expanded = expanded,
+                            onExpandedChange = { expanded = !expanded },
+                        ) {
+                            OutlinedTextField(
+                                value = searchText,
+                                onValueChange = {
+                                    searchText = it
+                                    expanded = true
+                                },
+                                label = { Text("Search food") },
+                                modifier = Modifier
+                                    .menuAnchor()
+                                    .fillMaxWidth(),
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) }
                             )
+                            ExposedDropdownMenu(
+                                expanded = expanded,
+                                onDismissRequest = { expanded = false }
+                            ) {
+                                filteredTemplates.forEach { template ->
+                                    DropdownMenuItem(
+                                        text = { Text(template.name) },
+                                        onClick = {
+                                            selectedTemplate = template
+                                            searchText = template.name
+                                            expanded = false
+                                        }
+                                    )
+                                }
+                                if (filteredTemplates.isEmpty() && searchText.length >= 3) {
+                                    DropdownMenuItem(
+                                        text = { Text("No results found") },
+                                        onClick = { },
+                                        enabled = false
+                                    )
+                                }
+                            }
                         }
                     }
+                    // Scan Button
+                    IconButton(onClick = onNavigateToScanner) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ean_icon),
+                            contentDescription = "Scan Food Item",
+                            modifier = Modifier.size(28.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
+                // Weight Input Field
                 OutlinedTextField(
                     value = grams,
                     onValueChange = { grams = it.filter { char -> char.isDigit() } },
@@ -247,7 +277,11 @@ fun AddIngredientDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    onIngredientSelected(selectedTemplate!!, grams.toInt())
+                    selectedTemplate?.let { template ->
+                        grams.toIntOrNull()?.let { weight ->
+                            onIngredientSelected(template, weight)
+                        }
+                    }
                 },
                 enabled = isConfirmEnabled
             ) {

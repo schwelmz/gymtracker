@@ -102,8 +102,8 @@ fun GymApp() {
             if (currentRoute == AppRoutes.NUTRITION_SCREEN) {
                 FloatingActionButton(
                     onClick = {
-                        // Navigate to the scanner screen and pass 'true' to open the camera
-                        val route = AppRoutes.FOOD_SCANNER_SCREEN.replace("{open_camera}", "true")
+                        // Navigate to the scanner screen with the correct parameters
+                        val route = AppRoutes.FOOD_SCANNER_SCREEN + "?open_camera=true&is_for_recipe=false"
                         navController.navigate(route)
                     }
                 ) {

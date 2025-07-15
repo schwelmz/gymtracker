@@ -22,6 +22,10 @@ interface RecipeDao {
     @Query("SELECT * FROM recipes ORDER BY name ASC")
     fun getRecipesWithIngredients(): Flow<List<RecipeWithIngredients>>
 
+    @Transaction
+    @Query("SELECT * FROM recipes WHERE id = :recipeId")
+    fun getRecipeWithIngredients(recipeId: Int): Flow<RecipeWithIngredients?>
+
     @Query("DELETE FROM recipe_ingredients WHERE recipeId = :recipeId")
     suspend fun deleteIngredientsByRecipeId(recipeId: Int)
 

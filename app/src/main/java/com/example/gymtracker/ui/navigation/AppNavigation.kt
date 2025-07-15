@@ -34,6 +34,7 @@ import com.example.gymtracker.viewmodel.FoodViewModel
 import com.example.gymtracker.viewmodel.GoalsViewModel
 import com.example.gymtracker.viewmodel.HomeViewModel
 import com.example.gymtracker.viewmodel.RecipeViewModel
+import com.example.gymtracker.viewmodel.ScannerResultViewModel
 import com.example.gymtracker.viewmodel.WorkoutViewModel
 import kotlinx.coroutines.launch
 
@@ -64,7 +65,7 @@ object AppRoutes {
 
     // Nutrition Graph
     const val NUTRITION_SCREEN = "nutrition_screen"
-    const val FOOD_SCANNER_SCREEN = "food_scanner_screen?open_camera={open_camera}"
+    const val FOOD_SCANNER_SCREEN = "food_scanner_screen" // Cleaned route
     const val FOOD_DIARY_SCREEN = "food_diary_screen"
     const val RECIPE_SCREEN = "recipe_screen"
     const val RECIPE_ADD_EDIT_SCREEN = "recipe_add_edit_screen/{recipeId}"
@@ -261,45 +262,58 @@ fun AppNavigation(
                     recipeViewModel = recipeViewModel
                 )
             }
-            composable(route = AppRoutes.FOOD_SCANNER_SCREEN) { navBackStackEntry -> // FIX: Explicit name
+            composable(
+                route = AppRoutes.FOOD_SCANNER_SCREEN + "?open_camera={open_camera}&is_for_recipe={is_for_recipe}",
+                arguments = listOf(
+                    navArgument("open_camera") {
+                        type = NavType.BoolType
+                        defaultValue = false
+                    },
+                    navArgument("is_for_recipe") {
+                        type = NavType.BoolType
+                        defaultValue = false
+                    }
+                )
+            ) { navBackStackEntry ->
                 val parentEntry = remember(navBackStackEntry) {
                     navController.getBackStackEntry(BottomBarDestination.Nutrition.route)
                 }
                 val foodViewModel: FoodViewModel = viewModel(parentEntry)
                 val scannerViewModel: FoodScannerViewModel = viewModel(parentEntry)
+                val scannerResultViewModel: ScannerResultViewModel = viewModel(parentEntry)
+
+                val shouldOpenCamera = navBackStackEntry.arguments?.getBoolean("open_camera") ?: false
+                val isForRecipe = navBackStackEntry.arguments?.getBoolean("is_for_recipe") ?: false
 
                 FoodScannerScreen(
                     foodViewModel = foodViewModel,
                     scannerViewModel = scannerViewModel,
-                    onSave = {
-                        navController.popBackStack()
-                    },
-                    shouldOpenCameraDirectly = true
+                    scannerResultViewModel = scannerResultViewModel,
+                    onSave = { navController.popBackStack() },
+                    shouldOpenCameraDirectly = shouldOpenCamera,
+                    isForRecipe = isForRecipe
                 )
             }
             composable(
                 route = AppRoutes.RECIPE_ADD_EDIT_SCREEN,
                 arguments = listOf(navArgument("recipeId") { type = NavType.IntType })
             ) { backStackEntry ->
+                val parentEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry(BottomBarDestination.Nutrition.route)
+                }
+                val scannerResultViewModel: ScannerResultViewModel = viewModel(parentEntry)
                 val recipeId = backStackEntry.arguments?.getInt("recipeId") ?: -1
+
                 AddEditRecipeScreen(
                     recipeId = recipeId,
-                    onNavigateUp = { navController.popBackStack() }
+                    scannerResultViewModel = scannerResultViewModel,
+                    onNavigateUp = { navController.popBackStack() },
+                    onNavigateToScanner = {
+                        val route = AppRoutes.FOOD_SCANNER_SCREEN + "?open_camera=true&is_for_recipe=true"
+                        navController.navigate(route)
+                    }
                 )
             }
-//            composable(route = AppRoutes.FOOD_DIARY_SCREEN) { navBackStackEntry -> // FIX: Explicit name
-//                val parentEntry = remember(navBackStackEntry) {
-//                    navController.getBackStackEntry(BottomBarDestination.Nutrition.route)
-//                }
-//                val foodViewModel: FoodViewModel = viewModel(parentEntry)
-//                FoodDiaryScreen(
-//                    viewModel = foodViewModel,
-//                    calorieGoal = 2000,
-//                    onNavigateUp = { navController.popBackStack() },
-//                    calorieMode = CalorieMode.SURPLUS
-//                )
-//            }
-            // Add the new destinations
             composable(route = AppRoutes.CUSTOM_FOOD_LIST_SCREEN) { navBackStackEntry ->
                 val parentEntry = remember(navBackStackEntry) {
                     navController.getBackStackEntry(BottomBarDestination.Nutrition.route)

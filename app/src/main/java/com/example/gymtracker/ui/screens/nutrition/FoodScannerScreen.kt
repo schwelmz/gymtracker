@@ -23,23 +23,25 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.example.gymtracker.viewmodel.FoodScannerViewModel
 import com.example.gymtracker.viewmodel.FoodViewModel
+import com.example.gymtracker.viewmodel.ScannerResultViewModel
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun FoodScannerScreen(
     scannerViewModel: FoodScannerViewModel = viewModel(),
     foodViewModel: FoodViewModel = viewModel(),
-    // 1. ACCEPT THE ARGUMENT FROM THE NAVIGATION GRAPH
+    scannerResultViewModel: ScannerResultViewModel = viewModel(),
     shouldOpenCameraDirectly: Boolean,
+    isForRecipe: Boolean,
     onSave: () -> Unit
 ) {
     val uiState by scannerViewModel.uiState.collectAsState()
     var showScanner by remember { mutableStateOf(false) }
     val cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA)
 
-    // --- 2. USE LaunchedEffect TO OPEN THE SCANNER ON SCREEN ENTRY ---
-    // This will only run once when the screen is first composed.
+    // Reset state on entry and handle camera permission
     LaunchedEffect(Unit) {
+        scannerViewModel.resetState() // Clear previous state
         if (shouldOpenCameraDirectly) {
             if (cameraPermissionState.status.isGranted) {
                 showScanner = true
@@ -55,7 +57,6 @@ fun FoodScannerScreen(
             showScanner = true
         }
     }
-
 
     Box(
         modifier = Modifier
@@ -73,37 +74,27 @@ fun FoodScannerScreen(
                 is FoodScannerUiState.Loading -> {
                     CircularProgressIndicator()
                 }
-//                is FoodScannerUiState.Success -> {
-//                    ProductDetails(
-//                        product = state.product,
-//                        onAddFood = { grams ->
-//                            foodViewModel.addScannedFood(state.product, grams)
-//                            onSave()
-//                        }
-//                    )
-//                }
                 is FoodScannerUiState.Success -> {
-                    // Keep a remembered state for the FoodTemplate
                     var template by remember { mutableStateOf<FoodTemplate?>(null) }
 
-                    // Automatically create the FoodTemplate only once
                     LaunchedEffect(state.product) {
                         val createdTemplate = foodViewModel.getOrCreateTemplateFromProduct(state.product)
                         template = createdTemplate
                     }
 
-                    // Only show UI once template is ready
-                    if (template != null) {
+                    template?.let {
                         ProductDetails(
                             product = state.product,
                             onAddFood = { grams, name ->
-                                foodViewModel.addScannedFoodWithCustomName(state.product, grams, name)
+                                if (isForRecipe) {
+                                    scannerResultViewModel.setScannedIngredient(it.copy(name = name), grams)
+                                } else {
+                                    foodViewModel.addScannedFoodWithCustomName(state.product, grams, name)
+                                }
                                 onSave()
                             }
                         )
-                    } else {
-                        CircularProgressIndicator()
-                    }
+                    } ?: CircularProgressIndicator()
                 }
                 is FoodScannerUiState.Error -> {
                     Text("Error: ${state.message}", color = MaterialTheme.colorScheme.error)
@@ -111,8 +102,6 @@ fun FoodScannerScreen(
             }
         }
 
-        // 3. This button is still here for manual scanning if the user
-        // arrives on this screen without the 'open_camera' flag.
         Button(
             onClick = {
                 if (cameraPermissionState.status.isGranted) {
