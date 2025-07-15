@@ -14,8 +14,8 @@ import androidx.compose.ui.unit.dp
 import com.example.gymtracker.data.dao.FoodLogWithDetails
 import com.example.gymtracker.ui.components.DateTimePickerDialog
 import com.example.gymtracker.ui.components.FoodCard // Assuming FoodCard is in components
-import com.example.gymtracker.ui.screens.workout.headlineBottomPadding
-import com.example.gymtracker.ui.screens.workout.headlineTopPadding
+import com.example.gymtracker.ui.utils.headlineBottomPadding
+import com.example.gymtracker.ui.utils.headlineTopPadding
 import com.example.gymtracker.viewmodel.FoodViewModel
 import kotlinx.coroutines.launch
 

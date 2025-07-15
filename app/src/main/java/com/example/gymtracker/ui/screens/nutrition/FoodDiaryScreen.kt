@@ -29,8 +29,8 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 import com.example.gymtracker.ui.components.DateTimePickerDialog
-import com.example.gymtracker.ui.screens.workout.headlineBottomPadding
-import com.example.gymtracker.ui.screens.workout.headlineTopPadding
+import com.example.gymtracker.ui.utils.headlineBottomPadding
+import com.example.gymtracker.ui.utils.headlineTopPadding
 
 // Enum for Time Span Selection
 enum class ChartTimeSpan(val days: Long, val title: String) {
