@@ -23,6 +23,7 @@ import com.example.gymtracker.ui.screens.nutrition.FoodScannerScreen
 import com.example.gymtracker.ui.screens.workout.PlanWorkoutLogScreen
 import com.example.gymtracker.ui.screens.workout.StatsScreen
 import com.example.gymtracker.ui.screens.home.WeightHistoryScreen
+import com.example.gymtracker.ui.screens.settings.AboutScreen
 import com.example.gymtracker.ui.screens.workout.WorkoutCalendarDayScreen
 import com.example.gymtracker.ui.screens.workout.WorkoutHostScreen
 import com.example.gymtracker.ui.screens.workout.WorkoutLogScreen
@@ -59,18 +60,21 @@ object AppRoutes {
     const val WORKOUT_ALL_EXERCISES_SCREEN = "workout_all_exercises_screen"
     const val WORKOUT_PLANS_SCREEN = "workout_plans_screen"
     const val EXERCISE_PICKER_SCREEN = "exercise_picker/{planId}"
+    const val PLAN_WORKOUT_LOG_SCREEN = "plan_workout_log_screen/{planId}"
+
     // Nutrition Graph
     const val NUTRITION_SCREEN = "nutrition_screen"
     const val FOOD_SCANNER_SCREEN = "food_scanner_screen?open_camera={open_camera}"
     const val FOOD_DIARY_SCREEN = "food_diary_screen"
     const val RECIPE_SCREEN = "recipe_screen"
     const val RECIPE_ADD_EDIT_SCREEN = "recipe_add_edit_screen/{recipeId}"
+    const val CUSTOM_FOOD_LIST_SCREEN = "custom_food_list_screen"
+    const val ADD_CUSTOM_FOOD_SCREEN = "add_custom_food_screen"
+
     // Settings Graph
     const val SETTINGS_SCREEN = "settings_screen"
     const val ABOUT_SCREEN = "about_screen"
-    const val CUSTOM_FOOD_LIST_SCREEN = "custom_food_list_screen"
-    const val ADD_CUSTOM_FOOD_SCREEN = "add_custom_food_screen"
-    const val PLAN_WORKOUT_LOG_SCREEN = "plan_workout_log_screen/{planId}"
+    const val SETTINGS_SET_GOALS_SCREEN = "settings_set_goals_screen"
 }
 
 @Composable
@@ -329,6 +333,9 @@ fun AppNavigation(
         ) {
             composable(route = AppRoutes.SETTINGS_SCREEN) {
                 SettingsHostScreen(mainNavController = navController)
+            }
+            composable(route = AppRoutes.ABOUT_SCREEN) {
+                AboutScreen(onNavigateUp = { navController.popBackStack() })
             }
         }
     }

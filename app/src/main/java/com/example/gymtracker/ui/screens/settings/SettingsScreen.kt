@@ -8,8 +8,12 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.gymtracker.ui.utils.headlineBottomPadding
+import com.example.gymtracker.ui.utils.headlineTopPadding
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -22,16 +26,31 @@ fun SettingsScreen(
     val languages = listOf("English", "Deutsch", "Español")
     var showDialog by remember { mutableStateOf(false) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(title = { Text("Settings") })
-        }
-    ) { innerPadding ->
+    Scaffold{ innerPadding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            top = headlineTopPadding,
+                            bottom = headlineBottomPadding,
+                            end = 16.dp
+                        ),
+                    contentAlignment = Alignment.CenterEnd // Aligns content to the end (right)
+                ) {
+                    Text(
+                        text = "App Settings",
+                        style = MaterialTheme.typography.headlineLarge,
+                        color = MaterialTheme.colorScheme.secondary
+                        // textAlign can be removed if the Box handles the alignment
+                    )
+                }
+            }
             item {
                 ListItem(
                     headlineContent = { Text("About") },
@@ -87,4 +106,16 @@ fun SettingsScreen(
             )
         }
     }
+}
+
+@Composable
+@Preview(showBackground = true)
+fun SettingsScreenPreview() {
+    SettingsScreen(
+        onNavigateToAbout = {},
+        onNavigateToDonate = {},
+        currentLanguage = "English",
+        onLanguageSelected = {}
+    )
+
 }

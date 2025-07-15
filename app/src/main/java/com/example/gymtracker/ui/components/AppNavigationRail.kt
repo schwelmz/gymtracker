@@ -32,7 +32,7 @@ fun AppNavigationRail(
             .background(MaterialTheme.colorScheme.surface)
             .width(50.dp), // A narrow width for the rail itself
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(0.dp, Alignment.CenterVertically)
+        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically)
     ) {
         items.forEach { item ->
             val isSelected = item.id == selectedItemId

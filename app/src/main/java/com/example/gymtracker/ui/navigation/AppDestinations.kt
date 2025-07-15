@@ -34,7 +34,7 @@ sealed class BottomBarDestination(
     )
     object Settings : BottomBarDestination(
         route = "settings_graph",
-        "Settings",
+        title = "Settings",
         icon = Icons.Outlined.Menu
     )
 }
