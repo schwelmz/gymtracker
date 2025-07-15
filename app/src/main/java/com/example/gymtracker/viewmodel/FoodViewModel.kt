@@ -7,7 +7,11 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.gymtracker.data.*
+import com.example.gymtracker.data.dao.FoodLogWithDetails
+import com.example.gymtracker.data.model.FoodLog
+import com.example.gymtracker.data.model.FoodTemplate
 import com.example.gymtracker.data.model.Product
+import com.example.gymtracker.data.repository.PredefinedFoodRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -84,11 +88,11 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
     suspend fun getOrCreateTemplateFromProduct(product: Product): FoodTemplate {
         val barcode = product.code ?: return FoodTemplate(
             name = "Unknown", caloriesPer100g = 0,
-            id =0,
-            barcode =null,
+            id = 0,
+            barcode = null,
             imageUrl = null,
             proteinPer100g = 0,
-            carbsPer100g =0,
+            carbsPer100g = 0,
             fatPer100g = 0
         )
         var template = templateDao.getByBarcode(barcode)

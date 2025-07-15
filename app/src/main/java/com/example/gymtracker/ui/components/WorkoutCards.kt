@@ -25,8 +25,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.gymtracker.R
-import com.example.gymtracker.data.Exercise
-import com.example.gymtracker.data.WorkoutSession
+import com.example.gymtracker.data.model.Exercise
+import com.example.gymtracker.data.model.WorkoutSession
 
 val cardHeight = 95.dp
 

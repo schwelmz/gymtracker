@@ -4,6 +4,23 @@ import android.content.Context
 import androidx.room.*
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.example.gymtracker.data.dao.ExerciseDao
+import com.example.gymtracker.data.dao.FoodLogDao
+import com.example.gymtracker.data.dao.FoodTemplateDao
+import com.example.gymtracker.data.dao.RecipeDao
+import com.example.gymtracker.data.dao.WeightEntryDao
+import com.example.gymtracker.data.dao.WorkoutDao
+import com.example.gymtracker.data.dao.WorkoutPlanDao
+import com.example.gymtracker.data.model.Converters
+import com.example.gymtracker.data.model.Exercise
+import com.example.gymtracker.data.model.FoodLog
+import com.example.gymtracker.data.model.FoodTemplate
+import com.example.gymtracker.data.model.Recipe
+import com.example.gymtracker.data.model.RecipeIngredient
+import com.example.gymtracker.data.model.WeightEntry
+import com.example.gymtracker.data.model.WorkoutPlan
+import com.example.gymtracker.data.model.WorkoutPlanExerciseCrossRef
+import com.example.gymtracker.data.model.WorkoutSession
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 
@@ -37,7 +54,7 @@ abstract class AppDatabase : RoomDatabase() {
         private var INSTANCE: AppDatabase? = null
 
         // Migration from version 14 to 15
-        private val MIGRATION_INCREMENT= object : Migration(16, 17) {
+        private val MIGRATION_INCREMENT= object : Migration(18, 19) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 // Add any table or column creation here — adjust if needed!
             }

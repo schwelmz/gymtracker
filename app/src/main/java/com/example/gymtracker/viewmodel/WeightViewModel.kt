@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.lifecycle.*
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.gymtracker.data.AppDatabase
-import com.example.gymtracker.data.WeightEntry
+import com.example.gymtracker.data.model.WeightEntry
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import java.time.LocalDate

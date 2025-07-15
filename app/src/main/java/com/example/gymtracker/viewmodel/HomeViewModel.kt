@@ -8,9 +8,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.gymtracker.data.HealthConnectManager
-import com.example.gymtracker.data.HealthDataRepository
-import com.example.gymtracker.data.TodayHealthStats
-import com.example.gymtracker.data.WeightEntry
+import com.example.gymtracker.data.model.HealthDataRepository
+import com.example.gymtracker.data.model.TodayHealthStats
+import com.example.gymtracker.data.model.WeightEntry
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

@@ -22,7 +22,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -30,9 +29,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.gymtracker.data.HealthConnectManager
-import com.example.gymtracker.ui.AppNavigation
-import com.example.gymtracker.ui.AppRoutes
-import com.example.gymtracker.ui.BottomBarDestination
+import com.example.gymtracker.ui.navigation.AppNavigation
+import com.example.gymtracker.ui.navigation.AppRoutes
+import com.example.gymtracker.ui.navigation.BottomBarDestination
 import com.example.gymtracker.ui.components.AppBottomNavigationBar
 import com.example.gymtracker.ui.theme.AppTheme
 import com.example.gymtracker.viewmodel.HomeViewModel

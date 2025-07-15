@@ -15,7 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.gymtracker.R
-import com.example.gymtracker.data.FoodLogWithDetails
+import com.example.gymtracker.data.dao.FoodLogWithDetails
 
 /**
  * A reusable composable to display a single food log entry.

@@ -9,7 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.painterResource // <-- ADD THIS IMPORT
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.example.gymtracker.ui.BottomBarDestination
+import com.example.gymtracker.ui.navigation.BottomBarDestination
 
 @Composable
 fun AppBottomNavigationBar(

@@ -7,8 +7,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
-import com.example.gymtracker.data.CalorieMode
-import com.example.gymtracker.data.UserGoals
+import com.example.gymtracker.data.model.CalorieMode
+import com.example.gymtracker.data.model.UserGoals
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 

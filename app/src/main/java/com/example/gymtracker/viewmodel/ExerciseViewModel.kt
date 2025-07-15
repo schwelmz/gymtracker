@@ -4,8 +4,8 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gymtracker.data.AppDatabase
-import com.example.gymtracker.data.Exercise
-import com.example.gymtracker.data.ExerciseRepository
+import com.example.gymtracker.data.model.Exercise
+import com.example.gymtracker.data.repository.ExerciseRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch

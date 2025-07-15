@@ -7,10 +7,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.gymtracker.data.AppDatabase
-import com.example.gymtracker.data.WorkoutPlan
-import com.example.gymtracker.data.WorkoutPlanDao
-import com.example.gymtracker.data.WorkoutPlanExerciseCrossRef
-import com.example.gymtracker.data.WorkoutPlanWithExercises
+import com.example.gymtracker.data.model.WorkoutPlan
+import com.example.gymtracker.data.dao.WorkoutPlanDao
+import com.example.gymtracker.data.model.WorkoutPlanExerciseCrossRef
+import com.example.gymtracker.data.model.WorkoutPlanWithExercises
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch

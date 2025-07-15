@@ -7,6 +7,11 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.gymtracker.data.*
+import com.example.gymtracker.data.model.FoodTemplate
+import com.example.gymtracker.data.model.IngredientDetails
+import com.example.gymtracker.data.model.Recipe
+import com.example.gymtracker.data.model.RecipeIngredient
+import com.example.gymtracker.data.model.RecipeWithDetails
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 

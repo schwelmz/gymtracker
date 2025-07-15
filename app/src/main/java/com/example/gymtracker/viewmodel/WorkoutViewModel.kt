@@ -5,8 +5,8 @@ import android.icu.util.Calendar
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gymtracker.data.AppDatabase
-import com.example.gymtracker.data.ExerciseSet
-import com.example.gymtracker.data.WorkoutSession
+import com.example.gymtracker.data.model.ExerciseSet
+import com.example.gymtracker.data.model.WorkoutSession
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
