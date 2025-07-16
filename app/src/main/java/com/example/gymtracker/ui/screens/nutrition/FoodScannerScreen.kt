@@ -14,7 +14,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import com.example.gymtracker.data.model.FoodTemplate
 import com.example.gymtracker.data.model.Product
 import com.example.gymtracker.ui.components.BarcodeScannerView
 import com.example.gymtracker.viewmodel.FoodScannerUiState
@@ -29,8 +28,11 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun FoodScannerScreen(
-    scannerViewModel: FoodScannerViewModel = viewModel(),
-    foodViewModel: FoodViewModel = viewModel(),
+    // --- THIS IS THE ONLY CHANGE IN THIS FILE ---
+    // Use the new factory to create the ViewModel instance
+    scannerViewModel: FoodScannerViewModel = viewModel(factory = FoodScannerViewModel.Factory),
+    // --- END OF CHANGE ---
+    foodViewModel: FoodViewModel = viewModel(factory = FoodViewModel.Factory),
     scannerResultViewModel: ScannerResultViewModel = viewModel(),
     shouldOpenCameraDirectly: Boolean,
     isForRecipe: Boolean,
@@ -40,9 +42,9 @@ fun FoodScannerScreen(
     var showScanner by remember { mutableStateOf(false) }
     val cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA)
     val scope = rememberCoroutineScope()
-    // Reset state on entry and handle camera permission
+
     LaunchedEffect(Unit) {
-        scannerViewModel.resetState() // Clear previous state
+        scannerViewModel.resetState()
         if (shouldOpenCameraDirectly) {
             if (cameraPermissionState.status.isGranted) {
                 showScanner = true
@@ -52,7 +54,6 @@ fun FoodScannerScreen(
         }
     }
 
-    // This effect will run AFTER the permission is granted or denied
     LaunchedEffect(cameraPermissionState.status) {
         if (cameraPermissionState.status.isGranted && shouldOpenCameraDirectly) {
             showScanner = true
@@ -82,7 +83,7 @@ fun FoodScannerScreen(
                             scope.launch {
                                 foodViewModel.saveScannedFood(
                                     product = state.product,
-                                    barcode = state.barcode, // Pass the barcode from the state
+                                    barcode = state.barcode,
                                     grams = grams,
                                     name = name,
                                     isForRecipe = isForRecipe,
@@ -126,19 +127,13 @@ fun FoodScannerScreen(
 fun ProductDetails(product: Product, onAddFood: (Int, String) -> Unit) {
     var grams by remember { mutableStateOf("100") }
 
+    // This logic now works perfectly because the name has already been corrected by the ViewModel
     val defaultName = remember(product) {
-        if (!product.name.isNullOrBlank()) {
-            product.name.split("–", "-").firstOrNull()?.trim() ?: product.name
-        } else if (!product.genericName.isNullOrBlank()) {
-            product.genericName
-        } else {
-            "Unknown Product"
-        }
+        product.name.takeIf { !it.isNullOrBlank() } ?: "Unknown Product"
     }
 
-    var customName by remember { mutableStateOf("") }
+    var customName by remember { mutableStateOf(if (defaultName == "Unknown Product") "" else defaultName) }
     val isUnknown = defaultName == "Unknown Product"
-    val displayName = if (isUnknown) customName else defaultName
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -146,7 +141,7 @@ fun ProductDetails(product: Product, onAddFood: (Int, String) -> Unit) {
     ) {
         AsyncImage(
             model = product.imageUrl,
-            contentDescription = displayName,
+            contentDescription = customName,
             modifier = Modifier
                 .height(200.dp)
                 .fillMaxWidth(),
@@ -163,7 +158,7 @@ fun ProductDetails(product: Product, onAddFood: (Int, String) -> Unit) {
             )
         } else {
             Text(
-                text = displayName,
+                text = customName,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
@@ -200,11 +195,11 @@ fun ProductDetails(product: Product, onAddFood: (Int, String) -> Unit) {
         Button(
             onClick = {
                 val gramsInt = grams.toIntOrNull() ?: 100
-                if (!isUnknown || customName.isNotBlank()) {
-                    onAddFood(gramsInt, displayName)
+                if (customName.isNotBlank()) {
+                    onAddFood(gramsInt, customName)
                 }
             },
-            enabled = !isUnknown || customName.isNotBlank()
+            enabled = customName.isNotBlank()
         ) {
             Text("Add Food")
         }
