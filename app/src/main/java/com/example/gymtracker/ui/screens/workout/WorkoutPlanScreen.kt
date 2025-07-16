@@ -14,7 +14,7 @@ import com.example.gymtracker.viewmodel.WorkoutPlanViewModel
 fun WorkoutPlanScreen(
     viewModel: WorkoutPlanViewModel = viewModel(factory = WorkoutPlanViewModel.Factory),
     onExercisePicker: (WorkoutPlan) -> Unit,
-    onLogWorkoutForPlan: (WorkoutPlan) -> Unit
+    onLogWorkoutForPlan: (List<String>) -> Unit
 ) {
     val plans by viewModel.allPlans.collectAsState(initial = emptyList())
     var showDialog by remember { mutableStateOf(false) }
@@ -35,7 +35,7 @@ fun WorkoutPlanScreen(
                     .fillMaxWidth()
                     .padding(vertical = 8.dp)
                     .combinedClickable(
-                        onClick = { onLogWorkoutForPlan(planWithExercises.plan) }, // <- Card click
+                        onClick = { onLogWorkoutForPlan(planWithExercises.exercises.map { it.name }) }, // <- Card click
                         onLongClick = { deleteDialogPlan = planWithExercises.plan }
                     ),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
@@ -52,8 +52,13 @@ fun WorkoutPlanScreen(
                     }
 
                     Spacer(Modifier.height(8.dp))
-                    Button(onClick = { onExercisePicker(planWithExercises.plan) }) {
-                        Text("Edit Exercises")
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Button(onClick = { onExercisePicker(planWithExercises.plan) }) {
+                            Text("Edit Exercises")
+                        }
+                        Button(onClick = { onLogWorkoutForPlan(planWithExercises.exercises.map { it.name }) }) {
+                            Text("Start Workout")
+                        }
                     }
                 }
             }
@@ -72,7 +77,7 @@ fun WorkoutPlanScreen(
                 confirmButton = {
                     TextButton(onClick = {
                         if (newPlanName.isNotBlank()) {
-                            viewModel.createPlan(newPlanName)
+                            viewModel.createPlan(newPlanName, null)
                             newPlanName = ""
                             showDialog = false
                         }

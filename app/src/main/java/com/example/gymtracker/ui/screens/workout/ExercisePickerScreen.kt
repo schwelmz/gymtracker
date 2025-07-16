@@ -4,12 +4,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.gymtracker.viewmodel.ExerciseViewModel
@@ -36,6 +38,7 @@ fun ExercisePickerScreen(
             addAll(planWithExercises!!.exercises.map { it.name })
         }
     }
+    var planGoal by remember(planWithExercises) { mutableStateOf<Int?>(planWithExercises!!.plan.goal) }
 
     Scaffold(
         topBar = {
@@ -51,6 +54,7 @@ fun ExercisePickerScreen(
         floatingActionButton = {
             FloatingActionButton(onClick = {
                 workoutPlanViewModel.updatePlanExercises(planId, selectedExercises)
+                workoutPlanViewModel.updatePlanGoal(planId, planGoal)
                 onNavigateUp()
             }) {
                 Icon(Icons.Default.Check, contentDescription = "Save")
@@ -64,6 +68,18 @@ fun ExercisePickerScreen(
                 .fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            item {
+                OutlinedTextField(
+                    value = planGoal?.toString() ?: "",
+                    onValueChange = {
+                        planGoal = it.toIntOrNull()
+                    },
+                    label = { Text("Weekly Goal (workouts)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(16.dp))
+            }
             items(allExercises, key = { it.name }) { exercise ->
                 val isSelected = exercise.name in selectedExercises
                 Card(

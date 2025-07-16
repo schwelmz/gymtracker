@@ -99,8 +99,16 @@ fun WorkoutHostScreen(mainNavController: NavHostController) {
                                 val route = AppRoutes.EXERCISE_PICKER_SCREEN.replace("{planId}", plan.id.toString())
                                 mainNavController.navigate(route)
                             },
-                            onLogWorkoutForPlan = { plan ->
-                                val route = AppRoutes.PLAN_WORKOUT_LOG_SCREEN.replace("{planId}", plan.id.toString())
+                            onLogWorkoutForPlan = { exerciseNames ->
+                                val exercisesList = exerciseNames as List<String>
+                                val exercisesString = StringBuilder()
+                                for (i in exercisesList.indices) {
+                                    exercisesString.append(exercisesList[i])
+                                    if (i < exercisesList.size - 1) {
+                                        exercisesString.append(",")
+                                    }
+                                }
+                                val route = AppRoutes.PLAN_WORKOUT_LOG_SCREEN.replace("{exerciseNames}", exercisesString.toString())
                                 mainNavController.navigate(route)
                             }
                         )

@@ -39,7 +39,7 @@ import com.example.gymtracker.data.model.RecipeLog
         WorkoutPlanExerciseCrossRef::class,
         RecipeLog::class
     ],
-    version = 21
+    version = 22
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -56,8 +56,13 @@ abstract class AppDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
-        // Migration from version 14 to 15
-        private val MIGRATION_INCREMENT= object : Migration(20, 21) {
+        private val MIGRATION_21_22 = object : Migration(21, 22) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE workout_plans ADD COLUMN goal INTEGER")
+            }
+        }
+
+        private val MIGRATION_20_21 = object : Migration(20, 21) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("CREATE TABLE IF NOT EXISTS `recipe_logs` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `instructions` TEXT NOT NULL, `imageUrl` TEXT, `timestamp` INTEGER NOT NULL)")
             }
@@ -71,7 +76,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "gym_tracker_database"
                 )
-                    .addMigrations(MIGRATION_INCREMENT) // ✅ Use migration instead of destructive fallback
+                    .addMigrations(MIGRATION_20_21, MIGRATION_21_22) // ✅ Use migration instead of destructive fallback
                     .build()
                 INSTANCE = instance
                 instance

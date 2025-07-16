@@ -86,6 +86,10 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
             workoutDao.updateSession(session)
         }
     }
+
+    fun resetCurrentSets() {
+        _currentSets.value = emptyList()
+    }
 }
 
 fun Date.normalized(): Date {

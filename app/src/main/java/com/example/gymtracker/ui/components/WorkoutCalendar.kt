@@ -33,11 +33,14 @@ import java.time.temporal.TemporalAdjusters
 import java.util.Locale
 import androidx.compose.foundation.shape.RoundedCornerShape
 
+import com.example.gymtracker.data.model.WorkoutPlanWithCompletionStatus
+
 @Composable
 fun WorkoutCalendar(
     modifier: Modifier = Modifier,
     workoutDates: Set<LocalDate>, // The set of dates with workouts
-    onDayClicked: (LocalDate) -> Unit // Callback for when a day is clicked
+    onDayClicked: (LocalDate) -> Unit, // Callback for when a day is clicked
+    plannedWorkoutsThisWeek: List<WorkoutPlanWithCompletionStatus>
 ) {
     val currentMonth = remember { YearMonth.now() }
     val startMonth = remember { currentMonth.minusMonths(100) } // Display 100 months back
@@ -53,6 +56,22 @@ fun WorkoutCalendar(
     )
 
     Column(modifier = modifier) {
+        val uncompletedPlans = plannedWorkoutsThisWeek.filter { !it.isGoalMetThisWeek }
+        if (uncompletedPlans.isNotEmpty()) {
+            Column(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+                Text(
+                    text = "Planned this week:",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+                uncompletedPlans.forEach { plan ->
+                    Text(
+                        text = "• ${plan.plan.name} (${plan.currentWeekCompletedCount}/${plan.plan.goal ?: 0})",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        }
         DaysOfWeekTitle(daysOfWeek = state.firstDayOfWeek.let {
             val days = DayOfWeek.values()
             days.slice(days.indexOf(it)..days.lastIndex) + days.slice(0 until days.indexOf(it))
@@ -235,13 +254,13 @@ private fun nextWeekHasWorkout(
     return getFirstWorkoutOfWeek(nextWeekDay, workoutDates, firstDayOfWeek) != null
 }
 
-@Composable
-@Preview(showBackground = true)
-fun WorkoutCalendarPreview() {
-    val fakeDates = setOf(LocalDate.of(2025, 7, 13), LocalDate.of(2025, 7, 8), LocalDate.of(2025, 7, 12), LocalDate.of(2025, 7, 23))
-    WorkoutCalendar(
-        workoutDates = fakeDates,
-        onDayClicked = {},
-        modifier = Modifier.padding(16.dp)
-    )
-}
+//@Composable
+//@Preview(showBackground = true)
+//fun WorkoutCalendarPreview() {
+//    val fakeDates = setOf(LocalDate.of(2025, 7, 13), LocalDate.of(2025, 7, 8), LocalDate.of(2025, 7, 12), LocalDate.of(2025, 7, 23))
+//    WorkoutCalendar(
+//        workoutDates = fakeDates,
+//        onDayClicked = {},
+//        modifier = Modifier.padding(16.dp)
+//    )
+//}

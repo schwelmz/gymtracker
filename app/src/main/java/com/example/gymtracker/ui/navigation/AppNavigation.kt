@@ -61,7 +61,7 @@ object AppRoutes {
     const val WORKOUT_ALL_EXERCISES_SCREEN = "workout_all_exercises_screen"
     const val WORKOUT_PLANS_SCREEN = "workout_plans_screen"
     const val EXERCISE_PICKER_SCREEN = "exercise_picker/{planId}"
-    const val PLAN_WORKOUT_LOG_SCREEN = "plan_workout_log_screen/{planId}"
+    const val PLAN_WORKOUT_LOG_SCREEN = "plan_workout_log_screen/{exerciseNames}"
 
     // Nutrition Graph
     const val NUTRITION_SCREEN = "nutrition_screen"
@@ -187,14 +187,12 @@ fun AppNavigation(
             }
             composable(
                 route = AppRoutes.PLAN_WORKOUT_LOG_SCREEN,
-                arguments = listOf(navArgument("planId") { type = NavType.IntType })
+                arguments = listOf(navArgument("exerciseNames") { type = NavType.StringType })
             ) { backStackEntry ->
-                val planId = backStackEntry.arguments?.getInt("planId") ?: -1
+                val exerciseNames = backStackEntry.arguments?.getString("exerciseNames")
                 PlanWorkoutLogScreen(
-                    planId = planId,
-                    onExerciseSelected = { exerciseName ->
-                        navController.navigate(AppRoutes.WORKOUT_LOG_SCREEN.replace("{exerciseName}", exerciseName))
-                    }
+                    exerciseNames = exerciseNames,
+                    onNavigateUp = { navController.popBackStack() }
                 )
             }
 

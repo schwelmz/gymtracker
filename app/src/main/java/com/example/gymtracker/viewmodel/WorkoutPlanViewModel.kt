@@ -14,17 +14,29 @@ import com.example.gymtracker.data.model.WorkoutPlanWithExercises
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
-class WorkoutPlanViewModel(application: Application) : AndroidViewModel(application) {
+import com.example.gymtracker.data.dao.WorkoutDao
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.temporal.TemporalAdjusters
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
+import java.time.Instant
+import java.time.ZoneId
+import com.example.gymtracker.data.model.WorkoutSession
+import com.example.gymtracker.data.model.WorkoutPlanWithCompletionStatus
+
+class WorkoutPlanViewModel(application: Application, private val workoutDao: WorkoutDao) : AndroidViewModel(application) {
     private val planDao: WorkoutPlanDao =
         AppDatabase.getDatabase(application).workoutPlanDao()
 
     val allPlans: Flow<List<WorkoutPlanWithExercises>> = planDao.getAllPlansWithExercises()
 
-    fun createPlan(name: String) {
+    fun createPlan(name: String, goal: Int?) {
         viewModelScope.launch(Dispatchers.IO) {
-            planDao.insertPlan(WorkoutPlan(name = name))
+            planDao.insertPlan(WorkoutPlan(name = name, goal = goal))
         }
     }
 
@@ -62,13 +74,60 @@ class WorkoutPlanViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
+    fun updatePlanGoal(planId: Int, goal: Int?) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val currentPlan = planDao.getPlanByIdNow(planId)
+            currentPlan?.let { plan ->
+                planDao.updatePlan(plan.copy(goal = goal))
+            }
+        }
+    }
+
+    val plannedWorkoutsThisWeek: Flow<List<WorkoutPlanWithCompletionStatus>> = combine(
+        allPlans,
+        workoutDao.getAllSessions()
+    ) { plansWithExercises, allSessions ->
+        val today = LocalDate.now()
+        val startOfWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+        val endOfWeek = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY))
+
+        val sessionsThisWeek = allSessions.filter { session ->
+            val sessionDate = Instant.ofEpochMilli(session.date.time)
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate()
+            sessionDate >= startOfWeek && sessionDate <= endOfWeek
+        }
+
+        plansWithExercises.map { planWithExercises ->
+            val completedCount = sessionsThisWeek.count { session ->
+                planWithExercises.exercises.any { exercise ->
+                    session.exerciseName == exercise.name
+                }
+            }
+            val isGoalMet = planWithExercises.plan.goal?.let { goal ->
+                completedCount >= goal
+            } ?: false // If goal is null, consider it not met for planning purposes
+
+            WorkoutPlanWithCompletionStatus(
+                plan = planWithExercises.plan,
+                currentWeekCompletedCount = completedCount,
+                isGoalMetThisWeek = isGoalMet
+            )
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+
     companion object {
         val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
                 val application =
                     checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])
-                return WorkoutPlanViewModel(application) as T
+                val workoutDao = AppDatabase.getDatabase(application).workoutDao()
+                return WorkoutPlanViewModel(application, workoutDao) as T
             }
         }
     }

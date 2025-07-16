@@ -17,7 +17,7 @@ import com.example.gymtracker.ui.utils.headlineTopPadding
 @Composable
 fun WorkoutPlansView(
     onExercisePicker: (WorkoutPlan) -> Unit,
-    onLogWorkoutForPlan: (WorkoutPlan) -> Unit
+    onLogWorkoutForPlan: (List<String>) -> Unit
 ){
     LazyColumn {
         item {
