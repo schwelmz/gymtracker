@@ -7,6 +7,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -19,6 +20,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -260,7 +262,7 @@ fun AddIngredientDialog(
     var grams by remember { mutableStateOf("") }
 
     val filteredTemplates = remember(searchText, allFoodTemplates) {
-        if (searchText.length >= 3) {
+        if (searchText.length >= 1) {
             allFoodTemplates.filter {
                 it.name.contains(searchText, ignoreCase = true)
             }.take(4)
@@ -298,7 +300,19 @@ fun AddIngredientDialog(
                                 modifier = Modifier
                                     .menuAnchor()
                                     .fillMaxWidth(),
-                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) }
+                                trailingIcon = {
+                                    if (searchText.isNotEmpty()) {
+                                        IconButton(onClick = { searchText = "" }) {
+                                            Icon(
+                                                imageVector = Icons.Default.Delete,
+                                                contentDescription = "Clear text"
+                                            )
+                                        }
+                                    } else {
+                                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                                    }
+                                }
+
                             )
                             ExposedDropdownMenu(
                                 expanded = expanded,
