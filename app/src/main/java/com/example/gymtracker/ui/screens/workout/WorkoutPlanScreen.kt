@@ -14,7 +14,7 @@ import com.example.gymtracker.viewmodel.WorkoutPlanViewModel
 fun WorkoutPlanScreen(
     viewModel: WorkoutPlanViewModel = viewModel(factory = WorkoutPlanViewModel.Factory),
     onExercisePicker: (WorkoutPlan) -> Unit,
-    onLogWorkoutForPlan: (List<String>) -> Unit
+    onLogWorkoutForPlan: (List<String>, Int) -> Unit
 ) {
     val plans by viewModel.allPlans.collectAsState(initial = emptyList())
     var showDialog by remember { mutableStateOf(false) }
@@ -35,7 +35,7 @@ fun WorkoutPlanScreen(
                     .fillMaxWidth()
                     .padding(vertical = 8.dp)
                     .combinedClickable(
-                        onClick = { onLogWorkoutForPlan(planWithExercises.exercises.map { it.name }) }, // <- Card click
+                        onClick = { onLogWorkoutForPlan(planWithExercises.exercises.map { it.name }, planWithExercises.plan.id) }, // <- Card click
                         onLongClick = { deleteDialogPlan = planWithExercises.plan }
                     ),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
@@ -56,7 +56,7 @@ fun WorkoutPlanScreen(
                         Button(onClick = { onExercisePicker(planWithExercises.plan) }) {
                             Text("Edit Exercises")
                         }
-                        Button(onClick = { onLogWorkoutForPlan(planWithExercises.exercises.map { it.name }) }) {
+                        Button(onClick = { onLogWorkoutForPlan(planWithExercises.exercises.map { it.name }, planWithExercises.plan.id) }) {
                             Text("Start Workout")
                         }
                     }

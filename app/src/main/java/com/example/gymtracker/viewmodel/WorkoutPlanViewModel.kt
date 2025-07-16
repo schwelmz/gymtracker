@@ -31,6 +31,7 @@ import com.example.gymtracker.data.model.WorkoutPlanWithCompletionStatus
 class WorkoutPlanViewModel(application: Application, private val workoutDao: WorkoutDao) : AndroidViewModel(application) {
     private val planDao: WorkoutPlanDao =
         AppDatabase.getDatabase(application).workoutPlanDao()
+    private val workoutPlanCompletionDao = AppDatabase.getDatabase(application).workoutPlanCompletionDao()
 
     val allPlans: Flow<List<WorkoutPlanWithExercises>> = planDao.getAllPlansWithExercises()
 
@@ -83,42 +84,31 @@ class WorkoutPlanViewModel(application: Application, private val workoutDao: Wor
         }
     }
 
-    val plannedWorkoutsThisWeek: Flow<List<WorkoutPlanWithCompletionStatus>> = combine(
-        allPlans,
-        workoutDao.getAllSessions()
-    ) { plansWithExercises, allSessions ->
-        val today = LocalDate.now()
-        val startOfWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-        val endOfWeek = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY))
-
-        val sessionsThisWeek = allSessions.filter { session ->
-            val sessionDate = Instant.ofEpochMilli(session.date.time)
-                .atZone(ZoneId.systemDefault())
-                .toLocalDate()
-            sessionDate >= startOfWeek && sessionDate <= endOfWeek
-        }
-
-        plansWithExercises.map { planWithExercises ->
-            val completedCount = sessionsThisWeek.count { session ->
-                planWithExercises.exercises.any { exercise ->
-                    session.exerciseName == exercise.name
-                }
-            }
-            val isGoalMet = planWithExercises.plan.goal?.let { goal ->
-                completedCount >= goal
-            } ?: false // If goal is null, consider it not met for planning purposes
-
-            WorkoutPlanWithCompletionStatus(
-                plan = planWithExercises.plan,
-                currentWeekCompletedCount = completedCount,
-                isGoalMetThisWeek = isGoalMet
+    val plannedWorkoutsThisWeek: Flow<List<WorkoutPlanWithCompletionStatus>> =
+        allPlans.combine(
+            workoutPlanCompletionDao.getCompletionsInDateRange(
+                LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)),
+                LocalDate.now().with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY))
             )
-        }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
-    )
+        ) { plans, completionsThisWeek ->
+            plans.map { planWithExercises ->
+                val completedCount = completionsThisWeek.count { it.planId == planWithExercises.plan.id }
+                val isGoalMet = planWithExercises.plan.goal?.let { goal ->
+                    completedCount >= goal
+                } ?: false
+
+                WorkoutPlanWithCompletionStatus(
+                    plan = planWithExercises.plan,
+                    exercises = planWithExercises.exercises,
+                    currentWeekCompletedCount = completedCount,
+                    isGoalMetThisWeek = isGoalMet
+                )
+            }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 
     companion object {
         val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {

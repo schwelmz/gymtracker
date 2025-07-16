@@ -35,6 +35,7 @@ import com.example.gymtracker.viewmodel.GoalsViewModel
 import com.example.gymtracker.viewmodel.HomeViewModel
 import com.example.gymtracker.viewmodel.RecipeViewModel
 import com.example.gymtracker.viewmodel.ScannerResultViewModel
+import com.example.gymtracker.viewmodel.WorkoutPlanViewModel
 import com.example.gymtracker.viewmodel.WorkoutViewModel
 import kotlinx.coroutines.launch
 
@@ -61,7 +62,7 @@ object AppRoutes {
     const val WORKOUT_ALL_EXERCISES_SCREEN = "workout_all_exercises_screen"
     const val WORKOUT_PLANS_SCREEN = "workout_plans_screen"
     const val EXERCISE_PICKER_SCREEN = "exercise_picker/{planId}"
-    const val PLAN_WORKOUT_LOG_SCREEN = "plan_workout_log_screen/{exerciseNames}"
+    const val PLAN_WORKOUT_LOG_SCREEN = "plan_workout_log_screen/{exerciseNames}?planId={planId}"
 
     // Nutrition Graph
     const val NUTRITION_SCREEN = "nutrition_screen"
@@ -187,11 +188,16 @@ fun AppNavigation(
             }
             composable(
                 route = AppRoutes.PLAN_WORKOUT_LOG_SCREEN,
-                arguments = listOf(navArgument("exerciseNames") { type = NavType.StringType })
+                arguments = listOf(
+                    navArgument("exerciseNames") { type = NavType.StringType },
+                    navArgument("planId") { type = NavType.StringType; nullable = true }
+                )
             ) { backStackEntry ->
                 val exerciseNames = backStackEntry.arguments?.getString("exerciseNames")
+                val planId = backStackEntry.arguments?.getString("planId")?.toIntOrNull()
                 PlanWorkoutLogScreen(
                     exerciseNames = exerciseNames,
+                    planId = planId,
                     onNavigateUp = { navController.popBackStack() }
                 )
             }
@@ -231,9 +237,11 @@ fun AppNavigation(
                 arguments = listOf(navArgument("planId") { type = NavType.IntType })
             ) { backStackEntry ->
                 val planId = backStackEntry.arguments?.getInt("planId") ?: return@composable
+                val workoutPlanViewModel: WorkoutPlanViewModel = viewModel(factory = WorkoutPlanViewModel.Factory)
                 ExercisePickerScreen(
                     planId = planId,
-                    onNavigateUp = { navController.popBackStack() }
+                    onNavigateUp = { navController.popBackStack() },
+                    workoutPlanViewModel = workoutPlanViewModel
                 )
             }
 

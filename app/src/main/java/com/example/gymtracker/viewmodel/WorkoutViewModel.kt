@@ -19,9 +19,11 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import java.time.Instant
 import java.time.ZoneId
+import com.example.gymtracker.data.model.WorkoutPlanCompletion
 
 class WorkoutViewModel(application: Application) : AndroidViewModel(application) {
     private val workoutDao = AppDatabase.getDatabase(application).workoutDao()
+    private val workoutPlanCompletionDao = AppDatabase.getDatabase(application).workoutPlanCompletionDao()
 
     // Live data for all sessions for the home screen
     val allSessions = workoutDao.getAllSessions()
@@ -60,13 +62,14 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         _currentSets.value = _currentSets.value + newSet
     }
 
-    fun saveWorkoutSession(exerciseName: String) {
+    fun saveWorkoutSession(exerciseName: String, planId: Int? = null) {
         if (_currentSets.value.isNotEmpty()) {
             viewModelScope.launch {
                 val newSession = WorkoutSession(
                     exerciseName = exerciseName,
                     sets = _currentSets.value,
-                    date = Date().normalized()
+                    date = Date().normalized(),
+                    planId = planId
                 )
                 workoutDao.insertSession(newSession)
                 // Reset for the next workout
@@ -74,6 +77,14 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
             }
         }
     }
+
+    fun logWorkoutPlanCompletion(planId: Int) {
+        viewModelScope.launch {
+            val completion = WorkoutPlanCompletion(planId = planId, completionDate = LocalDate.now())
+            workoutPlanCompletionDao.insertCompletion(completion)
+        }
+    }
+
     fun deleteSession(session: WorkoutSession) {
         viewModelScope.launch {
             workoutDao.deleteSession(session)

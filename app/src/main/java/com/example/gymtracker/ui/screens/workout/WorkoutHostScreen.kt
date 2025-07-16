@@ -79,6 +79,18 @@ fun WorkoutHostScreen(mainNavController: NavHostController) {
                             onNavigateToWorkoutCalendarDay = { date: LocalDate ->
                                 val route = AppRoutes.WORKOUT_CALENDAR_DAY_SCREEN.replace("{day}", date.toString())
                                 mainNavController.navigate(route)
+                            },
+                            onLogWorkoutForPlan = { exerciseNames, planId ->
+                                val exercisesList = exerciseNames as List<String>
+                                val exercisesString = StringBuilder()
+                                for (i in exercisesList.indices) {
+                                    exercisesString.append(exercisesList[i])
+                                    if (i < exercisesList.size - 1) {
+                                        exercisesString.append(",")
+                                    }
+                                }
+                                val route = AppRoutes.PLAN_WORKOUT_LOG_SCREEN.replace("{exerciseNames}", exercisesString.toString()).replace("{planId}", planId.toString())
+                                mainNavController.navigate(route)
                             }
                         )
                     }
@@ -99,7 +111,7 @@ fun WorkoutHostScreen(mainNavController: NavHostController) {
                                 val route = AppRoutes.EXERCISE_PICKER_SCREEN.replace("{planId}", plan.id.toString())
                                 mainNavController.navigate(route)
                             },
-                            onLogWorkoutForPlan = { exerciseNames ->
+                            onLogWorkoutForPlan = { exerciseNames, planId ->
                                 val exercisesList = exerciseNames as List<String>
                                 val exercisesString = StringBuilder()
                                 for (i in exercisesList.indices) {
@@ -108,7 +120,7 @@ fun WorkoutHostScreen(mainNavController: NavHostController) {
                                         exercisesString.append(",")
                                     }
                                 }
-                                val route = AppRoutes.PLAN_WORKOUT_LOG_SCREEN.replace("{exerciseNames}", exercisesString.toString())
+                                val route = AppRoutes.PLAN_WORKOUT_LOG_SCREEN.replace("{exerciseNames}", exercisesString.toString()).replace("{planId}", planId.toString())
                                 mainNavController.navigate(route)
                             }
                         )

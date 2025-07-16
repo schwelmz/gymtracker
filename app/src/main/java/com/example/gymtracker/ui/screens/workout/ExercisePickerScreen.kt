@@ -22,7 +22,7 @@ import com.example.gymtracker.viewmodel.WorkoutPlanViewModel
 fun ExercisePickerScreen(
     planId: Int,
     onNavigateUp: () -> Unit,
-    workoutPlanViewModel: WorkoutPlanViewModel = viewModel(),
+    workoutPlanViewModel: WorkoutPlanViewModel = viewModel(factory = WorkoutPlanViewModel.Factory),
     exerciseViewModel: ExerciseViewModel = viewModel()
 ) {
     val allExercises by exerciseViewModel.allExercises.collectAsState(initial = emptyList())

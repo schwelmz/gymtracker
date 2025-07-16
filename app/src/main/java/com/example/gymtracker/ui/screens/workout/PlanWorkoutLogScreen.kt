@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Done
 @Composable
 fun PlanWorkoutLogScreen(
     exerciseNames: String?,
+    planId: Int?,
     onNavigateUp: () -> Unit,
     workoutViewModel: WorkoutViewModel = viewModel()
 ) {
@@ -72,7 +73,10 @@ fun PlanWorkoutLogScreen(
                     onClick = {
                         // Save the last exercise's sets
                         if (currentSets.isNotEmpty()) {
-                            workoutViewModel.saveWorkoutSession(currentExerciseName)
+                            workoutViewModel.saveWorkoutSession(currentExerciseName, planId)
+                        }
+                        if (planId != null) {
+                            workoutViewModel.logWorkoutPlanCompletion(planId)
                         }
                         onNavigateUp()
                     },
@@ -85,7 +89,7 @@ fun PlanWorkoutLogScreen(
                     onClick = {
                         // Save current exercise's sets and move to next
                         if (currentSets.isNotEmpty()) {
-                            workoutViewModel.saveWorkoutSession(currentExerciseName)
+                            workoutViewModel.saveWorkoutSession(currentExerciseName, planId)
                         }
                         currentExerciseIndex++
                     },
