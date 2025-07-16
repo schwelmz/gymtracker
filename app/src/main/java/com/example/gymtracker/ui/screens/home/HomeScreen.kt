@@ -295,7 +295,7 @@ fun CalorieBudgetGraph(
         CalorieMode.SURPLUS -> intake >= goal
     }
 
-    val progressBarColor = if (isGoalAchieved) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+    val progressBarColor = if (isGoalAchieved) Color(0xFF8BC34A) else MaterialTheme.colorScheme.error
     val leftoverTextColor = if (isGoalAchieved) LocalContentColor.current else MaterialTheme.colorScheme.error
 
     var menuExpanded by remember { mutableStateOf(false) }
