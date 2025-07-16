@@ -23,14 +23,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.gymtracker.data.model.CalorieMode
 import com.example.gymtracker.data.model.DiaryEntry
-import com.example.gymtracker.ui.components.DateTimePickerDialog
-import com.example.gymtracker.ui.components.EditFoodLogDialog
 import com.example.gymtracker.ui.components.FoodCard
 import com.example.gymtracker.ui.components.RecipeLogCard
 import com.example.gymtracker.ui.utils.headlineBottomPadding
 import com.example.gymtracker.ui.utils.headlineTopPadding
 import com.example.gymtracker.viewmodel.FoodViewModel
-import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -55,90 +52,7 @@ fun FoodDiaryScreen(
     calorieMode: CalorieMode,
     onNavigateUp: () -> Unit
 ) {
-    // Use the correct unified diary history flow
     val foodHistory by viewModel.allDiaryHistory.collectAsState(initial = emptyList())
-    val scope = rememberCoroutineScope()
-
-    // --- State Management for Dialogs ---
-    var showOptionsDialog by remember { mutableStateOf(false) }
-    var showDateTimePicker by remember { mutableStateOf(false) }
-    var showGramsEditor by remember { mutableStateOf(false) }
-    var selectedEntry by remember { mutableStateOf<DiaryEntry?>(null) }
-
-    // --- Dialog Handling Logic ---
-    val entry = selectedEntry
-    if (showOptionsDialog && entry != null) {
-        when (entry) {
-            is DiaryEntry.Food -> {
-                FoodOptionsDialog(
-                    foodName = entry.details.name,
-                    onDismiss = { showOptionsDialog = false; selectedEntry = null },
-                    onEditTimeClick = {
-                        showOptionsDialog = false
-                        showDateTimePicker = true
-                    },
-                    onEditStatsClick = {
-                        showOptionsDialog = false
-                        showGramsEditor = true
-                    },
-                    onDeleteClick = {
-                        scope.launch { viewModel.deleteFoodLog(entry.details.logId) }
-                        showOptionsDialog = false
-                        selectedEntry = null
-                    }
-                )
-            }
-            is DiaryEntry.Recipe -> {
-                DeleteConfirmDialog(
-                    itemName = entry.log.name,
-                    onDismiss = { showOptionsDialog = false; selectedEntry = null },
-                    onConfirm = {
-                        viewModel.deleteRecipeLog(entry.log.id)
-                        showOptionsDialog = false
-                        selectedEntry = null
-                    }
-                )
-            }
-        }
-    }
-
-    if (showDateTimePicker && entry is DiaryEntry.Food) {
-        DateTimePickerDialog(
-            initialTimestamp = entry.details.timestamp,
-            onDismiss = { showDateTimePicker = false; selectedEntry = null },
-            onDateTimeSelected = { newTimestamp ->
-                viewModel.updateLogTimestamp(entry.details.logId, newTimestamp)
-                showDateTimePicker = false
-                selectedEntry = null
-            }
-        )
-    }
-
-    if (showGramsEditor && entry is DiaryEntry.Food) {
-        EditFoodLogDialog(
-            initialGrams = entry.details.grams,
-            initialCalories = entry.details.calories,
-            initialProtein = entry.details.protein,
-            initialCarbs = entry.details.carbs,
-            initialFat = entry.details.fat,
-            onDismiss = { showGramsEditor = false; selectedEntry = null },
-            onSave = { newGrams, newCalories, newProtein, newCarbs, newFat ->
-                scope.launch {
-                    viewModel.updateFoodLog(
-                        logId = entry.details.logId,
-                        grams = newGrams,
-                        calories = newCalories,
-                        protein = newProtein,
-                        carbs = newCarbs,
-                        fat = newFat
-                    )
-                }
-                showGramsEditor = false
-                selectedEntry = null
-            }
-        )
-    }
-
     var selectedTimeSpan by remember { mutableStateOf(ChartTimeSpan.WEEK) }
     var selectedBar by remember { mutableStateOf<Pair<LocalDate, Int>?>(null) }
 
@@ -154,11 +68,11 @@ fun FoodDiaryScreen(
         }
 
         val dailyCalories = mutableMapOf<LocalDate, Int>()
-        filteredHistory.forEach { diaryEntry ->
-            val date = Instant.ofEpochMilli(diaryEntry.timestamp).atZone(ZoneId.systemDefault()).toLocalDate()
-            val calories = when (diaryEntry) {
-                is DiaryEntry.Food -> diaryEntry.details.calories
-                is DiaryEntry.Recipe -> diaryEntry.log.totalCalories
+        filteredHistory.forEach { entry ->
+            val date = Instant.ofEpochMilli(entry.timestamp).atZone(ZoneId.systemDefault()).toLocalDate()
+            val calories = when (entry) {
+                is DiaryEntry.Food -> entry.details.calories
+                is DiaryEntry.Recipe -> entry.log.totalCalories
             }
             dailyCalories[date] = (dailyCalories[date] ?: 0) + calories
         }
@@ -255,20 +169,8 @@ fun FoodDiaryScreen(
                 items(logs, key = { it.id }) { log ->
                     Box(modifier = Modifier.padding(horizontal = 16.dp)) {
                         when (log) {
-                            is DiaryEntry.Food -> FoodCard(
-                                foodLog = log.details,
-                                onLongPress = {
-                                    selectedEntry = log
-                                    showOptionsDialog = true
-                                }
-                            )
-                            is DiaryEntry.Recipe -> RecipeLogCard(
-                                recipeLog = log.log,
-                                onLongPress = {
-                                    selectedEntry = log
-                                    showOptionsDialog = true
-                                }
-                            )
+                            is DiaryEntry.Food -> FoodCard(foodLog = log.details, onLongPress = {})
+                            is DiaryEntry.Recipe -> RecipeLogCard(recipeLog = log.log, onLongPress = {})
                         }
                     }
                 }
@@ -276,51 +178,6 @@ fun FoodDiaryScreen(
             item { Spacer(modifier = Modifier.height(64.dp)) }
         }
     }
-}
-
-@Composable
-private fun FoodOptionsDialog(
-    foodName: String,
-    onDismiss: () -> Unit,
-    onEditStatsClick: () -> Unit,
-    onEditTimeClick: () -> Unit,
-    onDeleteClick: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(foodName) },
-        text = { Text("What would you like to do?") },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
-        confirmButton = {
-            Column(horizontalAlignment = Alignment.End) {
-                TextButton(onClick = onEditStatsClick) { Text("Edit Stats") }
-                TextButton(onClick = onEditTimeClick) { Text("Edit Time") }
-                TextButton(onClick = onDeleteClick) { Text("Delete") }
-            }
-        }
-    )
-}
-
-@Composable
-private fun DeleteConfirmDialog(
-    itemName: String,
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Delete Entry") },
-        text = { Text("Are you sure you want to delete \"$itemName\" from your diary?") },
-        confirmButton = {
-            Button(
-                onClick = onConfirm,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-            ) {
-                Text("Delete")
-            }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
-    )
 }
 
 @Composable
@@ -353,8 +210,13 @@ fun BarChart(
     val textMeasurer = rememberTextMeasurer()
     val primaryColor = MaterialTheme.colorScheme.primary
     val onSurfaceVarColor = MaterialTheme.colorScheme.onSurfaceVariant
-    val greenColor = Color(0xFF4CAF50)
-    val redColor = Color(0xFFF44336)
+
+    // --- THIS IS THE CHANGE ---
+    // Use the same colors as the HomeScreen for consistency
+    val successColor = Color(0xFF8BC34A)
+    val failureColor = MaterialTheme.colorScheme.error
+    // --- END OF CHANGE ---
+
     val goalLabel = if (calorieMode == CalorieMode.DEFICIT) "Limit" else "Goal"
     val labelStyle = TextStyle(fontSize = 12.sp, color = onSurfaceVarColor)
     val barRects = remember { mutableStateListOf<Pair<Rect, Pair<LocalDate, Int>>>() }
@@ -383,11 +245,15 @@ fun BarChart(
             val barY = chartHeight - (calories.toFloat() / maxValue) * chartHeight
             val topY = minOf(goalY, barY)
             val barHeight = (goalY - barY).absoluteValue
+
+            // --- THIS IS THE CHANGE ---
+            // The logic is now based on the new consistent colors
             val barColor = (if (calorieMode == CalorieMode.DEFICIT) {
-                if (calories <= calorieGoal) greenColor else redColor
+                if (calories <= calorieGoal) successColor else failureColor
             } else {
-                if (calories >= calorieGoal) greenColor else redColor
+                if (calories >= calorieGoal) successColor else failureColor
             }).copy(alpha = 0.4f)
+            // --- END OF CHANGE ---
 
             val barRect = Rect(topLeft = Offset(barX, 0f), bottomRight = Offset(barX + barWidth, chartHeight))
             barRects.add(barRect to (date to calories))
@@ -416,11 +282,11 @@ fun BarChart(
             if (selectedIndex != -1) {
                 val barX = yAxisLabelPadding + selectedIndex * (barWidth * 1.5f)
                 val barY = chartHeight - (calories.toFloat() / maxValue) * chartHeight
-                val valueText = textMeasurer.measure(calories.toString(), style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Bold, color =primaryColor))
+                val valueText = textMeasurer.measure(calories.toString(), style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Bold, color = primaryColor))
                 val textBgSize = Size(valueText.size.width + 16.dp.toPx(), valueText.size.height + 8.dp.toPx())
                 val textOffset = Offset(x = barX + (barWidth - textBgSize.width) / 2, y = barY - textBgSize.height - 4.dp.toPx())
-                //drawRoundRect(color = primaryColor.copy(alpha = 0.9f), topLeft = textOffset, size = textBgSize, cornerRadius = CornerRadius(4.dp.toPx()))
-                drawText(valueText, color=primaryColor,topLeft = Offset(textOffset.x + 8.dp.toPx(), textOffset.y + 28.dp.toPx()))
+                drawRoundRect(color = primaryColor.copy(alpha = 0.9f), topLeft = textOffset, size = textBgSize, cornerRadius = CornerRadius(4.dp.toPx()))
+                drawText(valueText, topLeft = Offset(textOffset.x + 8.dp.toPx(), textOffset.y + 4.dp.toPx()))
             }
         }
     }

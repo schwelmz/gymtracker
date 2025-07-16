@@ -25,7 +25,6 @@ import kotlinx.coroutines.launch
 @Composable
 fun NutritionHostScreen(
     mainNavController: NavHostController,
-    // 1. Accept both required ViewModels
     foodViewModel: FoodViewModel,
     recipeViewModel: RecipeViewModel,
     goalsViewModel: GoalsViewModel
@@ -38,16 +37,13 @@ fun NutritionHostScreen(
     val pagerState = rememberPagerState { nutritionNavItems.size }
     val scope = rememberCoroutineScope()
 
-    // Synchronize pager state with rail selection
     LaunchedEffect(pagerState.currentPage) {
     }
-
-    //val nutritionRailNavController = rememberNavController()
 
     Row(modifier = Modifier.fillMaxSize()) {
         AppNavigationRail(
             items = nutritionNavItems,
-            selectedItemId = nutritionNavItems[pagerState.currentPage].id, // Use id for selection
+            selectedItemId = nutritionNavItems[pagerState.currentPage].id,
             onItemSelected = { route ->
                 val index = nutritionNavItems.indexOfFirst { it.route == route }
                 if (index != -1) {
@@ -59,20 +55,21 @@ fun NutritionHostScreen(
         )
         Surface(modifier = Modifier.fillMaxSize()) {
             VerticalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
-//                val foodViewModel: FoodViewModel = viewModel()
-//                val goalsViewModel: GoalsViewModel = viewModel()
                 val goalsState by goalsViewModel.uiState.collectAsState()
                 val calorieGoal = goalsState.calorieGoal
                 val calorieMode = goalsState.calorieMode
 
                 when (nutritionNavItems[page].route) {
                     AppRoutes.NUTRITION_SCREEN -> {
+                        // --- THIS IS THE CHANGE ---
                         NutritionScreen(
                             viewModel = foodViewModel,
-//                            onNavigateToDiary = { mainNavController.navigate(AppRoutes.FOOD_DIARY_SCREEN) },
-//                            onNavigateToScanner = { mainNavController.navigate(AppRoutes.FOOD_SCANNER_SCREEN) },
-                            onNavigateToCustomFood = { mainNavController.navigate(AppRoutes.CUSTOM_FOOD_LIST_SCREEN) }
+                            onNavigateToCustomFood = { mainNavController.navigate(AppRoutes.CUSTOM_FOOD_LIST_SCREEN) },
+                            // Pass the goals to the screen
+                            calorieGoal = calorieGoal,
+                            calorieMode = calorieMode
                         )
+                        // --- END OF CHANGE ---
                     }
 
                     AppRoutes.FOOD_DIARY_SCREEN -> {
@@ -88,24 +85,14 @@ fun NutritionHostScreen(
                         RecipesScreen(
                             recipeViewModel = recipeViewModel,
                             onNavigateToAddRecipe = {
-                                // Navigate to the add screen without an ID
                                 mainNavController.navigate(
-                                    AppRoutes.RECIPE_ADD_EDIT_SCREEN.replace(
-                                        "{recipeId}",
-                                        "-1"
-                                    )
+                                    AppRoutes.RECIPE_ADD_EDIT_SCREEN.replace("{recipeId}", "-1")
                                 )
                             },
                             onNavigateToRecipeDetails = { recipeId ->
-                                // --- THIS IS THE CORRECTED NAVIGATION LOGIC ---
-                                // Navigate to the edit screen with the recipe's ID
                                 mainNavController.navigate(
-                                    AppRoutes.RECIPE_ADD_EDIT_SCREEN.replace(
-                                        "{recipeId}",
-                                        recipeId.toString()
-                                    )
+                                    AppRoutes.RECIPE_ADD_EDIT_SCREEN.replace("{recipeId}", recipeId.toString())
                                 )
-
                             },
                             foodViewModel = foodViewModel
                         )
@@ -115,4 +102,3 @@ fun NutritionHostScreen(
         }
     }
 }
-

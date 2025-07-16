@@ -7,8 +7,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.gymtracker.data.model.CalorieMode
 import com.example.gymtracker.data.model.DiaryEntry
 import com.example.gymtracker.ui.components.DateTimePickerDialog
 import com.example.gymtracker.ui.components.EditFoodLogDialog
@@ -23,7 +25,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun NutritionScreen(
     viewModel: FoodViewModel,
-    onNavigateToCustomFood: () -> Unit
+    onNavigateToCustomFood: () -> Unit,
+    calorieGoal: Int,
+    calorieMode: CalorieMode
 ) {
     val scope = rememberCoroutineScope()
     val todaysDiaryEntries by viewModel.todayDiaryEntries.collectAsState(initial = emptyList())
@@ -33,6 +37,7 @@ fun NutritionScreen(
     var showGramsEditor by remember { mutableStateOf(false) }
     var selectedEntry by remember { mutableStateOf<DiaryEntry?>(null) }
 
+    // Dialog handling logic...
     val entry = selectedEntry
     if (showOptionsDialog && entry != null) {
         when (entry) {
@@ -133,6 +138,13 @@ fun NutritionScreen(
                 listOf(cals, prot, carb, fat)
             }
 
+            val isGoalAchieved = when (calorieMode) {
+                CalorieMode.DEFICIT -> totalCalories <= calorieGoal
+                CalorieMode.SURPLUS -> totalCalories >= calorieGoal
+            }
+            val calorieColor = if (isGoalAchieved) Color(0xFF8BC34A) else MaterialTheme.colorScheme.error
+            val leftoverCalories = calorieGoal - totalCalories
+
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -157,50 +169,79 @@ fun NutritionScreen(
                     }
                 }
 
+                // --- THIS IS THE MODIFIED SUMMARY CARD ---
                 item {
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 24.dp),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                            .padding(bottom = 16.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 50.dp)
                     ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = 12.dp)
-                            ) {
-                                Text(
-                                    text = "Today's Total Calories",
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                                Text(
-                                    text = "$totalCalories kcal",
-                                    style = MaterialTheme.typography.displaySmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                            HorizontalDivider()
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            // Left side: Calories, Carbs, Leftover
                             Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 12.dp),
-                                horizontalArrangement = Arrangement.SpaceAround
+                                verticalAlignment = Alignment.CenterVertically,
+
+                                horizontalArrangement = Arrangement.spacedBy(24.dp)
                             ) {
-                                MacroStat(label = "Protein", value = totalProtein)
-                                MacroStat(label = "Carbs", value = totalCarbs)
-                                MacroStat(label = "Fat", value = totalFat)
+                                Column {
+                                    Text(
+                                        text = "Total Intake",
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                    Text(
+                                        text = "$totalCalories kcal",
+                                        style = MaterialTheme.typography.headlineMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = calorieColor
+                                    )
+                                    // Carbs displayed underneath calories
+                                }
+                                Column {
+                                    Text(
+                                        text = "Leftover",
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                    Text(
+                                        text = "$leftoverCalories kcal",
+                                        style = MaterialTheme.typography.headlineMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                    // Carbs displayed underneath calories
+                                }
+                                // Right side: Protein and Fat only
                             }
+                        }
+                        // A divider for better visual separation
+                        HorizontalDivider()
+
+                        // --- BOTTOM ROW: All Macronutrients ---
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceAround,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            MacroStat(label = "Protein", value = totalProtein)
+                            MacroStat(label = "Carbs", value = totalCarbs)
+                            MacroStat(label = "Fat", value = totalFat)
                         }
                     }
                 }
+                // --- END OF MODIFICATION ---
 
                 item {
                     Button(
                         onClick = { onNavigateToCustomFood() },
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 24.dp)
                     ) {
                         Text("Add Food")
                     }
@@ -210,7 +251,9 @@ fun NutritionScreen(
                     Text(
                         text = "Today's Entries",
                         style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp)
                     )
                 }
 
@@ -246,8 +289,8 @@ fun NutritionScreen(
 @Composable
 private fun MacroStat(label: String, value: Int) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = label, style = MaterialTheme.typography.labelLarge)
-        Text(text = "${value}g", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+        Text(text = label, style = MaterialTheme.typography.labelMedium)
+        Text(text = "${value}g", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
     }
 }
 
