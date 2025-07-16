@@ -36,7 +36,7 @@ import kotlinx.coroutines.Dispatchers
         WorkoutPlan::class,
         WorkoutPlanExerciseCrossRef::class
     ],
-    version = 19
+    version = 20
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -54,7 +54,7 @@ abstract class AppDatabase : RoomDatabase() {
         private var INSTANCE: AppDatabase? = null
 
         // Migration from version 14 to 15
-        private val MIGRATION_INCREMENT= object : Migration(19, 19) {
+        private val MIGRATION_INCREMENT= object : Migration(20, 20) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 // Add any table or column creation here — adjust if needed!
             }
