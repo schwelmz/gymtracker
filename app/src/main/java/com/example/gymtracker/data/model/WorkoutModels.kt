@@ -25,21 +25,6 @@ data class WorkoutSession(
     val planId: Int? = null
 )
 
-@Entity(tableName = "workout_plan_completions",
-    foreignKeys = [
-        androidx.room.ForeignKey(entity = WorkoutPlan::class,
-            parentColumns = ["id"],
-            childColumns = ["planId"],
-            onDelete = androidx.room.ForeignKey.CASCADE)
-    ],
-    indices = [androidx.room.Index("planId")])
-data class WorkoutPlanCompletion(
-    @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
-    val planId: Int,
-    val completionDate: LocalDate
-)
-
 // This class tells Room how to convert complex types (Date, List) to simple types it can store.
 class Converters {
     @TypeConverter

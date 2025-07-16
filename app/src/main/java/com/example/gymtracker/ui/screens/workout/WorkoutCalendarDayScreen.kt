@@ -19,6 +19,8 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Date
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.gymtracker.viewmodel.WorkoutPlanViewModel
 
 @Composable
 fun WorkoutCalendarDayScreen(
@@ -26,7 +28,8 @@ fun WorkoutCalendarDayScreen(
     sessions: List<WorkoutSession>,
     onSessionClicked: (String) -> Unit,
     onDeleteSession: (WorkoutSession) -> Unit,
-    onModifySession: (WorkoutSession) -> Unit
+    onModifySession: (WorkoutSession) -> Unit,
+    workoutPlanViewModel: WorkoutPlanViewModel = viewModel(factory = WorkoutPlanViewModel.Factory)
 ) {
     val selectedDate by remember(day) {
         derivedStateOf {
@@ -64,8 +67,14 @@ fun WorkoutCalendarDayScreen(
                     session = session,
                     details = details,
                     onClick = { onSessionClicked(session.exerciseName) },
-                    onDelete = { onDeleteSession(session) },
-                    onModify = { onModifySession(session) }
+                    onDelete = { 
+                        onDeleteSession(session)
+                        workoutPlanViewModel.refresh()
+                    },
+                    onModify = { 
+                        onModifySession(session)
+                        workoutPlanViewModel.refresh()
+                    }
                 )
             }
         } else {

@@ -38,4 +38,7 @@ interface WorkoutDao {
 
     @Query("SELECT DISTINCT date FROM workout_sessions")
     fun getAllWorkoutDates(): Flow<List<Date>>
+
+    @Query("SELECT * FROM workout_sessions WHERE date BETWEEN :startDate AND :endDate")
+    fun getSessionsInDateRange(startDate: Date, endDate: Date): Flow<List<WorkoutSession>>
 }

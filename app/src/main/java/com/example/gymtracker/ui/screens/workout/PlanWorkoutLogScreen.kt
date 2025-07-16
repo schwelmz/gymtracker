@@ -75,9 +75,6 @@ fun PlanWorkoutLogScreen(
                         if (currentSets.isNotEmpty()) {
                             workoutViewModel.saveWorkoutSession(currentExerciseName, planId)
                         }
-                        if (planId != null) {
-                            workoutViewModel.logWorkoutPlanCompletion(planId)
-                        }
                         onNavigateUp()
                     },
                     containerColor = MaterialTheme.colorScheme.primary
