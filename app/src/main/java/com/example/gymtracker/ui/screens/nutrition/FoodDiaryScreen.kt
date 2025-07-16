@@ -1,38 +1,40 @@
 package com.example.gymtracker.ui.screens.nutrition
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.*
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.gymtracker.data.model.CalorieMode
-import com.example.gymtracker.data.dao.FoodLogWithDetails
+import com.example.gymtracker.data.model.DiaryEntry
 import com.example.gymtracker.ui.components.FoodCard
+import com.example.gymtracker.ui.components.RecipeLogCard
+import com.example.gymtracker.ui.utils.headlineBottomPadding
+import com.example.gymtracker.ui.utils.headlineTopPadding
 import com.example.gymtracker.viewmodel.FoodViewModel
-import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import kotlin.math.roundToInt
-import com.example.gymtracker.ui.components.DateTimePickerDialog
-import com.example.gymtracker.ui.utils.headlineBottomPadding
-import com.example.gymtracker.ui.utils.headlineTopPadding
 import kotlin.math.absoluteValue
+import kotlin.math.ceil
+import kotlin.math.roundToInt
 
 // Enum for Time Span Selection
 enum class ChartTimeSpan(val days: Long, val title: String) {
@@ -42,7 +44,7 @@ enum class ChartTimeSpan(val days: Long, val title: String) {
     ALL_TIME(Long.MAX_VALUE, "All Time")
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalTextApi::class)
+@OptIn(ExperimentalTextApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun FoodDiaryScreen(
     viewModel: FoodViewModel,
@@ -50,87 +52,43 @@ fun FoodDiaryScreen(
     calorieMode: CalorieMode,
     onNavigateUp: () -> Unit
 ) {
-    val foodHistory by viewModel.allFoodHistory.collectAsState(initial = emptyList())
-    val scope = rememberCoroutineScope()
-
-    var showOptionsDialog by remember { mutableStateOf(false) }
-    var showDateTimePicker by remember { mutableStateOf(false) }
-    var selectedLog by remember { mutableStateOf<FoodLogWithDetails?>(null) }
+    val foodHistory by viewModel.allDiaryHistory.collectAsState(initial = emptyList())
     var selectedTimeSpan by remember { mutableStateOf(ChartTimeSpan.WEEK) }
-    var showGramsEditor by remember { mutableStateOf(false) }
+    var selectedBar by remember { mutableStateOf<Pair<LocalDate, Int>?>(null) }
 
-    if (showOptionsDialog && selectedLog != null) {
-        OptionsDialog(
-            foodName = selectedLog!!.name,
-            onDismiss = { showOptionsDialog = false },
-            onEditClick = {
-                showOptionsDialog = false
-                showDateTimePicker = true
-            },
-            onEditGramsClick = {
-                showOptionsDialog = false
-                showGramsEditor = true
-            },
-            onDeleteClick = {
-                scope.launch { viewModel.deleteFoodLog(selectedLog!!.logId) }
-                showOptionsDialog = false
-            }
-        )
-    }
-    if (showGramsEditor && selectedLog != null) {
-        GramsEditDialog(
-            initialGrams = selectedLog!!.grams,
-            onDismiss = { showGramsEditor = false },
-            onSave = { newGrams ->
-                viewModel.updateLogGrams(selectedLog!!.logId, newGrams)
-                showGramsEditor = false
-            }
-        )
-    }
-    if (showDateTimePicker && selectedLog != null) {
-        DateTimePickerDialog(
-            initialTimestamp = selectedLog!!.timestamp,
-            onDismiss = { showDateTimePicker = false },
-            onDateTimeSelected = { newTimestamp ->
-                viewModel.updateLogTimestamp(selectedLog!!.logId, newTimestamp)
-                showDateTimePicker = false
-            }
-        )
-    }
-
-    // --- THIS IS THE CORRECTED LOGIC ---
-    // Both `groupedFoodHistory` and `chartData` are now directly derived from the
-    // source `foodHistory` and the `selectedTimeSpan` state. When the tabs change
-    // `selectedTimeSpan`, both of these will be correctly recalculated.
     val (groupedFoodHistory, chartData) = remember(foodHistory, selectedTimeSpan) {
         val filteredHistory = if (selectedTimeSpan == ChartTimeSpan.ALL_TIME) {
             foodHistory
         } else {
-            // For a "7 Day" period, we want today plus the previous 6 days.
-            // So the start date is 6 days ago.
             val startDate = LocalDate.now().minusDays(selectedTimeSpan.days - 1)
-            // The filter should be inclusive of the start date.
             foodHistory.filter {
                 !Instant.ofEpochMilli(it.timestamp).atZone(ZoneId.systemDefault()).toLocalDate()
                     .isBefore(startDate)
             }
         }
 
-        val grouped = filteredHistory.groupBy { log ->
-            Instant.ofEpochMilli(log.timestamp).atZone(ZoneId.systemDefault()).toLocalDate()
+        val dailyCalories = mutableMapOf<LocalDate, Int>()
+        filteredHistory.forEach { entry ->
+            val date = Instant.ofEpochMilli(entry.timestamp).atZone(ZoneId.systemDefault()).toLocalDate()
+            val calories = when (entry) {
+                is DiaryEntry.Food -> entry.details.calories
+                is DiaryEntry.Recipe -> entry.log.totalCalories
+            }
+            dailyCalories[date] = (dailyCalories[date] ?: 0) + calories
+        }
+
+        val grouped = filteredHistory.groupBy {
+            Instant.ofEpochMilli(it.timestamp).atZone(ZoneId.systemDefault()).toLocalDate()
         }.toSortedMap(compareByDescending { it })
 
-        val chart = grouped.entries.map { (date, logs) ->
-            date to logs.sumOf { it.calories }
-        }.reversed()
+        val chart = dailyCalories.entries.map { (date, cals) -> date to cals }.sortedBy { it.first }
 
         grouped to chart
     }
-    // --- END OF CORRECTION ---
 
     Scaffold { padding ->
         LazyColumn(
-            //modifier = Modifier.padding(padding),
+            modifier = Modifier.padding(padding),
             contentPadding = PaddingValues(vertical = 8.dp)
         ) {
             item {
@@ -142,20 +100,22 @@ fun FoodDiaryScreen(
                             bottom = headlineBottomPadding,
                             end = 16.dp
                         ),
-                    contentAlignment = Alignment.CenterEnd // Aligns content to the end (right)
+                    contentAlignment = Alignment.CenterEnd
                 ) {
                     Text(
                         text = "Food Diary",
                         style = MaterialTheme.typography.headlineLarge,
                         color = MaterialTheme.colorScheme.secondary
-                        // textAlign can be removed if the Box handles the alignment
                     )
                 }
             }
             item {
                 TimeSpanSelector(
                     selectedTimeSpan = selectedTimeSpan,
-                    onTimeSpanSelected = { selectedTimeSpan = it }
+                    onTimeSpanSelected = {
+                        selectedBar = null
+                        selectedTimeSpan = it
+                    }
                 )
             }
 
@@ -172,6 +132,10 @@ fun FoodDiaryScreen(
                         data = chartData,
                         calorieGoal = calorieGoal,
                         calorieMode = calorieMode,
+                        selectedBar = selectedBar,
+                        onBarClick = { bar ->
+                            selectedBar = if (selectedBar == bar) null else bar
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(250.dp)
@@ -189,9 +153,7 @@ fun FoodDiaryScreen(
                 }
             }
 
-            item {
-                HorizontalDivider(modifier = Modifier.padding(top = 8.dp))
-            }
+            item { HorizontalDivider(modifier = Modifier.padding(top = 8.dp)) }
 
             groupedFoodHistory.forEach { (date, logs) ->
                 item {
@@ -204,70 +166,27 @@ fun FoodDiaryScreen(
                     )
                 }
 
-                items(logs, key = { it.logId }) { log ->
+                items(logs, key = { it.id }) { log ->
                     Box(modifier = Modifier.padding(horizontal = 16.dp)) {
-                        FoodCard(
-                            foodLog = log,
-                            onLongPress = {
-                                selectedLog = log
-                                showOptionsDialog = true
-                            }
-                        )
+                        when (log) {
+                            is DiaryEntry.Food -> FoodCard(foodLog = log.details, onLongPress = {})
+                            is DiaryEntry.Recipe -> RecipeLogCard(recipeLog = log.log, onLongPress = {})
+                        }
                     }
                 }
             }
+            item { Spacer(modifier = Modifier.height(64.dp)) }
         }
     }
 }
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun GramsEditDialog(
-    initialGrams: Int,
-    onDismiss: () -> Unit,
-    onSave: (Int) -> Unit
-) {
-    var grams by remember { mutableStateOf(initialGrams.toString()) }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Edit Grams") },
-        text = {
-            OutlinedTextField(
-                value = grams,
-                onValueChange = { grams = it.filter { char -> char.isDigit() } },
-                label = { Text("New weight (g)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                singleLine = true
-            )
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    val newGrams = grams.toIntOrNull()
-                    if (newGrams != null) {
-                        onSave(newGrams)
-                    }
-                },
-                enabled = grams.isNotBlank()
-            ) {
-                Text("Save")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
-    )
-}
 @Composable
 fun TimeSpanSelector(
     selectedTimeSpan: ChartTimeSpan,
     onTimeSpanSelected: (ChartTimeSpan) -> Unit
 ) {
-    val timeSpans = ChartTimeSpan.values()
-    TabRow(selectedTabIndex = timeSpans.indexOf(selectedTimeSpan)) {
-        timeSpans.forEach { timeSpan ->
+    TabRow(selectedTabIndex = ChartTimeSpan.values().indexOf(selectedTimeSpan)) {
+        ChartTimeSpan.values().forEach { timeSpan ->
             Tab(
                 selected = selectedTimeSpan == timeSpan,
                 onClick = { onTimeSpanSelected(timeSpan) },
@@ -276,153 +195,105 @@ fun TimeSpanSelector(
         }
     }
 }
-@Composable
-private fun OptionsDialog(
-    foodName: String,
-    onDismiss: () -> Unit,
-    onEditClick: () -> Unit,
-    onEditGramsClick: ()->Unit,
-    onDeleteClick: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(foodName) },
-        text = { Text("What would you like to do?") },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
-        },
-        confirmButton = {
-            Row{
-                TextButton(onClick = onEditGramsClick) { Text("Edit Grams") }
-                Spacer(modifier = Modifier.width(8.dp))
-                TextButton(onClick = onEditClick) { Text("Edit Time") }
-                Spacer(modifier = Modifier.width(8.dp))
-                TextButton(onClick = onDeleteClick) { Text("Delete") }
-            }
-        }
-    )
-}
-/**
- * The final, beautifully rendered Line Chart.
- */
+
 @OptIn(ExperimentalTextApi::class)
 @Composable
 fun BarChart(
     data: List<Pair<LocalDate, Int>>,
     calorieGoal: Int,
     calorieMode: CalorieMode,
+    selectedBar: Pair<LocalDate, Int>?,
+    onBarClick: (Pair<LocalDate, Int>?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val density = LocalDensity.current
     val textMeasurer = rememberTextMeasurer()
-    val col = MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f)
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val onSurfaceVarColor = MaterialTheme.colorScheme.onSurfaceVariant
     val greenColor = Color(0xFF4CAF50)
     val redColor = Color(0xFFF44336)
+    val goalLabel = if (calorieMode == CalorieMode.DEFICIT) "Limit" else "Goal"
+    val labelStyle = TextStyle(fontSize = 12.sp, color = onSurfaceVarColor)
+    val barRects = remember { mutableStateListOf<Pair<Rect, Pair<LocalDate, Int>>>() }
 
-    val goalLabel = when (calorieMode) {
-        CalorieMode.DEFICIT -> "Limit"
-        CalorieMode.SURPLUS -> "Goal"
-    }
-
-    val labelStyle = TextStyle(fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-
-    Canvas(modifier = modifier) {
+    Canvas(
+        modifier = modifier.pointerInput(Unit) {
+            detectTapGestures { offset ->
+                val clickedBar = barRects.firstOrNull { (rect, _) -> rect.contains(offset) }
+                onBarClick(clickedBar?.second)
+            }
+        }
+    ) {
+        barRects.clear()
         val yAxisLabelPadding = with(density) { 40.dp.toPx() }
         val xAxisLabelPadding = with(density) { 24.dp.toPx() }
-
         val chartWidth = size.width - yAxisLabelPadding
         val chartHeight = size.height - xAxisLabelPadding
-        val calorieValues = data.map { it.second }
-
-        val maxDataValue = calorieValues.maxOrNull()?.toFloat() ?: 0f
-        val maxValue = maxOf(maxDataValue, calorieGoal.toFloat()) * 1.1f
-
-        val goalY = chartHeight - (calorieGoal / maxValue) * chartHeight
+        val maxDataValue = data.maxOfOrNull { it.second }?.toFloat() ?: 0f
+        val maxValue = getNiceMaxValue(maxOf(maxDataValue, calorieGoal.toFloat()) * 1.1f)
+        val goalY = chartHeight - (calorieGoal.toFloat() / maxValue) * chartHeight
         val barWidth = chartWidth / (data.size * 1.5f)
-
         val dateFormatter = DateTimeFormatter.ofPattern("d MMM")
 
-        // 1. Draw bars (with transparency) + calorie line inside
         data.forEachIndexed { index, (date, calories) ->
             val barX = yAxisLabelPadding + index * (barWidth * 1.5f)
-            val barY = chartHeight - (calories / maxValue) * chartHeight
+            val barY = chartHeight - (calories.toFloat() / maxValue) * chartHeight
             val topY = minOf(goalY, barY)
             val barHeight = (goalY - barY).absoluteValue
+            val barColor = (if (calorieMode == CalorieMode.DEFICIT) {
+                if (calories <= calorieGoal) greenColor else redColor
+            } else {
+                if (calories >= calorieGoal) greenColor else redColor
+            }).copy(alpha = 0.4f)
 
-            val barColor = when (calorieMode) {
-                CalorieMode.DEFICIT -> if (calories <= calorieGoal) greenColor else redColor
-                CalorieMode.SURPLUS -> if (calories >= calorieGoal) greenColor else redColor
-            }.copy(alpha = 0.4f)
+            val barRect = Rect(topLeft = Offset(barX, 0f), bottomRight = Offset(barX + barWidth, chartHeight))
+            barRects.add(barRect to (date to calories))
 
-            drawRect(
-                color = barColor,
-                topLeft = Offset(barX, topY),
-                size = Size(barWidth, barHeight.coerceAtLeast(2f))
-            )
-
-            // Draw calorie marker line (tick inside bar)
-            val tickY = chartHeight - (calories / maxValue) * chartHeight
-            drawLine(
-                color = barColor.copy(alpha = 1f),
-                start = Offset(barX, tickY),
-                end = Offset(barX + barWidth, tickY),
-                strokeWidth = 2.dp.toPx()
-            )
-
-            // X-axis label
+            drawRect(color = barColor, topLeft = Offset(barX, topY), size = Size(barWidth, barHeight.coerceAtLeast(2f)))
+            val tickY = chartHeight - (calories.toFloat() / maxValue) * chartHeight
+            drawLine(color = barColor.copy(alpha = 1f), start = Offset(barX, tickY), end = Offset(barX + barWidth, tickY), strokeWidth = 2.dp.toPx())
             val labelText = textMeasurer.measure(date.format(dateFormatter), style = labelStyle)
-            drawText(
-                textLayoutResult = labelText,
-                topLeft = Offset(
-                    barX + (barWidth - labelText.size.width) / 2,
-                    size.height - labelText.size.height
-                )
-            )
+            drawText(labelText, topLeft = Offset(barX + (barWidth - labelText.size.width) / 2, size.height - labelText.size.height))
         }
 
-        // 2. Draw Y-axis ticks and labels
-        val tickCount = 5
-        for (i in 0..tickCount) {
-            val value = i * (maxValue / tickCount)
+        (0..5).forEach { i ->
+            val value = i * (maxValue.toFloat() / 5)
             val y = chartHeight - (value / maxValue) * chartHeight
-
-            drawLine(
-                color = col.copy(alpha = 0.3f),
-                start = Offset(yAxisLabelPadding, y),
-                end = Offset(size.width, y),
-                strokeWidth = 1.dp.toPx()
-            )
-
+            drawLine(color = onSurfaceVarColor.copy(alpha = 0.3f), start = Offset(yAxisLabelPadding, y), end = Offset(size.width, y), strokeWidth = 1.dp.toPx())
             val labelText = textMeasurer.measure(value.roundToInt().toString(), style = labelStyle)
-            drawText(
-                textLayoutResult = labelText,
-                topLeft = Offset(yAxisLabelPadding - labelText.size.width - 4.dp.toPx(), y - labelText.size.height / 2)
-            )
+            drawText(labelText, topLeft = Offset(yAxisLabelPadding - labelText.size.width - 4.dp.toPx(), y - labelText.size.height / 2))
         }
 
-        // 3. Draw dashed goal/limit line LAST so it's on top of everything
-        drawLine(
-            color = col,
-            start = Offset(yAxisLabelPadding, goalY),
-            end = Offset(size.width, goalY),
-            strokeWidth = 2.dp.toPx(),
-            pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f))
-        )
+        drawLine(color = primaryColor.copy(alpha = 0.8f), start = Offset(yAxisLabelPadding, goalY), end = Offset(size.width, goalY), strokeWidth = 2.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f)))
+        val goalLabelText = textMeasurer.measure(goalLabel, style = labelStyle.copy(fontWeight = FontWeight.Bold, color = primaryColor))
+        drawText(goalLabelText, topLeft = Offset(yAxisLabelPadding + 4.dp.toPx(), goalY - goalLabelText.size.height - 4.dp.toPx()))
 
-        val goalLabelText = textMeasurer.measure(goalLabel, style = labelStyle.copy(fontWeight = FontWeight.Bold, color = col))
-        drawText(
-            textLayoutResult = goalLabelText,
-            topLeft = Offset(yAxisLabelPadding + 4.dp.toPx(), goalY - goalLabelText.size.height - 4.dp.toPx())
-        )
+        selectedBar?.let { (date, calories) ->
+            val selectedIndex = data.indexOfFirst { it.first == date }
+            if (selectedIndex != -1) {
+                val barX = yAxisLabelPadding + selectedIndex * (barWidth * 1.5f)
+                val barY = chartHeight - (calories.toFloat() / maxValue) * chartHeight
+                val valueText = textMeasurer.measure(calories.toString(), style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Bold, color = primaryColor))
+                val textBgSize = Size(valueText.size.width + 16.dp.toPx(), valueText.size.height + 8.dp.toPx())
+                val textOffset = Offset(x = barX + (barWidth - textBgSize.width) / 2, y = barY - textBgSize.height - 4.dp.toPx())
+                drawRoundRect(color = primaryColor.copy(alpha = 0.9f), topLeft = textOffset, size = textBgSize, cornerRadius = CornerRadius(4.dp.toPx()))
+                drawText(valueText, topLeft = Offset(textOffset.x + 8.dp.toPx(), textOffset.y + 4.dp.toPx()))
+            }
+        }
     }
-
 }
 
+private fun getNiceMaxValue(value: Float): Int {
+    if (value <= 0f) return 500
+    val step = when {
+        value <= 1000 -> 100
+        value <= 2500 -> 250
+        value <= 5000 -> 500
+        else -> 1000
+    }
+    return (ceil(value / step) * step).toInt()
+}
 
-
-/**
- * A helper function to format date headers nicely.
- */
 private fun formatDateHeader(date: LocalDate): String {
     val today = LocalDate.now()
     return when {

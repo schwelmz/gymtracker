@@ -100,7 +100,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "gym_tracker_database"
                 )
-                    .addMigrations(MIGRATION_20_21, MIGRATION_21_22, MIGRATION_22_23, MIGRATION_23_24) // ✅ Use migration instead of destructive fallback
+                    .addMigrations(MIGRATION_20_21, MIGRATION_21_22) // ✅ Use migration instead of destructive fallback
                     .build()
                 INSTANCE = instance
                 instance

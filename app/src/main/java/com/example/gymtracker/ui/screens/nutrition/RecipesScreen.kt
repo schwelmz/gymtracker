@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -20,7 +21,7 @@ import com.example.gymtracker.data.model.RecipeWithDetails
 import com.example.gymtracker.viewmodel.FoodViewModel
 import com.example.gymtracker.viewmodel.RecipeViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3Api::class)
 @Composable
 fun RecipesScreen(
     recipeViewModel: RecipeViewModel = viewModel(factory = RecipeViewModel.Factory),
@@ -51,15 +52,14 @@ fun RecipesScreen(
                         onClick = onNavigateToAddRecipe,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Add Recipe")
+                        Text("Add New Recipe")
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
                 }
 
                 if (recipes.isEmpty()) {
                     item {
                         Text(
-                            text = "No recipes found.",
+                            text = "No recipes found. Add your first one!",
                             style = MaterialTheme.typography.bodyLarge,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -73,12 +73,7 @@ fun RecipesScreen(
                             recipe = recipe,
                             onClick = { onNavigateToRecipeDetails(recipe.recipe.id) },
                             onUseRecipe = { usedRecipe ->
-                                usedRecipe.ingredients.forEach { ingredient ->
-                                    foodViewModel.logFood(
-                                        template = ingredient.foodTemplate,
-                                        grams = ingredient.grams
-                                    )
-                                }
+                                foodViewModel.logRecipe(usedRecipe)
                             },
                             onLongPress = {
                                 recipeToDelete = recipe
@@ -89,17 +84,19 @@ fun RecipesScreen(
             }
         }
 
-        // Confirm delete dialog
         recipeToDelete?.let { recipe ->
             AlertDialog(
                 onDismissRequest = { recipeToDelete = null },
                 title = { Text("Delete Recipe") },
-                text = { Text("Are you sure you want to delete \"${recipe.recipe.name}\"?") },
+                text = { Text("Are you sure you want to delete \"${recipe.recipe.name}\"? This cannot be undone.") },
                 confirmButton = {
-                    TextButton(onClick = {
-                        recipeViewModel.deleteRecipe(recipe.recipe)
-                        recipeToDelete = null
-                    }) {
+                    TextButton(
+                        onClick = {
+                            recipeViewModel.deleteRecipe(recipe.recipe)
+                            recipeToDelete = null
+                        },
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                    ) {
                         Text("Delete")
                     }
                 },
@@ -113,6 +110,7 @@ fun RecipesScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecipeCard(
     recipe: RecipeWithDetails,
@@ -165,13 +163,12 @@ fun RecipeCard(
                         overflow = TextOverflow.Ellipsis
                     )
                 }
-
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(16.dp))
                 Button(
                     onClick = { onUseRecipe(recipe) },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.align(Alignment.End)
                 ) {
-                    Text("Use Recipe")
+                    Text("Log this Recipe")
                 }
             }
         }

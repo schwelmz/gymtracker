@@ -8,11 +8,16 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.gymtracker.data.*
 import com.example.gymtracker.data.dao.FoodLogWithDetails
+import com.example.gymtracker.data.model.DiaryEntry
 import com.example.gymtracker.data.model.FoodLog
 import com.example.gymtracker.data.model.FoodTemplate
 import com.example.gymtracker.data.model.Product
+import com.example.gymtracker.data.model.RecipeLog
+import com.example.gymtracker.data.model.RecipeWithDetails
 import com.example.gymtracker.data.repository.PredefinedFoodRepository
+import com.google.gson.Gson
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
@@ -20,21 +25,35 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
     private val templateDao = AppDatabase.getDatabase(application).foodTemplateDao()
     private val logDao = AppDatabase.getDatabase(application).foodLogDao()
     private val foodLogDao = AppDatabase.getDatabase(application).foodLogDao()
-    val todayFoodLogs: Flow<List<FoodLogWithDetails>>
+    private val gson = Gson()
+    private val recipeLogDao = AppDatabase.getDatabase(application).recipeLogDao()
+    val todayDiaryEntries: Flow<List<DiaryEntry>>
         get() {
             val today = Calendar.getInstance()
-            today.set(Calendar.HOUR_OF_DAY, 0)
-            today.set(Calendar.MINUTE, 0)
-            today.set(Calendar.SECOND, 0)
-            today.set(Calendar.MILLISECOND, 0)
+            today.set(Calendar.HOUR_OF_DAY, 0); today.set(Calendar.MINUTE, 0); today.set(Calendar.SECOND, 0)
             val startOfDay = today.timeInMillis
-
             today.add(Calendar.DAY_OF_MONTH, 1)
             val endOfDay = today.timeInMillis
 
-            return logDao.getLogsForDayWithDetails(startOfDay, endOfDay)
+            val foodLogs = logDao.getLogsForDayWithDetails(startOfDay, endOfDay)
+            val recipeLogs = recipeLogDao.getRecipeLogsForDay(startOfDay, endOfDay)
+
+            return combine(foodLogs, recipeLogs) { foods, recipes ->
+                (foods.map { DiaryEntry.Food(it) } + recipes.map { DiaryEntry.Recipe(it) })
+                    .sortedByDescending { it.timestamp }
+            }
         }
-    val allFoodHistory: Flow<List<FoodLogWithDetails>>
+    val allDiaryHistory: Flow<List<DiaryEntry>>
+        get() {
+            val foodLogs = logDao.getAllLogsWithDetails()
+            val recipeLogs = recipeLogDao.getAllRecipeLogs()
+
+            return combine(foodLogs, recipeLogs) { foods, recipes ->
+                (foods.map { DiaryEntry.Food(it) } + recipes.map { DiaryEntry.Recipe(it) })
+                    .sortedByDescending { it.timestamp }
+            }
+        }
+
     val allFoodTemplates: Flow<List<FoodTemplate>>
 
     init {
@@ -45,10 +64,33 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
                 templateDao.insertAll(predefinedFoods)
             }
         }
-        allFoodHistory = logDao.getAllLogsWithDetails()
+        //allFoodHistory = logDao.getAllLogsWithDetails()
         allFoodTemplates = templateDao.getAll()
     }
+    fun logRecipe(recipe: RecipeWithDetails) {
+        viewModelScope.launch {
+            val totalCalories = recipe.ingredients.sumOf { (it.foodTemplate.caloriesPer100g * it.grams) / 100 }
+            val totalProtein = recipe.ingredients.sumOf { (it.foodTemplate.proteinPer100g * it.grams) / 100 }
+            val totalCarbs = recipe.ingredients.sumOf { (it.foodTemplate.carbsPer100g * it.grams) / 100 }
+            val totalFat = recipe.ingredients.sumOf { (it.foodTemplate.fatPer100g * it.grams) / 100 }
 
+            // Create a JSON string of the ingredients for the snapshot
+            val ingredientsJson = gson.toJson(recipe.ingredients)
+
+            val recipeLog = RecipeLog(
+                name = recipe.recipe.name,
+                instructions = recipe.recipe.instructions,
+                imageUrl = recipe.recipe.imageUrl,
+                timestamp = System.currentTimeMillis(),
+                totalCalories = totalCalories,
+                totalProtein = totalProtein,
+                totalCarbs = totalCarbs,
+                totalFat = totalFat,
+                ingredientsJson = ingredientsJson
+            )
+            recipeLogDao.insert(recipeLog)
+        }
+    }
     // --- REFACTORED LOGIC ---
 
     /**
@@ -81,6 +123,13 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
             logFood(template, grams)
         }
     }
+    fun deleteRecipeLog(logId: Int) {
+        viewModelScope.launch {
+            recipeLogDao.delete(logId)
+        }
+    }
+
+
     fun updateLogTimestamp(logId: Int, newTimestamp: Long) {
         viewModelScope.launch {
             logDao.updateTimestamp(logId, newTimestamp)
