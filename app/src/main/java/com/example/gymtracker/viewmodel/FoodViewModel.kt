@@ -21,6 +21,19 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
     private val logDao = AppDatabase.getDatabase(application).foodLogDao()
     private val foodLogDao = AppDatabase.getDatabase(application).foodLogDao()
     val todayFoodLogs: Flow<List<FoodLogWithDetails>>
+        get() {
+            val today = Calendar.getInstance()
+            today.set(Calendar.HOUR_OF_DAY, 0)
+            today.set(Calendar.MINUTE, 0)
+            today.set(Calendar.SECOND, 0)
+            today.set(Calendar.MILLISECOND, 0)
+            val startOfDay = today.timeInMillis
+
+            today.add(Calendar.DAY_OF_MONTH, 1)
+            val endOfDay = today.timeInMillis
+
+            return logDao.getLogsForDayWithDetails(startOfDay, endOfDay)
+        }
     val allFoodHistory: Flow<List<FoodLogWithDetails>>
     val allFoodTemplates: Flow<List<FoodTemplate>>
 
@@ -32,18 +45,6 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
                 templateDao.insertAll(predefinedFoods)
             }
         }
-
-        val today = Calendar.getInstance()
-        today.set(Calendar.HOUR_OF_DAY, 0)
-        today.set(Calendar.MINUTE, 0)
-        today.set(Calendar.SECOND, 0)
-        today.set(Calendar.MILLISECOND, 0)
-        val startOfDay = today.timeInMillis
-
-        today.add(Calendar.DAY_OF_MONTH, 1)
-        val endOfDay = today.timeInMillis
-
-        todayFoodLogs = logDao.getLogsForDayWithDetails(startOfDay, endOfDay)
         allFoodHistory = logDao.getAllLogsWithDetails()
         allFoodTemplates = templateDao.getAll()
     }

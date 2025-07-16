@@ -8,8 +8,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+/**
+ * This ViewModel is responsible for the `FoodScannerScreen`
+ *      itself. Its job is to take a barcode, call the network API to look up the food
+ *      product, and manage the UI state of that screen (e.g., showing a loading
+ *      indicator, displaying an error message, or showing the successful product result).
+ *       Its lifecycle is tied directly to the scanner screen.
+ *
+ */
 
-// Represents the state of our UI
 sealed interface FoodScannerUiState {
     object Idle : FoodScannerUiState
     object Loading : FoodScannerUiState
