@@ -419,8 +419,8 @@ fun BarChart(
                 val valueText = textMeasurer.measure(calories.toString(), style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Bold, color =primaryColor))
                 val textBgSize = Size(valueText.size.width + 16.dp.toPx(), valueText.size.height + 8.dp.toPx())
                 val textOffset = Offset(x = barX + (barWidth - textBgSize.width) / 2, y = barY - textBgSize.height - 4.dp.toPx())
-                drawRoundRect(color = primaryColor.copy(alpha = 0.9f), topLeft = textOffset, size = textBgSize, cornerRadius = CornerRadius(4.dp.toPx()))
-                drawText(valueText, topLeft = Offset(textOffset.x + 8.dp.toPx(), textOffset.y + 4.dp.toPx()))
+                //drawRoundRect(color = primaryColor.copy(alpha = 0.9f), topLeft = textOffset, size = textBgSize, cornerRadius = CornerRadius(4.dp.toPx()))
+                drawText(valueText, color=primaryColor,topLeft = Offset(textOffset.x + 8.dp.toPx(), textOffset.y + 28.dp.toPx()))
             }
         }
     }
