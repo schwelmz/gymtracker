@@ -56,22 +56,6 @@ fun WorkoutCalendar(
     )
 
     Column(modifier = modifier) {
-        val uncompletedPlans = plannedWorkoutsThisWeek.filter { !it.isGoalMetThisWeek }
-        if (uncompletedPlans.isNotEmpty()) {
-            Column(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
-                Text(
-                    text = "Planned this week:",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(bottom = 4.dp)
-                )
-                uncompletedPlans.forEach { plan ->
-                    Text(
-                        text = "• ${plan.plan.name} (${plan.currentWeekCompletedCount}/${plan.plan.goal ?: 0})",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-            }
-        }
         DaysOfWeekTitle(daysOfWeek = state.firstDayOfWeek.let {
             val days = DayOfWeek.values()
             days.slice(days.indexOf(it)..days.lastIndex) + days.slice(0 until days.indexOf(it))
