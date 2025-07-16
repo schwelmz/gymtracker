@@ -33,14 +33,14 @@ import java.time.temporal.TemporalAdjusters
 import java.util.Locale
 import androidx.compose.foundation.shape.RoundedCornerShape
 
-import com.example.gymtracker.data.model.WorkoutPlanWithCompletionStatus
+import com.example.gymtracker.data.model.WorkoutPlanStatus
 
 @Composable
 fun WorkoutCalendar(
     modifier: Modifier = Modifier,
     workoutDates: Set<LocalDate>, // The set of dates with workouts
     onDayClicked: (LocalDate) -> Unit, // Callback for when a day is clicked
-    plannedWorkoutsThisWeek: List<WorkoutPlanWithCompletionStatus>
+    plannedWorkoutsThisWeek: List<WorkoutPlanStatus>
 ) {
     val currentMonth = remember { YearMonth.now() }
     val startMonth = remember { currentMonth.minusMonths(100) } // Display 100 months back

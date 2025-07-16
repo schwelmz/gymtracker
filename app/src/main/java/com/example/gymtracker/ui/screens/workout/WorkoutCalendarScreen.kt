@@ -24,7 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.gymtracker.data.model.WorkoutPlanWithCompletionStatus
+import com.example.gymtracker.data.model.WorkoutPlanStatus
 import com.example.gymtracker.ui.components.WorkoutCalendar
 import com.example.gymtracker.ui.utils.headlineBottomPadding
 import com.example.gymtracker.ui.utils.headlineTopPadding
@@ -41,6 +41,7 @@ fun WorkoutCalendarView(
 ) {
     val plannedWorkoutsThisWeek by workoutPlanViewModel.plannedWorkoutsThisWeek.collectAsState(initial = emptyList())
     val incompletePlans by workoutPlanViewModel.incompleteWorkoutsThisWeek.collectAsState(initial = emptyList())
+    val weeklyStreak by workoutPlanViewModel.globalWeeklyStreak.collectAsState()
 
     LazyColumn {
         item {
@@ -58,8 +59,37 @@ fun WorkoutCalendarView(
                     text = "Calendar",
                     style = MaterialTheme.typography.headlineLarge,
                     color = MaterialTheme.colorScheme.secondary
-                    // textAlign can be removed if the Box handles the alignment
                 )
+            }
+        }
+        if (weeklyStreak > 0) {
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp, bottom = 16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier.height(64.dp).fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+//                        Text(
+//                            text = "🔥",
+//                            style = MaterialTheme.typography.headlineMedium,
+//                            modifier = Modifier.padding(end = 8.dp)
+//                        )
+                        val streakUnit = if (weeklyStreak == 1) "week" else "weeks"
+                        Text(
+                            text = "You have a $weeklyStreak $streakUnit streak!",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.tertiary
+                        )
+                    }
+                }
             }
         }
         item {
@@ -94,7 +124,7 @@ fun WorkoutCalendarView(
 
 @Composable
 fun WorkoutPlanGoalCard(
-    planStatus: WorkoutPlanWithCompletionStatus,
+    planStatus: WorkoutPlanStatus,
     onLogWorkout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
