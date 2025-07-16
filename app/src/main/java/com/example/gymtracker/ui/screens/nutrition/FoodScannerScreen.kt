@@ -24,6 +24,7 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.example.gymtracker.viewmodel.FoodScannerViewModel
 import com.example.gymtracker.viewmodel.FoodViewModel
 import com.example.gymtracker.viewmodel.ScannerResultViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -38,7 +39,7 @@ fun FoodScannerScreen(
     val uiState by scannerViewModel.uiState.collectAsState()
     var showScanner by remember { mutableStateOf(false) }
     val cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA)
-
+    val scope = rememberCoroutineScope()
     // Reset state on entry and handle camera permission
     LaunchedEffect(Unit) {
         scannerViewModel.resetState() // Clear previous state
@@ -75,26 +76,22 @@ fun FoodScannerScreen(
                     CircularProgressIndicator()
                 }
                 is FoodScannerUiState.Success -> {
-                    var template by remember { mutableStateOf<FoodTemplate?>(null) }
-
-                    LaunchedEffect(state.product) {
-                        val createdTemplate = foodViewModel.getOrCreateTemplateFromProduct(state.product)
-                        template = createdTemplate
-                    }
-
-                    template?.let {
-                        ProductDetails(
-                            product = state.product,
-                            onAddFood = { grams, name ->
-                                if (isForRecipe) {
-                                    scannerResultViewModel.setScannedIngredient(it.copy(name = name), grams)
-                                } else {
-                                    foodViewModel.addScannedFoodWithCustomName(state.product, grams, name)
-                                }
-                                onSave()
+                    ProductDetails(
+                        product = state.product,
+                        onAddFood = { grams, name ->
+                            scope.launch {
+                                foodViewModel.saveScannedFood(
+                                    product = state.product,
+                                    barcode = state.barcode, // Pass the barcode from the state
+                                    grams = grams,
+                                    name = name,
+                                    isForRecipe = isForRecipe,
+                                    scannerResultViewModel = scannerResultViewModel
+                                )
                             }
-                        )
-                    } ?: CircularProgressIndicator()
+                            onSave()
+                        }
+                    )
                 }
                 is FoodScannerUiState.Error -> {
                     Text("Error: ${state.message}", color = MaterialTheme.colorScheme.error)

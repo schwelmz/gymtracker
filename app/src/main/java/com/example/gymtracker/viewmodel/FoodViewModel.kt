@@ -203,6 +203,53 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
         }
         return "Unknown Product"
     }
+    // In com/example/gymtracker/viewmodel/FoodViewModel.kt
+
+    suspend fun saveScannedFood(
+        product: Product,
+        barcode: String,
+        grams: Int,
+        name: String,
+        isForRecipe: Boolean,
+        scannerResultViewModel: ScannerResultViewModel
+    ) {
+        // Use the 'barcode' parameter to check for an existing template.
+        // FIX: Changed foodTemplateDao to templateDao
+        val existingTemplate = templateDao.getByBarcode(barcode)
+
+        val finalTemplate = if (existingTemplate != null) {
+            // If a template exists, update its name if the user provided a new one.
+            if (existingTemplate.name != name) {
+                val updated = existingTemplate.copy(name = name)
+                // FIX: Changed foodTemplateDao to templateDao
+                templateDao.update(updated)
+                updated
+            } else {
+                existingTemplate
+            }
+        } else {
+            // If no template exists, create a new one with all the correct details.
+            val newTemplate = FoodTemplate(
+                barcode = barcode,
+                name = name,
+                imageUrl = product.imageUrl,
+                caloriesPer100g = product.nutriments?.energyKcalPer100g?.toInt() ?: 0,
+                proteinPer100g = product.nutriments?.proteinsPer100g?.toInt() ?: 0,
+                carbsPer100g = product.nutriments?.carbohydratesPer100g?.toInt() ?: 0,
+                fatPer100g = product.nutriments?.fatPer100g?.toInt() ?: 0
+            )
+            // FIX: Changed foodTemplateDao to templateDao
+            val newId = templateDao.insert(newTemplate)
+            newTemplate.copy(id = newId.toInt())
+        }
+
+        // Proceed to log the food or add it to the recipe.
+        if (isForRecipe) {
+            scannerResultViewModel.setScannedIngredient(finalTemplate, grams)
+        } else {
+            logFood(finalTemplate, grams)
+        }
+    }
 
     companion object {
         val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
