@@ -19,6 +19,8 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Date
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.gymtracker.viewmodel.WorkoutPlanViewModel
 
 @Composable
 fun WorkoutCalendarDayScreen(
@@ -64,8 +66,12 @@ fun WorkoutCalendarDayScreen(
                     session = session,
                     details = details,
                     onClick = { onSessionClicked(session.exerciseName) },
-                    onDelete = { onDeleteSession(session) },
-                    onModify = { onModifySession(session) }
+                    onDelete = { 
+                        onDeleteSession(session)
+                    },
+                    onModify = { 
+                        onModifySession(session)
+                    }
                 )
             }
         } else {
@@ -86,7 +92,7 @@ fun WorkoutCalendarDayScreenPreview() {
         WorkoutSession(1, "Bench Press", emptyList(), Date()),
         WorkoutSession(1, "Deadlift", emptyList(), Date()),
         WorkoutSession(1, "Squat", emptyList(), Date())
-)
+    )
     WorkoutCalendarDayScreen(
         day = LocalDate.now().toString(),
         sessions = fakeSessions,
@@ -94,5 +100,4 @@ fun WorkoutCalendarDayScreenPreview() {
         onDeleteSession = {},
         onModifySession = {}
     )
-
 }

@@ -25,13 +25,11 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import java.time.Instant
 import java.time.ZoneId
-import com.example.gymtracker.data.model.WorkoutSession
 import com.example.gymtracker.data.model.WorkoutPlanWithCompletionStatus
 
 class WorkoutPlanViewModel(application: Application, private val workoutDao: WorkoutDao) : AndroidViewModel(application) {
     private val planDao: WorkoutPlanDao =
         AppDatabase.getDatabase(application).workoutPlanDao()
-    private val workoutPlanCompletionDao = AppDatabase.getDatabase(application).workoutPlanCompletionDao()
 
     val allPlans: Flow<List<WorkoutPlanWithExercises>> = planDao.getAllPlansWithExercises()
 
@@ -85,25 +83,59 @@ class WorkoutPlanViewModel(application: Application, private val workoutDao: Wor
     }
 
     val plannedWorkoutsThisWeek: Flow<List<WorkoutPlanWithCompletionStatus>> =
-        allPlans.combine(
-            workoutPlanCompletionDao.getCompletionsInDateRange(
-                LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)),
-                LocalDate.now().with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY))
+        combine(
+            allPlans,
+            workoutDao.getSessionsInDateRange(
+                java.util.Date.from(LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).atStartOfDay(ZoneId.systemDefault()).toInstant()),
+                java.util.Date.from(LocalDate.now().with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY)).atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant())
             )
-        ) { plans, completionsThisWeek ->
+        ) { plans, sessionsThisWeek ->
             plans.map { planWithExercises ->
-                val completedCount = completionsThisWeek.count { it.planId == planWithExercises.plan.id }
-                val isGoalMet = planWithExercises.plan.goal?.let { goal ->
-                    completedCount >= goal
-                } ?: false
+                val planExercises = planWithExercises.exercises.map { it.name }.toSet()
+                val planId = planWithExercises.plan.id
 
-                WorkoutPlanWithCompletionStatus(
-                    plan = planWithExercises.plan,
-                    exercises = planWithExercises.exercises,
-                    currentWeekCompletedCount = completedCount,
-                    isGoalMetThisWeek = isGoalMet
-                )
+                if (planExercises.isEmpty()) {
+                    WorkoutPlanWithCompletionStatus(
+                        plan = planWithExercises.plan,
+                        exercises = planWithExercises.exercises,
+                        currentWeekCompletedCount = 0,
+                        isGoalMetThisWeek = planWithExercises.plan.goal == 0
+                    )
+                } else {
+                    val sessionsForThisPlan = sessionsThisWeek.filter { it.planId == planId || it.planId == null }
+
+                    val sessionsByDate = sessionsForThisPlan.groupBy {
+                        Instant.ofEpochMilli(it.date.time)
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate()
+                    }
+
+                    val completedCount = sessionsByDate.count { (_, sessionsOnDate) ->
+                        val loggedExercisesOnDate = sessionsOnDate.map { it.exerciseName }.toSet()
+                        loggedExercisesOnDate.containsAll(planExercises)
+                    }
+
+                    val isGoalMet = planWithExercises.plan.goal?.let { goal ->
+                        completedCount >= goal
+                    } ?: (completedCount > 0)
+
+                    WorkoutPlanWithCompletionStatus(
+                        plan = planWithExercises.plan,
+                        exercises = planWithExercises.exercises,
+                        currentWeekCompletedCount = completedCount,
+                        isGoalMetThisWeek = isGoalMet
+                    )
+                }
             }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    val incompleteWorkoutsThisWeek: Flow<List<WorkoutPlanWithCompletionStatus>> =
+        plannedWorkoutsThisWeek.map { plans ->
+            plans.filter { !it.isGoalMetThisWeek && (it.plan.goal ?: 1) > 0 }
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),

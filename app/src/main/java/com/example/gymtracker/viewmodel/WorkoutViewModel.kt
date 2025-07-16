@@ -19,11 +19,15 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import java.time.Instant
 import java.time.ZoneId
-import com.example.gymtracker.data.model.WorkoutPlanCompletion
+
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 
 class WorkoutViewModel(application: Application) : AndroidViewModel(application) {
     private val workoutDao = AppDatabase.getDatabase(application).workoutDao()
-    private val workoutPlanCompletionDao = AppDatabase.getDatabase(application).workoutPlanCompletionDao()
+
+    private val _workoutSessionEvents = MutableSharedFlow<Unit>()
+    val workoutSessionEvents: SharedFlow<Unit> = _workoutSessionEvents
 
     // Live data for all sessions for the home screen
     val allSessions = workoutDao.getAllSessions()
@@ -72,22 +76,17 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
                     planId = planId
                 )
                 workoutDao.insertSession(newSession)
+                _workoutSessionEvents.emit(Unit)
                 // Reset for the next workout
                 _currentSets.value = emptyList()
             }
         }
     }
 
-    fun logWorkoutPlanCompletion(planId: Int) {
-        viewModelScope.launch {
-            val completion = WorkoutPlanCompletion(planId = planId, completionDate = LocalDate.now())
-            workoutPlanCompletionDao.insertCompletion(completion)
-        }
-    }
-
     fun deleteSession(session: WorkoutSession) {
         viewModelScope.launch {
             workoutDao.deleteSession(session)
+            _workoutSessionEvents.emit(Unit)
         }
     }
     fun getSessionsForChart(exerciseName: String) = workoutDao.getSessionsForExercise(exerciseName)
@@ -95,6 +94,7 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
     fun updateSession(session: WorkoutSession) {
         viewModelScope.launch {
             workoutDao.updateSession(session)
+            _workoutSessionEvents.emit(Unit)
         }
     }
 

@@ -40,7 +40,7 @@ fun WorkoutCalendarView(
     workoutPlanViewModel: WorkoutPlanViewModel = viewModel(factory = WorkoutPlanViewModel.Factory)
 ) {
     val plannedWorkoutsThisWeek by workoutPlanViewModel.plannedWorkoutsThisWeek.collectAsState(initial = emptyList())
-    val incompletePlans = plannedWorkoutsThisWeek.filter { !it.isGoalMetThisWeek }
+    val incompletePlans by workoutPlanViewModel.incompleteWorkoutsThisWeek.collectAsState(initial = emptyList())
 
     LazyColumn {
         item {
