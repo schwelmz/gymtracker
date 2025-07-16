@@ -28,8 +28,7 @@ fun WorkoutCalendarDayScreen(
     sessions: List<WorkoutSession>,
     onSessionClicked: (String) -> Unit,
     onDeleteSession: (WorkoutSession) -> Unit,
-    onModifySession: (WorkoutSession) -> Unit,
-    workoutPlanViewModel: WorkoutPlanViewModel = viewModel(factory = WorkoutPlanViewModel.Factory)
+    onModifySession: (WorkoutSession) -> Unit
 ) {
     val selectedDate by remember(day) {
         derivedStateOf {
@@ -69,11 +68,9 @@ fun WorkoutCalendarDayScreen(
                     onClick = { onSessionClicked(session.exerciseName) },
                     onDelete = { 
                         onDeleteSession(session)
-                        workoutPlanViewModel.refresh()
                     },
                     onModify = { 
                         onModifySession(session)
-                        workoutPlanViewModel.refresh()
                     }
                 )
             }
@@ -95,7 +92,7 @@ fun WorkoutCalendarDayScreenPreview() {
         WorkoutSession(1, "Bench Press", emptyList(), Date()),
         WorkoutSession(1, "Deadlift", emptyList(), Date()),
         WorkoutSession(1, "Squat", emptyList(), Date())
-)
+    )
     WorkoutCalendarDayScreen(
         day = LocalDate.now().toString(),
         sessions = fakeSessions,
@@ -103,5 +100,4 @@ fun WorkoutCalendarDayScreenPreview() {
         onDeleteSession = {},
         onModifySession = {}
     )
-
 }

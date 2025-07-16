@@ -76,7 +76,7 @@ fun EditFoodLogDialog(
                     label = "Carbs",
                     value = carbs,
                     onValueChange = { carbs = it },
-                    icon = { R.drawable.carbs},
+                    icon = { R.drawable.egg_icon},
                     suffix = "g"
                 )
                 MacroInputRow(

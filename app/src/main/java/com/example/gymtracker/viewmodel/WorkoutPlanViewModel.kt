@@ -25,22 +25,11 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import java.time.Instant
 import java.time.ZoneId
-import com.example.gymtracker.data.model.WorkoutSession
 import com.example.gymtracker.data.model.WorkoutPlanWithCompletionStatus
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collectLatest
 
-class WorkoutPlanViewModel(application: Application, private val workoutDao: WorkoutDao, private val workoutViewModel: WorkoutViewModel) : AndroidViewModel(application) {
+class WorkoutPlanViewModel(application: Application, private val workoutDao: WorkoutDao) : AndroidViewModel(application) {
     private val planDao: WorkoutPlanDao =
         AppDatabase.getDatabase(application).workoutPlanDao()
-
-    init {
-        viewModelScope.launch {
-            workoutViewModel.workoutSessionEvents.collectLatest {
-                refresh()
-            }
-        }
-    }
 
     val allPlans: Flow<List<WorkoutPlanWithExercises>> = planDao.getAllPlansWithExercises()
 
@@ -93,15 +82,9 @@ class WorkoutPlanViewModel(application: Application, private val workoutDao: Wor
         }
     }
 
-    private val refreshTrigger = MutableStateFlow(0)
-
-    fun refresh() {
-        refreshTrigger.value++
-    }
-
     val plannedWorkoutsThisWeek: Flow<List<WorkoutPlanWithCompletionStatus>> =
-        combine(allPlans, refreshTrigger) { plans, _ -> plans }
-        .combine(
+        combine(
+            allPlans,
             workoutDao.getSessionsInDateRange(
                 java.util.Date.from(LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).atStartOfDay(ZoneId.systemDefault()).toInstant()),
                 java.util.Date.from(LocalDate.now().with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY)).atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant())
@@ -112,15 +95,14 @@ class WorkoutPlanViewModel(application: Application, private val workoutDao: Wor
                 val planId = planWithExercises.plan.id
 
                 if (planExercises.isEmpty()) {
-                    // Handle case where plan has no exercises, can't be completed.
                     WorkoutPlanWithCompletionStatus(
                         plan = planWithExercises.plan,
                         exercises = planWithExercises.exercises,
                         currentWeekCompletedCount = 0,
-                        isGoalMetThisWeek = false
+                        isGoalMetThisWeek = planWithExercises.plan.goal == 0
                     )
                 } else {
-                    val sessionsForThisPlan = sessionsThisWeek.filter { it.planId == planId }
+                    val sessionsForThisPlan = sessionsThisWeek.filter { it.planId == planId || it.planId == null }
 
                     val sessionsByDate = sessionsForThisPlan.groupBy {
                         Instant.ofEpochMilli(it.date.time)
@@ -135,7 +117,7 @@ class WorkoutPlanViewModel(application: Application, private val workoutDao: Wor
 
                     val isGoalMet = planWithExercises.plan.goal?.let { goal ->
                         completedCount >= goal
-                    } ?: false
+                    } ?: (completedCount > 0)
 
                     WorkoutPlanWithCompletionStatus(
                         plan = planWithExercises.plan,
@@ -153,7 +135,7 @@ class WorkoutPlanViewModel(application: Application, private val workoutDao: Wor
 
     val incompleteWorkoutsThisWeek: Flow<List<WorkoutPlanWithCompletionStatus>> =
         plannedWorkoutsThisWeek.map { plans ->
-            plans.filter { !it.isGoalMetThisWeek }
+            plans.filter { !it.isGoalMetThisWeek && (it.plan.goal ?: 1) > 0 }
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
@@ -167,8 +149,7 @@ class WorkoutPlanViewModel(application: Application, private val workoutDao: Wor
                 val application =
                     checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])
                 val workoutDao = AppDatabase.getDatabase(application).workoutDao()
-                val workoutViewModel = WorkoutViewModel(application) // Create an instance of WorkoutViewModel
-                return WorkoutPlanViewModel(application, workoutDao, workoutViewModel) as T
+                return WorkoutPlanViewModel(application, workoutDao) as T
             }
         }
     }
