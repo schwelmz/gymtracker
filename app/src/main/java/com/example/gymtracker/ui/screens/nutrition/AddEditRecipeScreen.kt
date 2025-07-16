@@ -1,5 +1,12 @@
 package com.example.gymtracker.ui.screens.nutrition
 
+import android.Manifest
+import android.content.Context
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -9,22 +16,30 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.rememberAsyncImagePainter
 import com.example.gymtracker.R
 import com.example.gymtracker.data.model.FoodTemplate
 import com.example.gymtracker.viewmodel.AddEditRecipeViewModel
 import com.example.gymtracker.viewmodel.RecipeViewModel
 import com.example.gymtracker.viewmodel.ScannerResultViewModel
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
+import java.io.File
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun AddEditRecipeScreen(
     recipeId: Int,
@@ -59,6 +74,25 @@ fun AddEditRecipeScreen(
             addEditRecipeViewModel.recipeName.isNotBlank() && addEditRecipeViewModel.recipeIngredients.isNotEmpty()
         }
     }
+
+    var tempUri by remember { mutableStateOf<Uri?>(null) }
+    val imageUri = addEditRecipeViewModel.recipeImageUri?.let { Uri.parse(it) }
+
+    // Permission state handler for the camera
+    val cameraPermissionState = rememberPermissionState(
+        permission = Manifest.permission.CAMERA
+    )
+    // Launcher for the camera activity
+    val cameraActivityLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture(),
+        onResult = { success ->
+            // If the picture was taken successfully, the URI we provided will be populated.
+            if (success) {
+                addEditRecipeViewModel.recipeImageUri = tempUri.toString()
+            }
+        }
+    )
+    val context = LocalContext.current
 
     if (showAddIngredientDialog) {
         AddIngredientDialog(
@@ -102,6 +136,43 @@ fun AddEditRecipeScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(16f / 9f) // Common aspect ratio for images
+                        .border(1.dp, MaterialTheme.colorScheme.outline),
+                    contentAlignment = Alignment.Center
+                ) {
+                    // Show the image if we have a URI, otherwise show text
+                    if (imageUri != null) {
+                        Image(
+                            painter = rememberAsyncImagePainter(imageUri),
+                            contentDescription = "Recipe Image",
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    } else {
+                        Text("No Image Taken")
+                    }
+                }
+
+                Button(
+                    onClick = {
+                        if (cameraPermissionState.status.isGranted) {
+                            // Create a file and URI for the camera to save the image to
+                            val uri = createImageUri(context)
+                            tempUri = uri // Update our state
+                            cameraActivityLauncher.launch(uri)
+                        } else {
+                            // Request the permission
+                            cameraPermissionState.launchPermissionRequest()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
+                ) {
+                    Text(if (cameraPermissionState.status.isGranted) "Take Picture" else "Request Camera Permission")
+                }
+            }
             item {
                 OutlinedTextField(
                     value = addEditRecipeViewModel.recipeName,
@@ -294,4 +365,12 @@ fun AddIngredientDialog(
             }
         }
     )
+}
+
+private fun createImageUri(context: Context): Uri {
+    val imagesDir = File(context.cacheDir, "images")
+    imagesDir.mkdirs()
+    val file = File(imagesDir, "img_${System.currentTimeMillis()}.jpg")
+    val authority = "${context.packageName}.provider"
+    return FileProvider.getUriForFile(context, authority, file)
 }

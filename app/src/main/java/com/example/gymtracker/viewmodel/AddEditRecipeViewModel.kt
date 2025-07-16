@@ -25,6 +25,7 @@ class AddEditRecipeViewModel(
 
     var recipeName by mutableStateOf("")
     var recipeInstructions by mutableStateOf("")
+    var recipeImageUri by mutableStateOf<String?>(null)
     var recipeIngredients by mutableStateOf<Map<FoodTemplate, Int>>(emptyMap())
         private set
 
@@ -35,6 +36,7 @@ class AddEditRecipeViewModel(
                 if (recipeWithIngredients != null) {
                     recipeName = recipeWithIngredients.recipe.name
                     recipeInstructions = recipeWithIngredients.recipe.instructions ?: ""
+                    recipeImageUri = recipeWithIngredients.recipe.imageUrl
 
                     val ingredientsMap = mutableMapOf<FoodTemplate, Int>()
                     recipeWithIngredients.ingredients.forEach { ingredient ->
@@ -59,7 +61,7 @@ class AddEditRecipeViewModel(
 
     fun saveRecipe() {
         viewModelScope.launch {
-            val recipe = Recipe(id = if (recipeId == -1) 0 else recipeId, name = recipeName, instructions = recipeInstructions)
+            val recipe = Recipe(id = if (recipeId == -1) 0 else recipeId, name = recipeName, instructions = recipeInstructions, imageUrl = recipeImageUri)
             val newRecipeId = recipeDao.insertRecipe(recipe).toInt()
 
             // Clear old ingredients before inserting new ones to handle updates correctly

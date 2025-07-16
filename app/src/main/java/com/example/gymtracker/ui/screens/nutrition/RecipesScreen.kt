@@ -1,5 +1,6 @@
 package com.example.gymtracker.ui.screens.nutrition
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -7,11 +8,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.rememberAsyncImagePainter
 import com.example.gymtracker.data.model.RecipeWithDetails
 import com.example.gymtracker.viewmodel.FoodViewModel
 import com.example.gymtracker.viewmodel.RecipeViewModel
@@ -129,34 +133,46 @@ fun RecipeCard(
             ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = recipe.recipe.name,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = "$totalCalories kcal • ${recipe.ingredients.size} ingredients",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            recipe.recipe.instructions?.takeIf { it.isNotBlank() }?.let {
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.bodySmall,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+        Column {
+            recipe.recipe.imageUrl?.let {
+                Image(
+                    painter = rememberAsyncImagePainter(it.toUri()),
+                    contentDescription = recipe.recipe.name,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp),
+                    contentScale = ContentScale.Crop
                 )
             }
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = recipe.recipe.name,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = "$totalCalories kcal • ${recipe.ingredients.size} ingredients",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                recipe.recipe.instructions?.takeIf { it.isNotBlank() }?.let {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
 
-            Spacer(Modifier.height(8.dp))
-            Button(
-                onClick = { onUseRecipe(recipe) },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Use Recipe")
+                Spacer(Modifier.height(8.dp))
+                Button(
+                    onClick = { onUseRecipe(recipe) },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Use Recipe")
+                }
             }
         }
     }
