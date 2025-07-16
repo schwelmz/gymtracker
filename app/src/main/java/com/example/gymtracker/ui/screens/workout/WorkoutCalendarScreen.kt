@@ -42,7 +42,7 @@ fun WorkoutCalendarView(
     val plannedWorkoutsThisWeek by workoutPlanViewModel.plannedWorkoutsThisWeek.collectAsState(initial = emptyList())
     val incompletePlans = plannedWorkoutsThisWeek.filter { !it.isGoalMetThisWeek }
 
-    LazyColumn(modifier = modifier.padding(horizontal = 16.dp)) {
+    LazyColumn {
         item {
             Box(
                 modifier = Modifier
@@ -50,13 +50,15 @@ fun WorkoutCalendarView(
                     .padding(
                         top = headlineTopPadding,
                         bottom = headlineBottomPadding,
+                        end = 16.dp
                     ),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.CenterEnd // Aligns content to the end (right)
             ) {
                 Text(
                     text = "Calendar",
                     style = MaterialTheme.typography.headlineLarge,
                     color = MaterialTheme.colorScheme.secondary
+                    // textAlign can be removed if the Box handles the alignment
                 )
             }
         }
@@ -72,8 +74,8 @@ fun WorkoutCalendarView(
             Spacer(modifier = Modifier.height(24.dp))
             if (incompletePlans.isNotEmpty()) {
                 Text(
-                    text = "Weekly Goals",
-                    style = MaterialTheme.typography.headlineMedium,
+                    text = "Planned this week",
+                    style = MaterialTheme.typography.headlineSmall,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
             }
@@ -102,31 +104,25 @@ fun WorkoutPlanGoalCard(
             .padding(vertical = 8.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(planStatus.plan.name, style = MaterialTheme.typography.titleLarge)
-            Spacer(Modifier.height(8.dp))
-            Text(
-                "Progress: ${planStatus.currentWeekCompletedCount} / ${planStatus.plan.goal ?: 1}",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Spacer(Modifier.height(16.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text(planStatus.plan.name, style = MaterialTheme.typography.titleLarge)
+                Text(
+                    "Progress: ${planStatus.currentWeekCompletedCount} / ${planStatus.plan.goal ?: 1}",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
             Button(
-                onClick = onLogWorkout,
-                modifier = Modifier.align(Alignment.End)
+                onClick = onLogWorkout
             ) {
                 Text("Start Workout")
             }
         }
     }
-}
-
-
-@Composable
-@Preview(showBackground = true)
-fun WorkoutCalendarViewPreview() {
-    WorkoutCalendarView(
-        workoutDates = setOf(LocalDate.now()),
-        onNavigateToWorkoutCalendarDay = {},
-        onLogWorkoutForPlan = { _, _ -> }
-    )
 }
