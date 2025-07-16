@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
@@ -31,6 +32,7 @@ import kotlin.math.roundToInt
 import com.example.gymtracker.ui.components.DateTimePickerDialog
 import com.example.gymtracker.ui.utils.headlineBottomPadding
 import com.example.gymtracker.ui.utils.headlineTopPadding
+import kotlin.math.absoluteValue
 
 // Enum for Time Span Selection
 enum class ChartTimeSpan(val days: Long, val title: String) {
@@ -166,7 +168,7 @@ fun FoodDiaryScreen(
             }
             item {
                 if (chartData.isNotEmpty()) {
-                    LineChart(
+                    BarChart(
                         data = chartData,
                         calorieGoal = calorieGoal,
                         calorieMode = calorieMode,
@@ -305,7 +307,7 @@ private fun OptionsDialog(
  */
 @OptIn(ExperimentalTextApi::class)
 @Composable
-fun LineChart(
+fun BarChart(
     data: List<Pair<LocalDate, Int>>,
     calorieGoal: Int,
     calorieMode: CalorieMode,
@@ -313,15 +315,16 @@ fun LineChart(
 ) {
     val density = LocalDensity.current
     val textMeasurer = rememberTextMeasurer()
+    val col = MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f)
+    val greenColor = Color(0xFF4CAF50)
+    val redColor = Color(0xFFF44336)
 
-    val primaryColor = MaterialTheme.colorScheme.primary
-    val goalColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f)
-    val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
     val goalLabel = when (calorieMode) {
         CalorieMode.DEFICIT -> "Limit"
         CalorieMode.SURPLUS -> "Goal"
     }
-    val labelStyle = TextStyle(fontSize = 12.sp, color = onSurfaceVariant)
+
+    val labelStyle = TextStyle(fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
     Canvas(modifier = modifier) {
         val yAxisLabelPadding = with(density) { 40.dp.toPx() }
@@ -329,113 +332,93 @@ fun LineChart(
 
         val chartWidth = size.width - yAxisLabelPadding
         val chartHeight = size.height - xAxisLabelPadding
+        val calorieValues = data.map { it.second }
 
-        val maxCalories = (data.maxOfOrNull { it.second } ?: calorieGoal).toFloat().coerceAtLeast(calorieGoal.toFloat()) * 1.1f
-        val numTicks = 4
+        val maxDataValue = calorieValues.maxOrNull()?.toFloat() ?: 0f
+        val maxValue = maxOf(maxDataValue, calorieGoal.toFloat()) * 1.1f
 
-        (0..numTicks).forEach { i ->
-            val tickValue = maxCalories * i / numTicks
-            val tickY = chartHeight - (tickValue / maxCalories) * chartHeight
+        val goalY = chartHeight - (calorieGoal / maxValue) * chartHeight
+        val barWidth = chartWidth / (data.size * 1.5f)
 
-            drawLine(
-                color = onSurfaceVariant.copy(alpha = 0.2f),
-                start = Offset(yAxisLabelPadding, tickY),
-                end = Offset(size.width, tickY),
-                strokeWidth = 1.dp.toPx()
+        val dateFormatter = DateTimeFormatter.ofPattern("d MMM")
+
+        // 1. Draw bars (with transparency) + calorie line inside
+        data.forEachIndexed { index, (date, calories) ->
+            val barX = yAxisLabelPadding + index * (barWidth * 1.5f)
+            val barY = chartHeight - (calories / maxValue) * chartHeight
+            val topY = minOf(goalY, barY)
+            val barHeight = (goalY - barY).absoluteValue
+
+            val barColor = when (calorieMode) {
+                CalorieMode.DEFICIT -> if (calories <= calorieGoal) greenColor else redColor
+                CalorieMode.SURPLUS -> if (calories >= calorieGoal) greenColor else redColor
+            }.copy(alpha = 0.4f)
+
+            drawRect(
+                color = barColor,
+                topLeft = Offset(barX, topY),
+                size = Size(barWidth, barHeight.coerceAtLeast(2f))
             )
-            val labelText = textMeasurer.measure(tickValue.roundToInt().toString(), style = labelStyle)
+
+            // Draw calorie marker line (tick inside bar)
+            val tickY = chartHeight - (calories / maxValue) * chartHeight
+            drawLine(
+                color = barColor.copy(alpha = 1f),
+                start = Offset(barX, tickY),
+                end = Offset(barX + barWidth, tickY),
+                strokeWidth = 2.dp.toPx()
+            )
+
+            // X-axis label
+            val labelText = textMeasurer.measure(date.format(dateFormatter), style = labelStyle)
             drawText(
                 textLayoutResult = labelText,
-                topLeft = Offset(yAxisLabelPadding - labelText.size.width - 4.dp.toPx(), tickY - (labelText.size.height / 2))
+                topLeft = Offset(
+                    barX + (barWidth - labelText.size.width) / 2,
+                    size.height - labelText.size.height
+                )
             )
         }
 
-        val goalY = chartHeight - (calorieGoal / maxCalories) * chartHeight
-        val goalPath = Path().apply {
-            moveTo(yAxisLabelPadding, goalY)
-            lineTo(size.width, goalY)
+        // 2. Draw Y-axis ticks and labels
+        val tickCount = 5
+        for (i in 0..tickCount) {
+            val value = i * (maxValue / tickCount)
+            val y = chartHeight - (value / maxValue) * chartHeight
+
+            drawLine(
+                color = col.copy(alpha = 0.3f),
+                start = Offset(yAxisLabelPadding, y),
+                end = Offset(size.width, y),
+                strokeWidth = 1.dp.toPx()
+            )
+
+            val labelText = textMeasurer.measure(value.roundToInt().toString(), style = labelStyle)
+            drawText(
+                textLayoutResult = labelText,
+                topLeft = Offset(yAxisLabelPadding - labelText.size.width - 4.dp.toPx(), y - labelText.size.height / 2)
+            )
         }
-        drawPath(
-            path = goalPath,
-            color = goalColor,
-            style = Stroke(width = 4f, cap = StrokeCap.Round, pathEffect = PathEffect.dashPathEffect(floatArrayOf(15f, 15f), 0f))
+
+        // 3. Draw dashed goal/limit line LAST so it's on top of everything
+        drawLine(
+            color = col,
+            start = Offset(yAxisLabelPadding, goalY),
+            end = Offset(size.width, goalY),
+            strokeWidth = 2.dp.toPx(),
+            pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f))
         )
 
-        val goalLabelText = textMeasurer.measure(goalLabel, style = labelStyle.copy(color = goalColor, fontWeight = FontWeight.Bold))
+        val goalLabelText = textMeasurer.measure(goalLabel, style = labelStyle.copy(fontWeight = FontWeight.Bold, color = col))
         drawText(
             textLayoutResult = goalLabelText,
             topLeft = Offset(yAxisLabelPadding + 4.dp.toPx(), goalY - goalLabelText.size.height - 4.dp.toPx())
         )
-
-        // --- DATA DRAWING LOGIC (REFACTORED) ---
-        if (data.size == 1) {
-            // --- HANDLE SINGLE, CENTERED DATA POINT ---
-            val (date, calories) = data.first()
-            val x = yAxisLabelPadding + chartWidth / 2 // Center the point
-            val y = chartHeight - ((calories / maxCalories) * chartHeight)
-            drawCircle(color = primaryColor, radius = 8f, center = Offset(x, y))
-        } else if (data.size > 1) {
-            // --- HANDLE MULTIPLE DATA POINTS (LINE, GRADIENT, DOTS) ---
-            val linePath = Path()
-            val fillPath = Path()
-            val pointSpacing = chartWidth / (data.size - 1)
-
-            val firstPointX = yAxisLabelPadding
-            val firstPointY = chartHeight - ((data.first().second / maxCalories) * chartHeight)
-            fillPath.moveTo(firstPointX, chartHeight)
-            fillPath.lineTo(firstPointX, firstPointY)
-            linePath.moveTo(firstPointX, firstPointY)
-
-            data.forEachIndexed { index, (_, calories) ->
-                val x = yAxisLabelPadding + (index * pointSpacing)
-                val y = chartHeight - ((calories / maxCalories) * chartHeight)
-                if (index != 0) linePath.lineTo(x, y)
-                fillPath.lineTo(x, y)
-            }
-
-            fillPath.lineTo(yAxisLabelPadding + chartWidth, chartHeight)
-            fillPath.close()
-
-            drawPath(
-                path = fillPath,
-                brush = Brush.verticalGradient(
-                    colors = listOf(primaryColor.copy(alpha = 0.3f), Color.Transparent),
-                    startY = 0f,
-                    endY = chartHeight
-                )
-            )
-            drawPath(path = linePath, color = primaryColor, style = Stroke(width = 6f, cap = StrokeCap.Round))
-            data.forEachIndexed { index, (_, calories) ->
-                val x = yAxisLabelPadding + (index * pointSpacing)
-                val y = chartHeight - ((calories / maxCalories) * chartHeight)
-                drawCircle(color = primaryColor, radius = 8f, center = Offset(x, y))
-            }
-        }
-
-        // --- X-AXIS LABEL LOGIC (REFACTORED) ---
-        val dateFormatter = DateTimeFormatter.ofPattern("d MMM")
-        if (data.size == 1) {
-            // --- SINGLE, CENTERED LABEL ---
-            val date = data.first().first
-            val labelText = textMeasurer.measure(date.format(dateFormatter), style = labelStyle)
-            val x = yAxisLabelPadding + (chartWidth / 2) - (labelText.size.width / 2)
-            val y = size.height - (labelText.size.height)
-            drawText(textLayoutResult = labelText, topLeft = Offset(x, y))
-        } else if (data.size > 1) {
-            // --- INTELLIGENTLY SPACED LABELS ---
-            val numLabels = (data.size - 1).coerceAtMost(4).coerceAtLeast(1)
-            (0..numLabels).forEach { i ->
-                val dataIndex = (i * (data.size - 1) / numLabels)
-                val date = data[dataIndex].first
-                val labelText = textMeasurer.measure(date.format(dateFormatter), style = labelStyle)
-                val pointSpacing = chartWidth / (data.size - 1)
-                val x = yAxisLabelPadding + (dataIndex * pointSpacing) - (labelText.size.width / 2)
-                val y = size.height - (labelText.size.height)
-                drawText(textLayoutResult = labelText, topLeft = Offset(x, y))
-            }
-        }
     }
+
 }
+
+
 
 /**
  * A helper function to format date headers nicely.

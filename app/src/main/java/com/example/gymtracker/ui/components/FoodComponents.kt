@@ -24,18 +24,20 @@ import com.example.gymtracker.data.dao.FoodLogWithDetails
 @Composable
 fun FoodCard(
     foodLog: FoodLogWithDetails,
-    // 1. Change the parameter from onDelete to onLongPress
     onLongPress: () -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
-    val cardHeight = 120.dp
+    val hasImage = !foodLog.imageUrl.isNullOrBlank()
+
+    // Dynamic card height based on whether an image is available
+    val cardHeight = if (hasImage) 80.dp else 60.dp
+    val imageWidth = if (hasImage) 70.dp else 0.dp
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
+            .padding(vertical = 4.dp, horizontal = 8.dp)
             .height(cardHeight)
-            // 2. Use the onLongPress lambda here
             .pointerInput(Unit) {
                 detectTapGestures(
                     onLongPress = {
@@ -43,34 +45,43 @@ fun FoodCard(
                         onLongPress()
                     }
                 )
-            }
+            },
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            val imageWidth = 95.dp
-            if (!foodLog.imageUrl.isNullOrBlank()) {
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (hasImage) {
                 AsyncImage(
                     model = foodLog.imageUrl,
                     contentDescription = foodLog.name,
                     modifier = Modifier
                         .width(imageWidth)
-                        .height(cardHeight)
-                )
-            } else {
-                Image(
-                    painter = painterResource(id = R.drawable.outline_picture_in_picture_center_24),
-                    contentDescription = foodLog.name,
-                    modifier = Modifier
-                        .width(imageWidth)
-                        .height(cardHeight)
-                        .padding(16.dp)
+                        .fillMaxHeight()
                 )
             }
 
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(text = foodLog.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(text = "Weight: ${foodLog.grams}g", style = MaterialTheme.typography.bodyMedium)
-                Text(text = "Calories: ${foodLog.calories}", style = MaterialTheme.typography.bodyMedium)
+            Column(
+                modifier = Modifier
+                    .padding(start = if (hasImage) 12.dp else 16.dp, end = 12.dp)
+                    .fillMaxHeight(),
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = foodLog.name,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1
+                )
+                Text(
+                    text = "Weight: ${foodLog.grams}g",
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Text(
+                    text = "Calories: ${foodLog.calories}",
+                    style = MaterialTheme.typography.bodySmall
+                )
             }
         }
     }

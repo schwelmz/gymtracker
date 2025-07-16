@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -304,7 +305,7 @@ fun AddIngredientDialog(
                                     if (searchText.isNotEmpty()) {
                                         IconButton(onClick = { searchText = "" }) {
                                             Icon(
-                                                imageVector = Icons.Default.Delete,
+                                                imageVector = Icons.Default.Clear,
                                                 contentDescription = "Clear text"
                                             )
                                         }
