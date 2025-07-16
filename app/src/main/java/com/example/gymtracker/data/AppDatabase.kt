@@ -8,6 +8,7 @@ import com.example.gymtracker.data.dao.ExerciseDao
 import com.example.gymtracker.data.dao.FoodLogDao
 import com.example.gymtracker.data.dao.FoodTemplateDao
 import com.example.gymtracker.data.dao.RecipeDao
+import com.example.gymtracker.data.dao.RecipeLogDao
 import com.example.gymtracker.data.dao.WeightEntryDao
 import com.example.gymtracker.data.dao.WorkoutDao
 import com.example.gymtracker.data.dao.WorkoutPlanDao
@@ -21,6 +22,7 @@ import com.example.gymtracker.data.model.WeightEntry
 import com.example.gymtracker.data.model.WorkoutPlan
 import com.example.gymtracker.data.model.WorkoutPlanExerciseCrossRef
 import com.example.gymtracker.data.model.WorkoutSession
+import com.example.gymtracker.data.model.RecipeLog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 
@@ -34,9 +36,10 @@ import kotlinx.coroutines.Dispatchers
         Recipe::class,
         RecipeIngredient::class,
         WorkoutPlan::class,
-        WorkoutPlanExerciseCrossRef::class
+        WorkoutPlanExerciseCrossRef::class,
+        RecipeLog::class
     ],
-    version = 18
+    version = 20
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -46,17 +49,18 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun workoutPlanDao(): WorkoutPlanDao
     abstract fun weightEntryDao(): WeightEntryDao
     abstract fun foodTemplateDao(): FoodTemplateDao
-    abstract fun recipeDao(): RecipeDao
     abstract fun foodLogDao(): FoodLogDao
+    abstract fun recipeDao(): RecipeDao
+    abstract fun recipeLogDao(): RecipeLogDao
 
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
-        // Migration from version 14 to 15
-        private val MIGRATION_INCREMENT= object : Migration(18, 18) {
+        // Migration from version 18 to 19
+        private val MIGRATION_INCREMENT= object : Migration(19, 20) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                // Add any table or column creation here — adjust if needed!
+                db.execSQL("CREATE TABLE IF NOT EXISTS `recipe_logs` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `instructions` TEXT NOT NULL, `imageUrl` TEXT, `timestamp` INTEGER NOT NULL)")
             }
         }
 
