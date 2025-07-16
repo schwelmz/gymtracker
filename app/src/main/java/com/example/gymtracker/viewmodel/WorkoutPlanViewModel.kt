@@ -29,6 +29,7 @@ import com.example.gymtracker.data.model.WorkoutPlanStatus
 
 import com.example.gymtracker.data.model.WorkoutSession
 import kotlinx.coroutines.flow.StateFlow
+import java.util.Date
 
 class WorkoutPlanViewModel(application: Application, private val workoutDao: WorkoutDao) : AndroidViewModel(application) {
     private val planDao: WorkoutPlanDao =
@@ -38,7 +39,7 @@ class WorkoutPlanViewModel(application: Application, private val workoutDao: Wor
 
     fun createPlan(name: String, goal: Int?) {
         viewModelScope.launch(Dispatchers.IO) {
-            planDao.insertPlan(WorkoutPlan(name = name, goal = goal))
+            planDao.insertPlan(WorkoutPlan(name = name, goal = goal, creationDate = Date()))
         }
     }
 
@@ -147,16 +148,26 @@ class WorkoutPlanViewModel(application: Application, private val workoutDao: Wor
                 break
             }
 
+            val plansToConsider = plansWithGoals.filter {
+                it.plan.creationDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate().isBefore(weekEnd)
+            }
+
+            if (plansToConsider.isEmpty()) {
+                consecutiveWeeks++
+                weekToCheck = weekToCheck.minusWeeks(1)
+                continue
+            }
+
             val sessionsForWeek = allSessions.filter {
                 val sessionDate = it.date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
                 !sessionDate.isBefore(weekStart) && !sessionDate.isAfter(weekEnd)
             }
 
-            if (sessionsForWeek.isEmpty() && plansWithGoals.any { (it.plan.goal ?: 0) > 0 }) {
+            if (sessionsForWeek.isEmpty() && plansToConsider.any { (it.plan.goal ?: 0) > 0 }) {
                 break // Stop if there are no sessions and goals exist
             }
 
-            if (areAllGoalsMetForWeek(plansWithGoals, sessionsForWeek)) {
+            if (areAllGoalsMetForWeek(plansToConsider, sessionsForWeek)) {
                 consecutiveWeeks++
                 weekToCheck = weekToCheck.minusWeeks(1)
             } else {

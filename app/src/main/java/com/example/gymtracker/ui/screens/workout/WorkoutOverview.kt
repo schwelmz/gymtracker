@@ -20,8 +20,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.gymtracker.data.model.WorkoutPlanStatus
@@ -56,7 +54,7 @@ fun WorkoutCalendarView(
                 contentAlignment = Alignment.CenterEnd // Aligns content to the end (right)
             ) {
                 Text(
-                    text = "Calendar",
+                    text = "Overview",
                     style = MaterialTheme.typography.headlineLarge,
                     color = MaterialTheme.colorScheme.secondary
                 )

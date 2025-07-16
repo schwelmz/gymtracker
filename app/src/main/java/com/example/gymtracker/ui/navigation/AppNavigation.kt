@@ -25,7 +25,6 @@ import com.example.gymtracker.ui.screens.workout.StatsScreen
 import com.example.gymtracker.ui.screens.home.WeightHistoryScreen
 import com.example.gymtracker.ui.screens.settings.AboutScreen
 import com.example.gymtracker.ui.screens.workout.WorkoutCalendarDayScreen
-import com.example.gymtracker.ui.screens.workout.WorkoutHostScreen
 import com.example.gymtracker.ui.screens.workout.WorkoutLogScreen
 import com.example.gymtracker.ui.screens.workout.WorkoutModifyScreen
 import com.example.gymtracker.viewmodel.ExerciseViewModel
@@ -58,7 +57,7 @@ object AppRoutes {
     const val WORKOUT_CALENDAR_DAY_SCREEN = "workout_calendar_day_screen/{day}"
     const val WORKOUT_MODIFY_SCREEN = "workout_modify_screen/{sessionId}"
     const val WORKOUT_RECENT_SCREEN = "workout_recent_screen"
-    const val WORKOUT_CALENDAR_VIEW_SCREEN = "workout_calendar_view_screen"
+    const val WORKOUT_OVERVIEW_SCREEN = "workout_calendar_view_screen"
     const val WORKOUT_ALL_EXERCISES_SCREEN = "workout_all_exercises_screen"
     const val WORKOUT_PLANS_SCREEN = "workout_plans_screen"
     const val EXERCISE_PICKER_SCREEN = "exercise_picker/{planId}"
