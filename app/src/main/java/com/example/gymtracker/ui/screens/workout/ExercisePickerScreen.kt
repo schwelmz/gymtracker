@@ -91,7 +91,7 @@ fun ExercisePickerScreen(
 //            }
 
             item {
-                Text("Weekly Goal (number of workouts)", style = MaterialTheme.typography.labelLarge)
+                Text("Weekly Goal (#workouts)", style = MaterialTheme.typography.labelLarge)
                 Spacer(Modifier.height(8.dp))
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
