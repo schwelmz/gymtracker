@@ -72,19 +72,11 @@ fun WorkoutHostScreen(mainNavController: NavHostController) {
                                 )
                                 mainNavController.navigate(route)
                             },
-                            onLogWorkoutForPlan = { exerciseNames, planId ->
-                                val exercisesList = exerciseNames as List<String>
-                                val exercisesString = StringBuilder()
-                                for (i in exercisesList.indices) {
-                                    exercisesString.append(exercisesList[i])
-                                    if (i < exercisesList.size - 1) {
-                                        exercisesString.append(",")
-                                    }
-                                }
-                                val route = AppRoutes.PLAN_WORKOUT_LOG_SCREEN.replace(
-                                    "{exerciseNames}",
-                                    exercisesString.toString()
-                                ).replace("{planId}", planId.toString())
+                            onLogWorkoutForPlan = { exercises, planId ->
+                                val exercisesString = exercises.joinToString(separator = ",")
+                                val route = AppRoutes.PLAN_WORKOUT_LOG_SCREEN
+                                    .replace("{exerciseNames}", exercisesString)
+                                    .replace("{planId}", planId.toString())
                                 mainNavController.navigate(route)
                             }
                         )
@@ -148,19 +140,11 @@ fun WorkoutHostScreen(mainNavController: NavHostController) {
                                 )
                                 mainNavController.navigate(route)
                             },
-                            onLogWorkoutForPlan = { exerciseNames, planId ->
-                                val exercisesList = exerciseNames as List<String>
-                                val exercisesString = StringBuilder()
-                                for (i in exercisesList.indices) {
-                                    exercisesString.append(exercisesList[i])
-                                    if (i < exercisesList.size - 1) {
-                                        exercisesString.append(",")
-                                    }
-                                }
-                                val route = AppRoutes.PLAN_WORKOUT_LOG_SCREEN.replace(
-                                    "{exerciseNames}",
-                                    exercisesString.toString()
-                                ).replace("{planId}", planId.toString())
+                            onLogWorkoutForPlan = { exercises, planId ->
+                                val exercisesString = exercises.joinToString(separator = ",")
+                                val route = AppRoutes.PLAN_WORKOUT_LOG_SCREEN
+                                    .replace("{exerciseNames}", exercisesString)
+                                    .replace("{planId}", planId.toString())
                                 mainNavController.navigate(route)
                             }
                         )

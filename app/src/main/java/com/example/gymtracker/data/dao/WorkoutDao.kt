@@ -41,4 +41,7 @@ interface WorkoutDao {
 
     @Query("SELECT * FROM workout_sessions WHERE date BETWEEN :startDate AND :endDate")
     fun getSessionsInDateRange(startDate: Date, endDate: Date): Flow<List<WorkoutSession>>
+
+    @Query("SELECT * FROM workout_sessions WHERE exerciseName = :exerciseName ORDER BY date DESC LIMIT 1")
+    fun getLastSessionForExercise(exerciseName: String): Flow<WorkoutSession?>
 }

@@ -36,6 +36,26 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
     private val _currentSets = MutableStateFlow<List<ExerciseSet>>(emptyList())
     val currentSets = _currentSets.asStateFlow()
 
+    private val _lastReps = MutableStateFlow<Int?>(null)
+    val lastReps = _lastReps.asStateFlow()
+
+    private val _lastWeight = MutableStateFlow<Double?>(null)
+    val lastWeight = _lastWeight.asStateFlow()
+
+    fun loadLastSession(exerciseName: String) {
+        viewModelScope.launch {
+            workoutDao.getLastSessionForExercise(exerciseName).collect { session ->
+                if (session != null && session.sets.isNotEmpty()) {
+                    _lastReps.value = session.sets.last().reps
+                    _lastWeight.value = session.sets.last().weight
+                } else {
+                    _lastReps.value = 10 // Default value
+                    _lastWeight.value = 20.0 // Default value
+                }
+            }
+        }
+    }
+
     // NEW STATE FOR THE CALENDAR
     val workoutDates: StateFlow<Set<LocalDate>> = workoutDao.getAllWorkoutDates()
         .map { dates ->
@@ -64,6 +84,8 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
     fun addSet(reps: Int, weight: Double) {
         val newSet = ExerciseSet(reps, weight)
         _currentSets.value = _currentSets.value + newSet
+        _lastReps.value = reps
+        _lastWeight.value = weight
     }
 
     fun saveWorkoutSession(exerciseName: String, planId: Int? = null) {
@@ -100,6 +122,11 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
 
     fun resetCurrentSets() {
         _currentSets.value = emptyList()
+    }
+
+    fun resetLastSession() {
+        _lastReps.value = null
+        _lastWeight.value = null
     }
 }
 

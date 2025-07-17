@@ -18,8 +18,7 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
     }
-}
 
-rootProject.name = "GymTracker"
-include(":app")
- 
+    rootProject.name = "GymTracker"
+    include(":app")
+}

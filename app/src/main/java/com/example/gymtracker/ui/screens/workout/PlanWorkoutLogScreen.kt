@@ -1,26 +1,47 @@
 package com.example.gymtracker.ui.screens.workout
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.exclude
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Done
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.gymtracker.data.model.ExerciseSet
+import com.example.gymtracker.ui.components.ExerciseSetInput
+import com.example.gymtracker.ui.utils.headlineBottomPadding
+import com.example.gymtracker.ui.utils.headlineTopPadding
 import com.example.gymtracker.viewmodel.WorkoutViewModel
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.filled.Done
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,17 +59,20 @@ fun PlanWorkoutLogScreen(
     val currentExerciseName = remember(currentExerciseIndex, exercises) {
         exercises.getOrNull(currentExerciseIndex) ?: ""
     }
-
-    // State for the current logging session for the current exercise
-    var reps by remember { mutableStateOf("") }
-    var weight by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
 
     // Collect sets for the current exercise from the ViewModel
     val currentSets by workoutViewModel.currentSets.collectAsState()
+    val lastReps by workoutViewModel.lastReps.collectAsState()
+    val lastWeight by workoutViewModel.lastWeight.collectAsState()
 
     // Reset current sets in ViewModel when switching exercises
     LaunchedEffect(currentExerciseName) {
-        workoutViewModel.resetCurrentSets()
+        if (currentExerciseName.isNotBlank()) {
+            workoutViewModel.resetLastSession() // Reset first
+            workoutViewModel.loadLastSession(currentExerciseName)
+            workoutViewModel.resetCurrentSets()
+        }
     }
 
     val imeBottom = WindowInsets.ime
@@ -59,7 +83,7 @@ fun PlanWorkoutLogScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Log Workout: ${currentExerciseName}") },
+                title = { Text("") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateUp) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
@@ -86,7 +110,9 @@ fun PlanWorkoutLogScreen(
                     onClick = {
                         // Save current exercise's sets and move to next
                         if (currentSets.isNotEmpty()) {
-                            workoutViewModel.saveWorkoutSession(currentExerciseName, planId)
+                            scope.launch {
+                                workoutViewModel.saveWorkoutSession(currentExerciseName, planId)
+                            }
                         }
                         currentExerciseIndex++
                     },
@@ -100,78 +126,42 @@ fun PlanWorkoutLogScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .padding(start = 16.dp, end = 16.dp, bottom = bottomPadding),
+                .padding(padding),
             horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "Add New Set",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                OutlinedTextField(
-                    value = reps,
-                    onValueChange = { reps = it },
-                    label = { Text("Reps") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f)
-                )
-                OutlinedTextField(
-                    value = weight,
-                    onValueChange = { weight = it },
-                    label = { Text("Weight (kg)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Button(
-                onClick = {
-                    val repCount = reps.toIntOrNull()
-                    val weightValue = weight.toDoubleOrNull()
-                    if (repCount != null && weightValue != null) {
-                        workoutViewModel.addSet(repCount, weightValue)
-                        reps = ""
-                        weight = ""
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Add Set")
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-
-            LazyColumn(
+        ){
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
-                contentPadding = PaddingValues(bottom = 16.dp)
+                    .padding(
+                        top = headlineTopPadding,
+                        bottom = headlineBottomPadding
+                    ),
+                contentAlignment = Alignment.Center // Aligns content to the end (right)
             ) {
-                if (currentSets.isNotEmpty()) {
-                    item {
-                        Text(
-                            text = "Logged Sets",
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                    }
-                }
-                itemsIndexed(currentSets) { index, set ->
-                    Column(modifier = Modifier.padding(vertical = 4.dp)) {
-                        Text(text = "Set ${index + 1}: ${set.reps} reps @ ${set.weight} kg")
-                        HorizontalDivider()
-                    }
+                Text(
+                    text = currentExerciseName,
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            }
+            if (lastReps != null && lastWeight != null) {
+                ExerciseSetInput(
+                    sets = currentSets,
+                    onAddSet = { reps, weight ->
+                        workoutViewModel.addSet(reps, weight)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth() // Use fillMaxWidth instead of fillMaxSize for ExerciseSetInput
+                        .padding(horizontal = 16.dp), // Apply specific padding here
+                    initialReps = lastReps,
+                    initialWeight = lastWeight
+                )
+            } else {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
                 }
             }
         }

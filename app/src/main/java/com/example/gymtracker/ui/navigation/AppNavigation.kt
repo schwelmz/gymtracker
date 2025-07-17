@@ -1,6 +1,7 @@
 package com.example.gymtracker.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -136,17 +137,31 @@ fun AppNavigation(
                 val exerciseName = backStackEntry.arguments?.getString("exerciseName") ?: "Unknown"
                 val viewModel: WorkoutViewModel = viewModel()
                 val sets by viewModel.currentSets.collectAsState()
-                WorkoutLogScreen(
-                    exerciseName = exerciseName,
-                    sets = sets,
-                    onAddSet = { reps, weight ->
-                        viewModel.addSet(reps, weight)
-                    },
-                    onWorkoutSaved = {
-                        viewModel.saveWorkoutSession(exerciseName)
-                        navController.popBackStack(AppRoutes.WORKOUT_SCREEN, inclusive = false) // Go back to the workout list
+                val lastReps by viewModel.lastReps.collectAsState()
+                val lastWeight by viewModel.lastWeight.collectAsState()
+
+                LaunchedEffect(exerciseName) {
+                    if (exerciseName != "Unknown") {
+                        viewModel.loadLastSession(exerciseName)
+                        viewModel.resetCurrentSets()
                     }
-                )
+                }
+
+                if (lastReps != null && lastWeight != null) {
+                    WorkoutLogScreen(
+                        exerciseName = exerciseName,
+                        sets = sets,
+                        onAddSet = { reps, weight ->
+                            viewModel.addSet(reps, weight)
+                        },
+                        onWorkoutSaved = {
+                            viewModel.saveWorkoutSession(exerciseName)
+                            navController.popBackStack(AppRoutes.ADD_WORKOUT_SCREEN, inclusive = true)
+                        },
+                        initialReps = lastReps,
+                        initialWeight = lastWeight
+                    )
+                }
             }
 
             // StatsScreen is now mainly accessed from the WorkoutScreen, but can be kept here
