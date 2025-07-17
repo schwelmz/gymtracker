@@ -1,14 +1,12 @@
 package com.example.gymtracker.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.FlingBehavior
-import androidx.compose.foundation.gestures.ScrollScope
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,7 +33,19 @@ fun CustomWheelPicker(
     val pickerHeight = itemHeight * visibleItems
 
     val initialIndex = items.indexOf(initialValue).coerceAtLeast(0)
-    val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialIndex)
+    val listState = remember(initialIndex) {
+        LazyListState(firstVisibleItemIndex = initialIndex)
+    }
+
+    var lastSnappedIndex by remember { mutableStateOf(-1) }
+    val coroutineScope = rememberCoroutineScope()
+
+    var itemList by remember { mutableStateOf(items.toMutableList()) }
+
+    // Dialog state
+    var showDialog by remember { mutableStateOf(false) }
+    var editIndex by remember { mutableStateOf(-1) }
+    var inputText by remember { mutableStateOf("") }
 
     LaunchedEffect(listState.isScrollInProgress) {
         if (!listState.isScrollInProgress) {
@@ -46,16 +56,21 @@ fun CustomWheelPicker(
             val viewportCenter = layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset / 2
             val centerItem = visibleItemsInfo.minByOrNull { abs((it.offset + it.size / 2) - viewportCenter) }
 
-            if (centerItem != null) {
-                val targetIndex = centerItem.index
-                onItemSelected(items[targetIndex])
-                listState.animateScrollToItem(targetIndex)
+            centerItem?.let {
+                if (it.index != lastSnappedIndex) {
+                    lastSnappedIndex = it.index
+                    onItemSelected(itemList[it.index])
+                }
+                coroutineScope.launch {
+                    listState.animateScrollToItem(it.index)
+                }
             }
         }
     }
 
+    // Main wheel picker UI
     Box(modifier = modifier.height(pickerHeight)) {
-        // Center indicator
+        // Center highlight
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
@@ -63,7 +78,7 @@ fun CustomWheelPicker(
                 .height(itemHeight)
                 .background(
                     color = MaterialTheme.colorScheme.secondaryContainer,
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(50)
+                    shape = MaterialTheme.shapes.large
                 )
                 .padding(horizontal = 16.dp)
         )
@@ -71,22 +86,28 @@ fun CustomWheelPicker(
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(vertical = (pickerHeight - itemHeight) / 2),
-            flingBehavior = rememberSnappingFlingBehavior(lazyListState = listState, itemHeight = itemHeightPx)
+            contentPadding = PaddingValues(vertical = (pickerHeight - itemHeight) / 2)
         ) {
-            items(items.size) { index ->
+            items(itemList.size) { index ->
                 Box(
                     modifier = Modifier
                         .height(itemHeight)
-                        .padding(horizontal = 16.dp),
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .combinedClickable(
+                            onClick = {},
+                            onLongClick = {
+                                editIndex = index
+                                inputText = itemList[index]
+                                showDialog = true
+                            }
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = items[index],
+                        text = itemList[index],
                         style = MaterialTheme.typography.bodyLarge.copy(
-                            platformStyle = PlatformTextStyle(
-                                includeFontPadding = false
-                            ),
+                            platformStyle = PlatformTextStyle(includeFontPadding = false),
                             lineHeightStyle = LineHeightStyle(
                                 alignment = LineHeightStyle.Alignment.Center,
                                 trim = LineHeightStyle.Trim.Both
@@ -97,7 +118,7 @@ fun CustomWheelPicker(
             }
         }
 
-        // Fading overlays
+        // Fade overlays
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -121,28 +142,39 @@ fun CustomWheelPicker(
                 )
         )
     }
-}
 
-@Composable
-private fun rememberSnappingFlingBehavior(lazyListState: LazyListState, itemHeight: Float): FlingBehavior {
-    val coroutineScope = rememberCoroutineScope()
-    return remember(lazyListState, itemHeight) {
-        object : FlingBehavior {
-            override suspend fun ScrollScope.performFling(initialVelocity: Float): Float {
-                val layoutInfo = lazyListState.layoutInfo
-                val visibleItemsInfo = layoutInfo.visibleItemsInfo
-                if (visibleItemsInfo.isEmpty()) return initialVelocity
-
-                val viewportCenter = layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset / 2
-                val centerItem = visibleItemsInfo.minByOrNull { abs((it.offset + it.size / 2) - viewportCenter) }
-
-                if (centerItem != null) {
-                    coroutineScope.launch {
-                        lazyListState.animateScrollToItem(centerItem.index)
+    // Long-click input dialog
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text("Change Value") },
+            text = {
+                OutlinedTextField(
+                    value = inputText,
+                    onValueChange = { inputText = it },
+                    label = { Text("New Value") },
+                    singleLine = true
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (editIndex in itemList.indices) {
+                        itemList[editIndex] = inputText
+                        showDialog = false
+                        coroutineScope.launch {
+                            listState.animateScrollToItem(editIndex)
+                        }
+                        onItemSelected(inputText)
                     }
+                }) {
+                    Text("Save")
                 }
-                return initialVelocity
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text("Cancel")
+                }
             }
-        }
+        )
     }
 }
