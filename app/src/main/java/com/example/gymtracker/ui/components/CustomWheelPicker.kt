@@ -37,7 +37,7 @@ fun CustomWheelPicker(
         LazyListState(firstVisibleItemIndex = initialIndex)
     }
 
-    var lastSnappedIndex by remember { mutableStateOf(-1) }
+    var lastSnappedIndex by remember { mutableStateOf(0) }
     val coroutineScope = rememberCoroutineScope()
 
     var itemList by remember { mutableStateOf(items.toMutableList()) }
