@@ -40,6 +40,7 @@ fun WorkoutCalendarView(
     val plannedWorkoutsThisWeek by workoutPlanViewModel.plannedWorkoutsThisWeek.collectAsState(initial = emptyList())
     val incompletePlans by workoutPlanViewModel.incompleteWorkoutsThisWeek.collectAsState(initial = emptyList())
     val weeklyStreak by workoutPlanViewModel.globalWeeklyStreak.collectAsState()
+    val streakWeeks by workoutPlanViewModel.streakWeeks.collectAsState()
 
     LazyColumn {
         item {
@@ -94,7 +95,7 @@ fun WorkoutCalendarView(
             WorkoutCalendar(
                 workoutDates = workoutDates,
                 onDayClicked = { date -> onNavigateToWorkoutCalendarDay(date) },
-                plannedWorkoutsThisWeek = plannedWorkoutsThisWeek
+                streakWeeks = streakWeeks
             )
         }
 

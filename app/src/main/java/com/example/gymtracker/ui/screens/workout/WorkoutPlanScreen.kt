@@ -26,9 +26,6 @@ fun WorkoutPlanScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Text("Workout Plans", style = MaterialTheme.typography.headlineMedium)
-        Spacer(Modifier.height(16.dp))
-
         plans.forEach { planWithExercises ->
             Card(
                 modifier = Modifier

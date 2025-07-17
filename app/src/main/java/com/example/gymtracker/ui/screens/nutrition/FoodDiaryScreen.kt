@@ -172,7 +172,7 @@ fun FoodDiaryScreen(
 
     Scaffold { padding ->
         LazyColumn(
-            modifier = Modifier.padding(padding),
+            modifier = Modifier.padding(end= 8.dp),
             contentPadding = PaddingValues(vertical = 8.dp)
         ) {
             item {
