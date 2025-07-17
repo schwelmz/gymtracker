@@ -9,7 +9,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -122,7 +121,7 @@ fun FoodDiaryScreen(
             onDismiss = { showGramsEditor = false; selectedEntry = null },
             onSave = { newGrams, newCalories, newProtein, newCarbs, newFat ->
                 scope.launch {
-                    viewModel.updateFoodLog(
+                    viewModel.updateLogGramsAndRecalculate(
                         logId = entry.details.logId,
                         grams = newGrams,
                         calories = newCalories,
@@ -133,7 +132,7 @@ fun FoodDiaryScreen(
                 }
                 showGramsEditor = false
                 selectedEntry = null
-            }
+            },
         )
     }
 

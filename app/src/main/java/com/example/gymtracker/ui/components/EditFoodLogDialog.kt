@@ -35,7 +35,6 @@ fun EditFoodLogDialog(
     var protein by remember { mutableStateOf(initialProtein.toString()) }
     var carbs by remember { mutableStateOf(initialCarbs.toString()) }
     var fat by remember { mutableStateOf(initialFat.toString()) }
-
     val isFormValid = listOf(grams, calories, protein, carbs, fat).all { it.isNotBlank() && it.toIntOrNull() != null }
 
     AlertDialog(
@@ -89,20 +88,32 @@ fun EditFoodLogDialog(
             }
         },
         confirmButton = {
-            Button(
-                onClick = {
-                    onSave(
-                        grams.toInt(),
-                        calories.toInt(),
-                        protein.toInt(),
-                        carbs.toInt(),
-                        fat.toInt()
-                    )
-                },
-                enabled = isFormValid
-            ) {
-                Text("Save")
+            Column(horizontalAlignment = Alignment.End) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(
+                        onClick = {
+                            onSave(
+                                grams.toInt(),
+                                calories.toInt(),
+                                protein.toInt(),
+                                carbs.toInt(),
+                                fat.toInt()
+                            )
+                        }, // existing logic
+                        colors = ButtonDefaults.buttonColors()
+                    ) {
+                        Text("Save")
+                    }
+
+//                    if (onUpdateFromGrams != null) {
+//                        OutlinedButton(onClick = {onUpdateFromGrams(grams.toInt())}) {
+//                            Text("Update from Grams")
+//                        }
+//                    }
+                }
+
             }
+
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {

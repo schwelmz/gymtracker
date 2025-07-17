@@ -29,3 +29,4 @@ data class FoodLog(
     val fat: Int,
     val timestamp: Long
 )
+

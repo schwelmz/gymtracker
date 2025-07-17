@@ -96,7 +96,7 @@ fun NutritionScreen(
             onDismiss = { showGramsEditor = false; selectedEntry = null },
             onSave = { newGrams, newCalories, newProtein, newCarbs, newFat ->
                 scope.launch {
-                    viewModel.updateFoodLog(
+                    viewModel.updateLogGramsAndRecalculate(
                         logId = entry.details.logId,
                         grams = newGrams,
                         calories = newCalories,
@@ -107,7 +107,7 @@ fun NutritionScreen(
                 }
                 showGramsEditor = false
                 selectedEntry = null
-            }
+            },
         )
     }
 

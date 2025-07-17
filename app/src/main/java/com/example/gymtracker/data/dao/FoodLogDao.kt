@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
 import com.example.gymtracker.data.model.FoodLog
+import com.example.gymtracker.data.model.FoodTemplate
 import kotlinx.coroutines.flow.Flow
 
 // A data class to hold the result of the join query
@@ -67,7 +68,8 @@ interface FoodLogDao {
     suspend fun updateTimestamp(logId: Int, newTimestamp: Long)
     @Query("DELETE FROM food_logs WHERE id = :logId")
     suspend fun delete(logId: Int)
-
+    @Query("SELECT * FROM food_logs WHERE id = :logId")
+    suspend fun getById(logId: Int): FoodLog
     @Query("UPDATE food_logs SET grams = :grams, calories = :calories, protein = :protein, carbs = :carbs, fat = :fat WHERE id = :logId")
     suspend fun updateFoodLogFull(
         logId: Int,

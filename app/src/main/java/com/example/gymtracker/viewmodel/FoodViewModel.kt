@@ -7,7 +7,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.gymtracker.data.*
-import com.example.gymtracker.data.dao.FoodLogWithDetails
 import com.example.gymtracker.data.model.DiaryEntry
 import com.example.gymtracker.data.model.FoodLog
 import com.example.gymtracker.data.model.FoodTemplate
@@ -188,6 +187,37 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
             logDao.updateGrams(logId, newGrams)
         }
     }
+    fun updateLogGramsAndRecalculate(
+        logId: Int,
+        calories: Int,
+        grams: Int,
+        protein: Int,
+        carbs: Int,
+        fat: Int,
+    ) {
+        viewModelScope.launch {
+            // Fetch the FoodLog first to get the templateId
+            val log = logDao.getById(logId) ?: return@launch
+            val template = templateDao.getById(log.templateId) ?: return@launch
+
+            // Calculate updated macros
+            val updatedCalories = (calories * grams) / 100
+            val updatedProtein = (protein * grams) / 100
+            val updatedCarbs   = (carbs * grams) / 100
+            val updatedFat     = (fat* grams) / 100
+
+            // Update the log
+            logDao.updateFoodLogFull(
+                logId = logId,
+                grams = grams,
+                calories = updatedCalories,
+                protein = updatedProtein,
+                carbs = updatedCarbs,
+                fat = updatedFat
+            )
+        }
+    }
+
     fun updateFoodLog(
         logId: Int,
         grams: Int,
@@ -206,14 +236,14 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
     fun logFood(template: FoodTemplate, grams: Int) {
         viewModelScope.launch {
             val log = FoodLog(
-            templateId = template.id,
-            grams = grams,
-            timestamp = System.currentTimeMillis(),
-            id = 0,
-            calories = (template.caloriesPer100g * grams) / 100,
-            protein = (template.proteinPer100g * grams) / 100,
-            carbs = (template.carbsPer100g * grams) / 100,
-            fat = (template.fatPer100g * grams) / 100
+            templateId  = template.id,
+            grams       = grams,
+            timestamp   = System.currentTimeMillis(),
+            id          = 0,
+            calories    = (template.caloriesPer100g * grams) / 100,
+            protein     = (template.proteinPer100g  * grams) / 100,
+            carbs       = (template.carbsPer100g    * grams) / 100,
+            fat         = (template.fatPer100g      * grams) / 100
             )
             logDao.insert(log)
         }

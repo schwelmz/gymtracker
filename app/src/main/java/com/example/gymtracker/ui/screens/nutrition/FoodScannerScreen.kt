@@ -28,10 +28,8 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun FoodScannerScreen(
-    // --- THIS IS THE ONLY CHANGE IN THIS FILE ---
     // Use the new factory to create the ViewModel instance
     scannerViewModel: FoodScannerViewModel = viewModel(factory = FoodScannerViewModel.Factory),
-    // --- END OF CHANGE ---
     foodViewModel: FoodViewModel = viewModel(factory = FoodViewModel.Factory),
     scannerResultViewModel: ScannerResultViewModel = viewModel(),
     shouldOpenCameraDirectly: Boolean,
