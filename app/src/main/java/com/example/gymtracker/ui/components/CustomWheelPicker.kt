@@ -44,7 +44,7 @@ fun CustomWheelPicker(
 
     // Dialog state
     var showDialog by remember { mutableStateOf(false) }
-    var editIndex by remember { mutableStateOf(-1) }
+    var editIndex by remember { mutableStateOf(0) }
     var inputText by remember { mutableStateOf("") }
 
     LaunchedEffect(listState.isScrollInProgress) {
