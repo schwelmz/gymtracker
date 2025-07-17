@@ -33,14 +33,17 @@ import java.time.temporal.TemporalAdjusters
 import java.util.Locale
 import androidx.compose.foundation.shape.RoundedCornerShape
 
-import com.example.gymtracker.data.model.WorkoutPlanStatus
+import com.example.gymtracker.viewmodel.StreakPosition
+import com.example.gymtracker.viewmodel.StreakWeekInfo
+import com.example.gymtracker.viewmodel.YearWeek
+import com.example.gymtracker.viewmodel.toYearWeek
 
 @Composable
 fun WorkoutCalendar(
     modifier: Modifier = Modifier,
     workoutDates: Set<LocalDate>, // The set of dates with workouts
     onDayClicked: (LocalDate) -> Unit, // Callback for when a day is clicked
-    plannedWorkoutsThisWeek: List<WorkoutPlanStatus>
+    streakWeeks: Map<YearWeek, StreakWeekInfo>
 ) {
     val currentMonth = remember { YearMonth.now() }
     val startMonth = remember { currentMonth.minusMonths(100) } // Display 100 months back
@@ -68,8 +71,8 @@ fun WorkoutCalendar(
                     day = day,
                     hasWorkout = day.date in workoutDates,
                     onDayClicked = { onDayClicked(day.date) },
-                    workoutDates = workoutDates,
-                    firstDayOfWeek = firstDayOfWeek
+                    firstDayOfWeek = firstDayOfWeek,
+                    streakWeekInfo = streakWeeks[day.date.toYearWeek()]
                 )
             }
         )
@@ -81,8 +84,8 @@ private fun Day(
     day: CalendarDay,
     hasWorkout: Boolean,
     onDayClicked: (LocalDate) -> Unit,
-    workoutDates: Set<LocalDate>,
-    firstDayOfWeek: DayOfWeek
+    firstDayOfWeek: DayOfWeek,
+    streakWeekInfo: StreakWeekInfo?
 ) {
     Box(
         modifier = Modifier
@@ -93,28 +96,24 @@ private fun Day(
         contentAlignment = Alignment.Center
     ) {
         // --- 1. DRAW THE PILL BACKGROUND ---
-        val firstWorkout = getFirstWorkoutOfWeek(day, workoutDates, firstDayOfWeek)
-        if (firstWorkout != null) {
-            val lastWorkout = getLastWorkoutOfWeek(day, workoutDates, firstDayOfWeek)!!
-            val prevWeekHasWorkout = previousWeekHasWorkout(day, workoutDates, firstDayOfWeek)
-            val nextWeekHasWorkout = nextWeekHasWorkout(day, workoutDates, firstDayOfWeek)
-
-            // Determine the start and end dates for the visual pill background.
+        if (streakWeekInfo != null) {
             val weekStartDate = day.date.with(TemporalAdjusters.previousOrSame(firstDayOfWeek))
             val weekEndDate = weekStartDate.plusDays(6)
-            val pillStartDate = if (prevWeekHasWorkout) weekStartDate else firstWorkout
-            val pillEndDate = if (nextWeekHasWorkout) weekEndDate else lastWorkout
 
-            // Draw the background only if the current day is within the pill's range.
+            val pillStartDate = when (streakWeekInfo.position) {
+                StreakPosition.START, StreakPosition.SINGLE -> streakWeekInfo.firstWorkoutDate ?: weekStartDate
+                else -> weekStartDate
+            }
+            val pillEndDate = when (streakWeekInfo.position) {
+                StreakPosition.END, StreakPosition.SINGLE -> streakWeekInfo.lastWorkoutDate ?: weekEndDate
+                else -> weekEndDate
+            }
+
             if (day.date >= pillStartDate && day.date <= pillEndDate) {
                 val pillShape = when {
-                    // Single-day workout in a non-connected week
                     pillStartDate == pillEndDate -> RoundedCornerShape(50)
-                    // The first day of the pill
                     day.date == pillStartDate -> RoundedCornerShape(topStartPercent = 50, bottomStartPercent = 50)
-                    // The last day of the pill
                     day.date == pillEndDate -> RoundedCornerShape(topEndPercent = 50, bottomEndPercent = 50)
-                    // A day in the middle of the pill
                     else -> RoundedCornerShape(0.dp)
                 }
                 Box(
@@ -124,6 +123,7 @@ private fun Day(
                 )
             }
         }
+
 
         // --- 2. DRAW THE DAY NUMBER AND DOT ---
         val isToday = day.date == LocalDate.now()
