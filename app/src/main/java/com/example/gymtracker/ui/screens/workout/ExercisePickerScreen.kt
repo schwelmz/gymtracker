@@ -80,18 +80,18 @@ fun ExercisePickerScreen(
                 it.name.contains(searchQuery, ignoreCase = true)
             }
 
-//            item {
-//                OutlinedTextField(
-//                    value = searchQuery,
-//                    onValueChange = { searchQuery = it },
-//                    label = { Text("Search Exercises") },
-//                    modifier = Modifier.fillMaxWidth()
-//                )
-//                Spacer(Modifier.height(16.dp))
-//            }
+            item {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    label = { Text("Search Exercises") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(16.dp))
+            }
 
             item {
-                Text("Weekly Goal (#workouts)", style = MaterialTheme.typography.labelLarge)
+                Text("Weekly Goal (workouts)", style = MaterialTheme.typography.labelLarge)
                 Spacer(Modifier.height(8.dp))
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -111,18 +111,18 @@ fun ExercisePickerScreen(
                 Spacer(Modifier.height(16.dp))
             }
 
-            item {
-                OutlinedTextField(
-                    value = planGoal?.toString() ?: "",
-                    onValueChange = {
-                        planGoal = it.toIntOrNull()
-                    },
-                    label = { Text("Weekly Goal (workouts)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(Modifier.height(16.dp))
-            }
+//            item {
+//                OutlinedTextField(
+//                    value = planGoal?.toString() ?: "",
+//                    onValueChange = {
+//                        planGoal = it.toIntOrNull()
+//                    },
+//                    label = { Text("Weekly Goal (workouts)") },
+//                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+//                    modifier = Modifier.fillMaxWidth()
+//                )
+//                Spacer(Modifier.height(16.dp))
+//            }
             items(filteredExercises, key = { it.name }) { exercise ->
                 val isSelected = exercise.name in selectedExercises
                 Card(
