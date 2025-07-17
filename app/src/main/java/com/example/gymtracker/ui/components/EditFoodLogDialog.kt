@@ -88,7 +88,7 @@ fun EditFoodLogDialog(
             }
         },
         confirmButton = {
-            Button(
+            OutlinedButton(
                 onClick = {
                     onSave(
                         grams.toInt(),
@@ -98,13 +98,16 @@ fun EditFoodLogDialog(
                         fat.toInt()
                     )
                 },
-                enabled = isFormValid
+                enabled = isFormValid,
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.primary
+                )
             ) {
                 Text("Save")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            OutlinedButton(onClick = onDismiss,colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.secondary)) {
                 Text("Cancel")
             }
         }

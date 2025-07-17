@@ -48,9 +48,13 @@ fun RecipesScreen(
                 }
 
                 item {
-                    Button(
+                    OutlinedButton(
                         onClick = onNavigateToAddRecipe,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.primary // ✅ only content, not container
+                        )
+
                     ) {
                         Text("Add New Recipe")
                     }
@@ -90,18 +94,18 @@ fun RecipesScreen(
                 title = { Text("Delete Recipe") },
                 text = { Text("Are you sure you want to delete \"${recipe.recipe.name}\"? This cannot be undone.") },
                 confirmButton = {
-                    TextButton(
+                    OutlinedButton(
                         onClick = {
                             recipeViewModel.deleteRecipe(recipe.recipe)
                             recipeToDelete = null
                         },
-                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
                     ) {
                         Text("Delete")
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { recipeToDelete = null }) {
+                    OutlinedButton(onClick = { recipeToDelete = null },colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.secondary)) {
                         Text("Cancel")
                     }
                 }
@@ -164,9 +168,13 @@ fun RecipeCard(
                     )
                 }
                 Spacer(Modifier.height(16.dp))
-                Button(
+                OutlinedButton(
                     onClick = { onUseRecipe(recipe) },
-                    modifier = Modifier.align(Alignment.End)
+                    modifier = Modifier.align(Alignment.End),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.primary // ✅ only content, not container
+                    )
+
                 ) {
                     Text("Log this Recipe")
                 }

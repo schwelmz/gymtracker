@@ -119,12 +119,13 @@ fun AddEditRecipeScreen(
                     }
                 },
                 actions = {
-                    TextButton(
+                    OutlinedButton(
                         onClick = {
                             addEditRecipeViewModel.saveRecipe()
                             onNavigateUp()
                         },
-                        enabled = isSaveEnabled
+                        enabled = isSaveEnabled,
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary)
                     ) {
                         Text("Save")
                     }
@@ -159,7 +160,7 @@ fun AddEditRecipeScreen(
                     }
                 }
 
-                Button(
+                OutlinedButton(
                     onClick = {
                         if (cameraPermissionState.status.isGranted) {
                             // Create a file and URI for the camera to save the image to
@@ -203,7 +204,7 @@ fun AddEditRecipeScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text("Ingredients", style = MaterialTheme.typography.titleLarge)
-                    Button(onClick = { showAddIngredientDialog = true }) {
+                    OutlinedButton(onClick = { showAddIngredientDialog = true }) {
                         Text("Add")
                     }
                 }
@@ -375,7 +376,7 @@ fun AddIngredientDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            OutlinedButton(onClick = onDismiss, colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.secondary)) {
                 Text("Cancel")
             }
         }

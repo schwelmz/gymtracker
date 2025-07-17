@@ -283,14 +283,14 @@ fun WeightTrackerCard(
                         Text("%.1f kg".format(latestEntry.weight), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                         Text(latestEntry.date.format(formatter), style = MaterialTheme.typography.bodySmall)
                     }
-                    Button(onClick = onNavigateToWeightHistory) {
+                    OutlinedButton(onClick = onNavigateToWeightHistory, colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)) {
                         Text("View History")
                     }
                 }
             } else {
                 Text("No weight entries yet.", style = MaterialTheme.typography.bodyMedium)
                 Spacer(modifier = Modifier.height(8.dp))
-                Button(onClick = onNavigateToWeightHistory) {
+                OutlinedButton(onClick = onNavigateToWeightHistory,colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)) {
                     Text("Add First Weight")
                 }
             }
@@ -332,7 +332,7 @@ fun GoalSettingDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            OutlinedButton(onClick = onDismiss,colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.secondary)) {
                 Text("Cancel")
             }
         }
@@ -575,11 +575,11 @@ fun PermissionCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (showDeclineButton) {
-                    OutlinedButton(onClick = onDeclineClick) {
+                    OutlinedButton(onClick = onDeclineClick, colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)) {
                         Text("Decline")
                     }
                 }
-                Button(onClick = onGrantClick) {
+                OutlinedButton(onClick = onGrantClick, colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)) {
                     Text(grantButtonText)
                 }
             }

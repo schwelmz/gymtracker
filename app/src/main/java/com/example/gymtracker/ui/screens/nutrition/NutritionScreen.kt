@@ -238,11 +238,12 @@ fun NutritionScreen(
                 // --- END OF MODIFICATION ---
 
                 item {
-                    Button(
+                    OutlinedButton(
                         onClick = { onNavigateToCustomFood() },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 24.dp)
+                            .padding(bottom = 24.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)
                     ) {
                         Text("Add Food")
                     }
@@ -309,13 +310,13 @@ private fun DeleteConfirmDialog(
         title = { Text("Delete Entry") },
         text = { Text("Are you sure you want to delete \"$itemName\" from your diary?") },
         confirmButton = {
-            Button(
+            OutlinedButton(
                 onClick = onConfirm,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
             ) {
                 Text("Delete")
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        dismissButton = { OutlinedButton(onClick = onDismiss, colors =ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.secondary))  { Text("Cancel") } }
     )
 }
