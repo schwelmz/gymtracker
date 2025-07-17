@@ -28,15 +28,15 @@ interface FoodLogDao {
     @Transaction
     @Query("""
         SELECT
-            l.id as logId,
-            t.name,
-            t.imageUrl,
-            l.grams,
-            (t.caloriesPer100g * l.grams / 100) as calories,
-            (t.proteinPer100g * l.grams / 100) as protein,
-            (t.carbsPer100g * l.grams / 100) as carbs,
-            (t.fatPer100g * l.grams / 100) as fat,
-            l.timestamp
+        l.id as logId,
+        t.name,
+        t.imageUrl,
+        l.grams,
+        l.calories,           -- ✅ use stored values
+        l.protein,
+        l.carbs,
+        l.fat,
+        l.timestamp
         FROM food_logs l
         JOIN food_templates t ON l.templateId = t.id
         WHERE l.timestamp >= :startOfDay AND l.timestamp < :endOfDay
@@ -47,15 +47,15 @@ interface FoodLogDao {
     @Transaction
     @Query("""
         SELECT
-            l.id as logId,
-            t.name,
-            t.imageUrl,
-            l.grams,
-            (t.caloriesPer100g * l.grams / 100) as calories,
-            (t.proteinPer100g * l.grams / 100) as protein,
-            (t.carbsPer100g * l.grams / 100) as carbs,
-            (t.fatPer100g * l.grams / 100) as fat,
-            l.timestamp
+        l.id as logId,
+        t.name,
+        t.imageUrl,
+        l.grams,
+        l.calories,           -- ✅ use stored values
+        l.protein,
+        l.carbs,
+        l.fat,
+        l.timestamp
         FROM food_logs l
         JOIN food_templates t ON l.templateId = t.id
         ORDER BY l.timestamp DESC
@@ -76,6 +76,12 @@ interface FoodLogDao {
         protein: Int,
         carbs: Int,
         fat: Int
+    )
+    @Query("UPDATE food_logs SET grams = :grams, timestamp = :timestamp WHERE id = :logId")
+    suspend fun updateFoodLog(
+        logId: Int,
+        grams: Int,
+        timestamp: Long,
     )
 
 }

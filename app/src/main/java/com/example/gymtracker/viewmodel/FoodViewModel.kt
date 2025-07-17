@@ -206,14 +206,14 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
     fun logFood(template: FoodTemplate, grams: Int) {
         viewModelScope.launch {
             val log = FoodLog(
-                templateId = template.id,
-                grams = grams,
-                timestamp = System.currentTimeMillis(),
-                id = 0,
-                calories = 0,
-                protein = 0,
-                carbs = 0,
-                fat = 0
+            templateId = template.id,
+            grams = grams,
+            timestamp = System.currentTimeMillis(),
+            id = 0,
+            calories = (template.caloriesPer100g * grams) / 100,
+            protein = (template.proteinPer100g * grams) / 100,
+            carbs = (template.carbsPer100g * grams) / 100,
+            fat = (template.fatPer100g * grams) / 100
             )
             logDao.insert(log)
         }
