@@ -10,10 +10,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.gymtracker.data.repository.UserPreferencesRepository
 import com.example.gymtracker.ui.utils.headlineBottomPadding
 import com.example.gymtracker.ui.utils.headlineTopPadding
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -25,6 +28,11 @@ fun SettingsScreen(
 ) {
     val languages = listOf("English", "Deutsch", "Español")
     var showDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val userPrefsRepo = remember { UserPreferencesRepository(context) }
+
+
 
     Scaffold{ innerPadding ->
         LazyColumn(
@@ -60,7 +68,17 @@ fun SettingsScreen(
                     modifier = Modifier.clickable(onClick = onNavigateToAbout)
                 )
             }
-
+            item {
+                ListItem(
+                    headlineContent = { Text("Reset Health Permissions Prompt") },
+                    supportingContent = { Text("Click this prompt and you'll be asked again to grant health data access on the home screen.") },
+                    modifier = Modifier.clickable {
+                        scope.launch {
+                            userPrefsRepo.setHealthPermissionsDeclined(false)
+                        }
+                    }
+                )
+            }
             item {
                 ListItem(
                     headlineContent = { Text("Support the App") },

@@ -17,7 +17,6 @@ class HealthConnectManager(private val context: Context) {
      * Creates an ActivityResultContract to request Health Connect permissions.
      */
     fun requestPermissionsContract(): ActivityResultContract<Set<String>, Set<String>> {
-        // --- THIS IS THE CORRECT, VERIFIED METHOD FOR THE STABLE LIBRARY ---
         return PermissionController.createRequestPermissionResultContract()
     }
 }

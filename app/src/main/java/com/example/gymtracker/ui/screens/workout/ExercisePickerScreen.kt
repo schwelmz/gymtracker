@@ -1,21 +1,29 @@
 package com.example.gymtracker.ui.screens.workout
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import com.example.gymtracker.R
 import com.example.gymtracker.viewmodel.ExerciseViewModel
 import com.example.gymtracker.viewmodel.WorkoutPlanViewModel
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,7 +47,7 @@ fun ExercisePickerScreen(
         }
     }
     var planGoal by remember(planWithExercises) { mutableStateOf<Int?>(planWithExercises!!.plan.goal) }
-
+    var searchQuery by remember { mutableStateOf("") }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -68,6 +76,41 @@ fun ExercisePickerScreen(
                 .fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            val filteredExercises = allExercises.filter {
+                it.name.contains(searchQuery, ignoreCase = true)
+            }
+
+//            item {
+//                OutlinedTextField(
+//                    value = searchQuery,
+//                    onValueChange = { searchQuery = it },
+//                    label = { Text("Search Exercises") },
+//                    modifier = Modifier.fillMaxWidth()
+//                )
+//                Spacer(Modifier.height(16.dp))
+//            }
+
+            item {
+                Text("Weekly Goal (number of workouts)", style = MaterialTheme.typography.labelLarge)
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .horizontalScroll(rememberScrollState())
+                        .fillMaxWidth()
+                ) {
+                    (1..10).forEach { goal ->
+                        FilterChip(
+                            selected = planGoal == goal,
+                            onClick = { planGoal = goal },
+                            label = { Text(goal.toString()) }
+                        )
+                    }
+                }
+                Spacer(Modifier.height(16.dp))
+            }
+
             item {
                 OutlinedTextField(
                     value = planGoal?.toString() ?: "",
@@ -80,7 +123,7 @@ fun ExercisePickerScreen(
                 )
                 Spacer(Modifier.height(16.dp))
             }
-            items(allExercises, key = { it.name }) { exercise ->
+            items(filteredExercises, key = { it.name }) { exercise ->
                 val isSelected = exercise.name in selectedExercises
                 Card(
                     modifier = Modifier
@@ -99,18 +142,59 @@ fun ExercisePickerScreen(
                             MaterialTheme.colorScheme.surface
                     )
                 ) {
-                    Column(Modifier.padding(16.dp)) {
-                        Text(text = exercise.name, style = MaterialTheme.typography.titleMedium)
-                        if (!exercise.description.isNullOrBlank()) {
-                            Text(
-                                text = exercise.description ?: "",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 8.dp), // Tighter padding
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        val imageModel: Any? = when {
+                            exercise.imageResId != null -> exercise.imageResId
+                            !exercise.imageUri.isNullOrBlank() -> exercise.imageUri
+                            else -> null
+                        }
+
+                        if (imageModel != null) {
+                            AsyncImage(
+                                model = imageModel,
+                                contentDescription = "Exercise Image",
+                                modifier = Modifier
+                                    .size(56.dp) // Smaller image
+                                    .clip(MaterialTheme.shapes.small)
                             )
+                        }
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = exercise.name,
+                                style = MaterialTheme.typography.bodyLarge, // Slightly smaller than titleMedium
+                                maxLines = 1
+                            )
+                            if (!exercise.description.isNullOrBlank()) {
+                                Text(
+                                    text = exercise.description,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1
+                                )
+                            }
                         }
                     }
                 }
             }
         }
+    }
+}
+@Composable
+fun resolveExerciseImage(imageUri: String?): Int? {
+    return when (imageUri) {
+        "Barbell Row" -> R.drawable.barbellrow
+        "Bench Press" -> R.drawable.benchpress
+        "deadlift" -> R.drawable.deadlift
+        "overhead press" -> R.drawable.overheadpress
+        "squat" -> R.drawable.squat
+        // Add more mappings here if needed
+        else -> null
     }
 }

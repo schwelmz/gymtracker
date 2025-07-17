@@ -2,12 +2,14 @@ package com.example.gymtracker.ui.screens.home
 
 import android.content.Intent
 import android.net.Uri
+import android.provider.Settings
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,6 +31,7 @@ import com.example.gymtracker.viewmodel.FoodViewModel
 import com.example.gymtracker.viewmodel.GoalsViewModel
 import com.example.gymtracker.viewmodel.HomeUiState
 import com.example.gymtracker.viewmodel.HomeViewModel
+import kotlinx.coroutines.launch
 import java.lang.Float.max
 import java.time.format.DateTimeFormatter
 
@@ -44,7 +47,6 @@ fun HomeScreen(
     val goals by goalsViewModel.uiState.collectAsState()
     val weightEntries by homeViewModel.weightEntries.collectAsState(initial = emptyList())
 
-    // BUGFIX: Use the new unified diary entry flow
     val todaysDiaryEntries by foodViewModel.todayDiaryEntries.collectAsState(initial = emptyList())
     val (totalCaloriesIntake, totalProtein, totalCarbs, totalFat) = remember(todaysDiaryEntries) {
         var cals = 0; var prot = 0; var carb = 0; var fat = 0
@@ -72,8 +74,10 @@ fun HomeScreen(
     var showGoalDialog by remember { mutableStateOf(false) }
     var dialogTitle by remember { mutableStateOf("") }
     var dialogCurrentValue by remember { mutableStateOf("") }
-    // BUGFIX: Corrected typo from mutableStateof to mutableStateOf
     var onDialogSave by remember { mutableStateOf<(Int) -> Unit>({}) }
+    val dismissedCard by homeViewModel.dismissedDisabledCard.collectAsState(initial = false)
+    val showDisabledCard = healthState is HomeUiState.PermissionsDeclined && !dismissedCard
+    val scope = rememberCoroutineScope()
 
     if (showGoalDialog) {
         GoalSettingDialog(
@@ -119,23 +123,82 @@ fun HomeScreen(
                     PermissionCard(
                         title = "Health Connect Not Installed",
                         description = "To view your health stats, please install the Health Connect app.",
-                        buttonText = "Install",
-                        onButtonClick = {
+                        grantButtonText = "Install",
+                        onGrantClick = {
                             val intent = Intent(Intent.ACTION_VIEW).apply {
                                 data = Uri.parse("market://details?id=com.google.android.apps.healthdata")
                                 setPackage("com.android.vending")
                             }
                             context.startActivity(intent)
-                        }
+                        },
+                        onDeclineClick = { /* No decline option for installation */ },
+                        showDeclineButton = false
                     )
                 }
                 is HomeUiState.PermissionsNotGranted -> {
                     PermissionCard(
                         title = "Permissions Required",
                         description = "This app needs permission to read your health data. Tap below to grant access.",
-                        buttonText = "Grant Permissions",
-                        onButtonClick = onGrantPermissionsClick
+                        grantButtonText = "Grant Permissions",
+                        onGrantClick = onGrantPermissionsClick,
+                        onDeclineClick = { homeViewModel.userDeclinedPermissions() }
                     )
+                }
+                // --- NEW: Handle the case where permissions were declined ---
+                is HomeUiState.PermissionsDeclined -> {
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        CalorieBudgetGraph(
+                            intake = totalCaloriesIntake,
+                            burned = 0, // Burned calories are unknown
+                            goal = goals.calorieGoal,
+                            calorieMode = goals.calorieMode,
+                            showBurned = false, // Hide the burned stat
+                            onGoalClick = {
+                                launchGoalDialog("Set Calorie Goal", goals.calorieGoal) {
+                                    goalsViewModel.updateUserGoal(calories = it)
+                                }
+                            },
+                            onModeChange = { newMode ->
+                                goalsViewModel.updateUserGoal(calorieMode = newMode)
+                            }
+                        )
+                        MacroSummaryCard(
+                            protein = totalProtein,
+                            carbs = totalCarbs,
+                            fat = totalFat,
+                            proteinGoal = goals.proteinGoal,
+                            carbGoal = goals.carbGoal,
+                            fatGoal = goals.fatGoal,
+                            onProteinGoalClick = {
+                                launchGoalDialog("Set Protein Goal (g)", goals.proteinGoal) {
+                                    goalsViewModel.updateUserGoal(protein = it)
+                                }
+                            },
+                            onCarbGoalClick = {
+                                launchGoalDialog("Set Carb Goal (g)", goals.carbGoal) {
+                                    goalsViewModel.updateUserGoal(carbs = it)
+                                }
+                            },
+                            onFatGoalClick = {
+                                launchGoalDialog("Set Fat Goal (g)", goals.fatGoal) {
+                                    goalsViewModel.updateUserGoal(fat = it)
+                                }
+                            }
+                        )
+                        // Show the new disabled card instead of the grid
+                        if (showDisabledCard) {
+                            HealthStatsDisabledCard(onDismiss = {
+                                scope.launch {
+                                    homeViewModel.userPreferencesRepository.setDismissedDisabledCard(true)
+                                }
+                            })
+                        }
+
+                        WeightTrackerCard(
+                            weightEntries = weightEntries,
+                            onNavigateToWeightHistory = onNavigateToWeightHistory
+                        )
+                    }
                 }
                 is HomeUiState.Success -> {
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -153,7 +216,6 @@ fun HomeScreen(
                                 goalsViewModel.updateUserGoal(calorieMode = newMode)
                             }
                         )
-
                         MacroSummaryCard(
                             protein = totalProtein,
                             carbs = totalCarbs,
@@ -186,7 +248,6 @@ fun HomeScreen(
                                 }
                             }
                         )
-
                         WeightTrackerCard(
                             weightEntries = weightEntries,
                             onNavigateToWeightHistory = onNavigateToWeightHistory
@@ -278,6 +339,7 @@ fun GoalSettingDialog(
     )
 }
 
+
 @Composable
 fun CalorieBudgetGraph(
     intake: Int,
@@ -285,7 +347,8 @@ fun CalorieBudgetGraph(
     goal: Int,
     calorieMode: CalorieMode,
     onGoalClick: () -> Unit,
-    onModeChange: (CalorieMode) -> Unit
+    onModeChange: (CalorieMode) -> Unit,
+    showBurned: Boolean = true // <-- NEW PARAMETER
 ) {
     val leftover = goal - intake
     val progress = (intake.toFloat() / max(1f, goal.toFloat())).coerceIn(0f, 1f)
@@ -351,7 +414,7 @@ fun CalorieBudgetGraph(
 
             Spacer(modifier = Modifier.height(16.dp))
             LinearProgressIndicator(
-                progress = { progress }, // BUGFIX: Corrected syntax
+                progress = { progress },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(12.dp)
@@ -368,7 +431,10 @@ fun CalorieBudgetGraph(
                     .padding(4.dp)) {
                     CalorieStat(label = goalLabel, value = "$goal")
                 }
-                CalorieStat(label = "Burned", value = "$burned")
+                // Conditionally show the "Burned" stat
+                if (showBurned) {
+                    CalorieStat(label = "Burned", value = "$burned")
+                }
                 CalorieStat(label = "Leftover", value = "$leftover", valueColor = leftoverTextColor)
             }
         }
@@ -486,24 +552,73 @@ private fun CalorieStat(
 fun PermissionCard(
     title: String,
     description: String,
-    buttonText: String,
-    onButtonClick: () -> Unit
+    grantButtonText: String,
+    onGrantClick: () -> Unit,
+    onDeclineClick: () -> Unit,
+    showDeclineButton: Boolean = true // Make decline optional
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(text = title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
             Text(text = description, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = onButtonClick) {
-                Text(buttonText)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (showDeclineButton) {
+                    OutlinedButton(onClick = onDeclineClick) {
+                        Text("Decline")
+                    }
+                }
+                Button(onClick = onGrantClick) {
+                    Text(grantButtonText)
+                }
+            }
+        }
+    }
+}
+@Composable
+fun HealthStatsDisabledCard(onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    Card(
+        modifier = Modifier
+            .fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(imageVector = Icons.Default.Warning, contentDescription = "Warning", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("Health Stats Disabled", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text(
+                text = "You have declined health permissions. To enable activity tracking, please grant access in your phone's settings. You can change this at any time in the FreeGym Settings.",
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                // The new "I understand" button
+                OutlinedButton(onClick = onDismiss) {
+                    Text("I understand")
+                }
+                Button(onClick = {
+                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = Uri.fromParts("package", context.packageName, null)
+                    }
+                    context.startActivity(intent)
+                }) {
+                    Text("Go to Settings")
+                }
             }
         }
     }

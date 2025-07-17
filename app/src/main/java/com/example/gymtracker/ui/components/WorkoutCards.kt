@@ -1,10 +1,14 @@
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -17,7 +21,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -60,11 +66,15 @@ fun ExerciseCard(
         )
     }
 
+    val imageModifier = Modifier
+        .size(56.dp) // Compact size
+        .clip(MaterialTheme.shapes.medium)
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
-            .height(cardHeight)
+            .padding(vertical = 4.dp) // Reduced vertical padding
+            .height(72.dp) // Optional: lower height for compactness
             .pointerInput(Unit) {
                 detectTapGestures(
                     onTap = { onClick() },
@@ -75,41 +85,43 @@ fun ExerciseCard(
                 )
             }
     ) {
-        Row {
-            val imageWidth = 95.dp
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             if (!exercise.imageUri.isNullOrBlank()) {
                 AsyncImage(
-                    model = exercise.imageUri, // Coil handles the loading
+                    model = exercise.imageUri,
                     contentDescription = exercise.name,
-                    modifier = Modifier
-                        .width(imageWidth)
-                        .height(cardHeight)
+                    modifier = imageModifier
                 )
             } else if (exercise.imageResId != null) {
                 Image(
                     painter = painterResource(id = exercise.imageResId),
                     contentDescription = exercise.name,
-                    modifier = Modifier
-                        .width(imageWidth)
-                        .height(cardHeight)
+                    modifier = imageModifier
                 )
             } else {
                 Image(
                     painter = painterResource(id = R.drawable.outline_picture_in_picture_center_24),
                     contentDescription = exercise.name,
-                    modifier = Modifier
-                        .width(imageWidth)
-                        .height(cardHeight)
+                    modifier = imageModifier
                 )
             }
 
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(text = exercise.name, style = MaterialTheme.typography.titleMedium)
-                Text(
-                    text = exercise.description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = exercise.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1)
+                if (!exercise.description.isNullOrBlank()) {
+                    Text(
+                        text = exercise.description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1
+                    )
+                }
             }
         }
     }

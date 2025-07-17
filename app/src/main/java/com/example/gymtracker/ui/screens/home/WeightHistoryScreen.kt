@@ -152,7 +152,9 @@ fun WeightHistoryScreen(
                     item {
                         Text(
                             text = "No weight entries in this period.\nTap the '+' button to add one.",
-                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                            modifier = Modifier
+                                .padding(16.dp)
+                                .fillMaxWidth(),
                             style = MaterialTheme.typography.bodyLarge,
                             textAlign = TextAlign.Center
                         )
@@ -281,7 +283,10 @@ fun WeightEntryDialog(
                 AsyncImage(
                     model = imagePath?.let { File(it) },
                     contentDescription = "Selected image",
-                    modifier = Modifier.fillMaxWidth().height(180.dp).clip(MaterialTheme.shapes.medium),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .clip(MaterialTheme.shapes.medium),
                     contentScale = ContentScale.Crop,
                     placeholder = painterResource(id = R.drawable.placeholder_image)
                 )
@@ -402,13 +407,14 @@ fun WeightChart(
     }
 
     val maxY = remember(entries) {
-        val maxWeight = entries.maxOfOrNull { it.weight }
-        if (maxWeight != null && maxWeight > 0f) {
-            maxWeight * 1.1f
-        } else {
-            100f
-        }
+        val maxWeight = entries.maxOfOrNull { it.weight } ?: 100f
+        maxWeight
     }
+    val minY = remember(entries) {
+        val minWeight = entries.minOfOrNull { it.weight } ?: 50f
+        minWeight
+    }
+
 
     val chart = lineChart(
         lines = listOf(
@@ -421,10 +427,12 @@ fun WeightChart(
                 pointSizeDp = 8f
             )
         ),
-        axisValuesOverrider = AxisValuesOverrider.fixed(minY = 0f, maxY = maxY)
+        axisValuesOverrider = AxisValuesOverrider.fixed(minY = minY, maxY = maxY)
     )
 
-    Card(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+    Card(modifier = Modifier
+        .fillMaxWidth()
+        .padding(16.dp)) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Chart(
                 chart = chart,
