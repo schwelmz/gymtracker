@@ -15,6 +15,7 @@ import com.example.gymtracker.data.model.DiaryEntry
 import com.example.gymtracker.ui.components.DateTimePickerDialog
 import com.example.gymtracker.ui.components.EditFoodLogDialog
 import com.example.gymtracker.ui.components.FoodCard
+import com.example.gymtracker.ui.components.FoodOptionsDialog
 import com.example.gymtracker.ui.components.RecipeLogCard
 import com.example.gymtracker.ui.utils.headlineBottomPadding
 import com.example.gymtracker.ui.utils.headlineTopPadding
@@ -294,28 +295,8 @@ private fun MacroStat(label: String, value: Int) {
     }
 }
 
-@Composable
-private fun FoodOptionsDialog(
-    foodName: String,
-    onDismiss: () -> Unit,
-    onEditStatsClick: () -> Unit,
-    onEditTimeClick: () -> Unit,
-    onDeleteClick: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(foodName) },
-        text = { Text("What would you like to do?") },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
-        confirmButton = {
-            Column(horizontalAlignment = Alignment.End) {
-                TextButton(onClick = onEditStatsClick) { Text("Edit Stats") }
-                TextButton(onClick = onEditTimeClick) { Text("Edit Time") }
-                TextButton(onClick = onDeleteClick) { Text("Delete") }
-            }
-        }
-    )
-}
+
+
 
 @Composable
 private fun DeleteConfirmDialog(
