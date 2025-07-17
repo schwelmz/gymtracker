@@ -46,8 +46,16 @@ fun ExercisePickerScreen(
             addAll(planWithExercises!!.exercises.map { it.name })
         }
     }
-    var planGoal by remember(planWithExercises) { mutableStateOf<Int?>(planWithExercises!!.plan.goal) }
+    //var planGoal by remember(planWithExercises) { mutableStateOf<Int?>(planWithExercises!!.plan.goal) }
     var searchQuery by remember { mutableStateOf("") }
+    val goalValue = planWithExercises?.plan?.goal ?: 1 // fallback default
+    var planGoal: Int? by remember(planWithExercises?.plan?.goal) {
+        mutableStateOf(goalValue)
+    }
+    val filteredExercises = allExercises.filter {
+        it.name.contains(searchQuery, ignoreCase = true)
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -76,9 +84,6 @@ fun ExercisePickerScreen(
                 .fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            val filteredExercises = allExercises.filter {
-                it.name.contains(searchQuery, ignoreCase = true)
-            }
 
             item {
                 OutlinedTextField(
@@ -110,7 +115,7 @@ fun ExercisePickerScreen(
                 }
                 Spacer(Modifier.height(16.dp))
             }
-
+//
 //            item {
 //                OutlinedTextField(
 //                    value = planGoal?.toString() ?: "",
