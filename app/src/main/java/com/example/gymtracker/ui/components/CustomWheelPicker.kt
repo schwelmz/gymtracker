@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.util.Locale
 import kotlin.math.abs
 
 @Composable
@@ -147,20 +148,23 @@ fun CustomWheelPicker(
             text = {
                 OutlinedTextField(
                     value = inputText,
-                    onValueChange = { inputText = it },
+                    onValueChange = {
+                        inputText = it.replace(',', '.')  // force '.' as decimal
+                    },
                     label = { Text("New Value") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Number,
+                        keyboardType = KeyboardType.Decimal,
                         imeAction = ImeAction.Done
                     )
                 )
+
             },
             confirmButton = {
                 TextButton(onClick = {
                     val parsed = inputText.toFloatOrNull()
                     if (parsed != null && editIndex in itemList.indices) {
-                        val formatted = "%.2f".format(parsed)
+                        val formatted = String.format(Locale.US, "%.2f", parsed)
                         itemList[editIndex] = formatted
                         showDialog = false
                         coroutineScope.launch {
