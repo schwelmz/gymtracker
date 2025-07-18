@@ -20,6 +20,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.gymtracker.data.model.RecipeWithDetails
 import com.example.gymtracker.viewmodel.FoodViewModel
 import com.example.gymtracker.viewmodel.RecipeViewModel
+import com.patrykandpatrick.vico.core.extension.sumOf
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -122,7 +123,7 @@ fun RecipeCard(
     onUseRecipe: (RecipeWithDetails) -> Unit,
     onLongPress: () -> Unit
 ) {
-    val totalCalories = recipe.ingredients.sumOf {
+    val totalCalories = recipe.ingredients.sumOf{
         (it.foodTemplate.caloriesPer100g * it.grams) / 100
     }
 

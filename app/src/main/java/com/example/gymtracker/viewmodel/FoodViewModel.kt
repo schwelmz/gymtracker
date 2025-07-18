@@ -15,6 +15,7 @@ import com.example.gymtracker.data.model.RecipeLog
 import com.example.gymtracker.data.model.RecipeWithDetails
 import com.example.gymtracker.data.repository.PredefinedFoodRepository
 import com.google.gson.Gson
+import com.patrykandpatrick.vico.core.extension.sumOf
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
@@ -97,7 +98,7 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
      * It checks if a template for this food already exists. If not, it creates one.
      * Then, it creates a log entry for the specified weight.
      */
-    fun addScannedFood(product: Product, grams: Int) {
+    fun addScannedFood(product: Product, grams: Float) {
         viewModelScope.launch {
             val barcode = product.code ?: return@launch
             var template = templateDao.getByBarcode(barcode)
@@ -108,10 +109,10 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
                     barcode = barcode,
                     name = findBestName(product),
                     imageUrl = product.imageUrl,
-                    caloriesPer100g = product.nutriments?.energyKcalPer100g?.toInt() ?: 0,
-                    proteinPer100g = product.nutriments?.proteinsPer100g?.toInt() ?: 0,
-                    carbsPer100g = product.nutriments?.carbohydratesPer100g?.toInt() ?: 0,
-                    fatPer100g = product.nutriments?.fatPer100g?.toInt() ?: 0
+                    caloriesPer100g = product.nutriments?.energyKcalPer100g?.toFloat() ?: 0f,
+                    proteinPer100g = product.nutriments?.proteinsPer100g?.toFloat() ?: 0f,
+                    carbsPer100g = product.nutriments?.carbohydratesPer100g?.toFloat() ?: 0f,
+                    fatPer100g = product.nutriments?.fatPer100g?.toFloat() ?: 0f
                 )
                 // Insert and get the ID of the newly created template
                 val newId = templateDao.insert(newTemplate).toInt()
@@ -136,13 +137,13 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
     }
     suspend fun getOrCreateTemplateFromProduct(product: Product): FoodTemplate {
         val barcode = product.code ?: return FoodTemplate(
-            name = "Unknown", caloriesPer100g = 0,
+            name = "Unknown", caloriesPer100g = 0f,
             id = 0,
             barcode = null,
             imageUrl = null,
-            proteinPer100g = 0,
-            carbsPer100g = 0,
-            fatPer100g = 0
+            proteinPer100g = 0f,
+            carbsPer100g = 0f,
+            fatPer100g = 0f
         )
         var template = templateDao.getByBarcode(barcode)
         if (template == null) {
@@ -150,17 +151,17 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
                 barcode = barcode,
                 name = findBestName(product),
                 imageUrl = product.imageUrl,
-                caloriesPer100g = product.nutriments?.energyKcalPer100g?.toInt() ?: 0,
-                proteinPer100g = product.nutriments?.proteinsPer100g?.toInt() ?: 0,
-                carbsPer100g = product.nutriments?.carbohydratesPer100g?.toInt() ?: 0,
-                fatPer100g = product.nutriments?.fatPer100g?.toInt() ?: 0
+                caloriesPer100g = product.nutriments?.energyKcalPer100g?.toFloat() ?: 0f,
+                proteinPer100g = product.nutriments?.proteinsPer100g?.toFloat() ?: 0f,
+                carbsPer100g = product.nutriments?.carbohydratesPer100g?.toFloat() ?: 0f,
+                fatPer100g = product.nutriments?.fatPer100g?.toFloat() ?: 0f
             )
             val id = templateDao.insert(newTemplate).toInt()
             template = newTemplate.copy(id = id)
         }
         return template
     }
-    fun addScannedFoodWithCustomName(product: Product, grams: Int, customName: String) {
+    fun addScannedFoodWithCustomName(product: Product, grams: Float, customName: String) {
         viewModelScope.launch {
             val barcode = product.code ?: return@launch
             var template = templateDao.getByBarcode(barcode)
@@ -170,10 +171,10 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
                     barcode = barcode,
                     name = customName,
                     imageUrl = product.imageUrl,
-                    caloriesPer100g = product.nutriments?.energyKcalPer100g?.toInt() ?: 0,
-                    proteinPer100g = product.nutriments?.proteinsPer100g?.toInt() ?: 0,
-                    carbsPer100g = product.nutriments?.carbohydratesPer100g?.toInt() ?: 0,
-                    fatPer100g = product.nutriments?.fatPer100g?.toInt() ?: 0
+                    caloriesPer100g = product.nutriments?.energyKcalPer100g?.toFloat() ?: 0f,
+                    proteinPer100g = product.nutriments?.proteinsPer100g?.toFloat() ?: 0f,
+                    carbsPer100g = product.nutriments?.carbohydratesPer100g?.toFloat() ?: 0f,
+                    fatPer100g = product.nutriments?.fatPer100g?.toFloat() ?: 0f
                 )
                 val newId = templateDao.insert(newTemplate).toInt()
                 template = newTemplate.copy(id = newId)
@@ -182,7 +183,7 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
             logFood(template, grams)
         }
     }
-    fun updateLogGrams(logId: Int, newGrams: Int) {
+    fun updateLogGrams(logId: Int, newGrams: Float) {
         viewModelScope.launch {
             logDao.updateGrams(logId, newGrams)
         }
@@ -190,7 +191,7 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
     fun updateLogGramsAndRecalculate(
         logId: Int,
         calories: Int,
-        grams: Int,
+        grams: Float,
         protein: Int,
         carbs: Int,
         fat: Int,
@@ -219,7 +220,7 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
     }
     fun updateFoodLog(
         logId: Int,
-        grams: Int
+        grams: Float
     ) {
         viewModelScope.launch {
             val log = logDao.getById(logId) ?: return@launch
@@ -243,11 +244,11 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
 
     fun updateFoodLog(
         logId: Int,
-        grams: Int,
-        calories: Int,
-        protein: Int,
-        carbs: Int,
-        fat: Int
+        grams: Float,
+        calories: Float,
+        protein: Float,
+        carbs: Float,
+        fat: Float
     ) {
         viewModelScope.launch {
             foodLogDao.updateFoodLogFull(logId, grams, calories, protein, carbs, fat)
@@ -257,17 +258,17 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
     /**
      * Logs an entry for a predefined or custom food template.
      */
-    fun logFood(template: FoodTemplate, grams: Int) {
+    fun logFood(template: FoodTemplate, grams: Float) {
         viewModelScope.launch {
             val log = FoodLog(
-            templateId  = template.id,
-            grams       = grams,
-            timestamp   = System.currentTimeMillis(),
-            id          = 0,
-            calories    = (template.caloriesPer100g * grams) / 100,
-            protein     = (template.proteinPer100g  * grams) / 100,
-            carbs       = (template.carbsPer100g    * grams) / 100,
-            fat         = (template.fatPer100g      * grams) / 100
+            templateId = template.id,
+            grams = grams,
+            timestamp = System.currentTimeMillis(),
+            id = 0,
+            calories = (template.caloriesPer100g * grams) / 100,
+            protein = (template.proteinPer100g  * grams) / 100,
+            carbs = (template.carbsPer100g    * grams) / 100,
+            fat = (template.fatPer100g      * grams) / 100
             )
             logDao.insert(log)
         }
@@ -276,14 +277,14 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
     /**
      * Saves a new user-defined food template to the database.
      */
-    fun saveCustomFoodTemplate(name: String, calories: Int, protein: Int, carbs: Int, fat: Int) {
+    fun saveCustomFoodTemplate(name: String, calories: Any, protein: Any, carbs: Any, fat: Any) {
         viewModelScope.launch {
             val newTemplate = FoodTemplate(
                 name = name,
-                caloriesPer100g = calories,
-                proteinPer100g = protein,
-                carbsPer100g = carbs,
-                fatPer100g = fat
+                caloriesPer100g = calories as Float,
+                proteinPer100g = protein as Float,
+                carbsPer100g = carbs as Float,
+                fatPer100g = fat as Float
             )
             templateDao.insert(newTemplate)
         }
@@ -311,7 +312,7 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
     suspend fun saveScannedFood(
         product: Product,
         barcode: String,
-        grams: Int,
+        grams: Float,
         name: String,
         isForRecipe: Boolean,
         scannerResultViewModel: ScannerResultViewModel
@@ -336,10 +337,10 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
                 barcode = barcode,
                 name = name,
                 imageUrl = product.imageUrl,
-                caloriesPer100g = product.nutriments?.energyKcalPer100g?.toInt() ?: 0,
-                proteinPer100g = product.nutriments?.proteinsPer100g?.toInt() ?: 0,
-                carbsPer100g = product.nutriments?.carbohydratesPer100g?.toInt() ?: 0,
-                fatPer100g = product.nutriments?.fatPer100g?.toInt() ?: 0
+                caloriesPer100g = product.nutriments?.energyKcalPer100g?.toFloat() ?: 0f,
+                proteinPer100g = product.nutriments?.proteinsPer100g?.toFloat() ?: 0f,
+                carbsPer100g = product.nutriments?.carbohydratesPer100g?.toFloat() ?: 0f,
+                fatPer100g = product.nutriments?.fatPer100g?.toFloat() ?: 0f
             )
             // FIX: Changed foodTemplateDao to templateDao
             val newId = templateDao.insert(newTemplate)

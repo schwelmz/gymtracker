@@ -19,10 +19,10 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 class ScannerResultViewModel : ViewModel() {
 
-    private val _scannedIngredient = MutableStateFlow<Pair<FoodTemplate, Int>?>(null)
+    private val _scannedIngredient = MutableStateFlow<Pair<FoodTemplate, Float>?>(null)
     val scannedIngredient = _scannedIngredient.asStateFlow()
 
-    fun setScannedIngredient(template: FoodTemplate, grams: Int) {
+    fun setScannedIngredient(template: FoodTemplate, grams: Float) {
         _scannedIngredient.value = template to grams
     }
 

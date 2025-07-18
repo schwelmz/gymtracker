@@ -53,16 +53,22 @@ fun CustomFoodListScreen(
             text = {
                 OutlinedTextField(
                     value = grams,
-                    onValueChange = { grams = it.filter { char -> char.isDigit() } },
+                    onValueChange = {
+                        val cleaned = it.replace(',', '.')
+                            .filterIndexed { index, c ->
+                                c.isDigit() || (c == '.' && !it.take(index).contains('.'))
+                            }
+                        grams = cleaned
+                    },
                     label = { Text("Enter weight (g)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true
                 )
             },
             confirmButton = {
                 Button(
                     onClick = {
-                        val gramsInt = grams.toIntOrNull()
+                        val gramsInt = grams.toFloatOrNull()
                         if (gramsInt != null) {
                             // Call the new, correct function in the ViewModel
                             viewModel.logFood(selectedFood!!, gramsInt)

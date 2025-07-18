@@ -12,10 +12,10 @@ data class RecipeLog(
     val imageUrl: String?,
     val timestamp: Long,
     // Store the calculated totals at the time of logging.
-    val totalCalories: Int,
-    val totalProtein: Int,
-    val totalCarbs: Int,
-    val totalFat: Int,
+    val totalCalories: Float,
+    val totalProtein: Float,
+    val totalCarbs: Float,
+    val totalFat:Float,
     // Store a JSON snapshot of the ingredients.
     val ingredientsJson: String
 )

@@ -105,7 +105,7 @@ fun FoodCard(
 
 // MacroStat remains the same
 @Composable
-fun MacroStat(label: String, value: Int) {
+fun MacroStat(label: String, value: Float) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(text = label, style = MaterialTheme.typography.labelMedium)
         Text(text = "${value}g", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)

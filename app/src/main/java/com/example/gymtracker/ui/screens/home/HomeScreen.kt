@@ -49,7 +49,7 @@ fun HomeScreen(
 
     val todaysDiaryEntries by foodViewModel.todayDiaryEntries.collectAsState(initial = emptyList())
     val (totalCaloriesIntake, totalProtein, totalCarbs, totalFat) = remember(todaysDiaryEntries) {
-        var cals = 0; var prot = 0; var carb = 0; var fat = 0
+        var cals = 0f; var prot = 0f; var carb = 0f; var fat = 0f
         todaysDiaryEntries.forEach { entry ->
             when (entry) {
                 is DiaryEntry.Food -> {
@@ -163,9 +163,9 @@ fun HomeScreen(
                             }
                         )
                         MacroSummaryCard(
-                            protein = totalProtein,
-                            carbs = totalCarbs,
-                            fat = totalFat,
+                            protein = totalProtein.toInt(),
+                            carbs = totalCarbs.toInt(),
+                            fat = totalFat.toInt(),
                             proteinGoal = goals.proteinGoal,
                             carbGoal = goals.carbGoal,
                             fatGoal = goals.fatGoal,
@@ -217,9 +217,9 @@ fun HomeScreen(
                             }
                         )
                         MacroSummaryCard(
-                            protein = totalProtein,
-                            carbs = totalCarbs,
-                            fat = totalFat,
+                            protein = totalProtein.toInt(),
+                            carbs = totalCarbs.toInt(),
+                            fat = totalFat.toInt(),
                             proteinGoal = goals.proteinGoal,
                             carbGoal = goals.carbGoal,
                             fatGoal = goals.fatGoal,
@@ -342,7 +342,7 @@ fun GoalSettingDialog(
 
 @Composable
 fun CalorieBudgetGraph(
-    intake: Int,
+    intake: Float,
     burned: Int,
     goal: Int,
     calorieMode: CalorieMode,
@@ -425,17 +425,17 @@ fun CalorieBudgetGraph(
             Spacer(modifier = Modifier.height(16.dp))
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                CalorieStat(label = "Intake", value = "$intake")
+                CalorieStat(label = "Intake", value = "${intake.toInt()}")
                 Box(modifier = Modifier
                     .clickable(onClick = onGoalClick)
                     .padding(4.dp)) {
-                    CalorieStat(label = goalLabel, value = "$goal")
+                    CalorieStat(label = goalLabel, value = "${goal.toInt()}")
                 }
                 // Conditionally show the "Burned" stat
                 if (showBurned) {
-                    CalorieStat(label = "Burned", value = "$burned")
+                    CalorieStat(label = "Burned", value = "${burned.toInt()}")
                 }
-                CalorieStat(label = "Leftover", value = "$leftover", valueColor = leftoverTextColor)
+                CalorieStat(label = "Leftover", value = "${leftover.toInt()}", valueColor = leftoverTextColor)
             }
         }
     }
@@ -499,9 +499,9 @@ fun MacroSummaryCard(
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            MacroStat(label = "Protein", value = protein, goal = proteinGoal, onClick = onProteinGoalClick)
-            MacroStat(label = "Carbs", value = carbs, goal = carbGoal, onClick = onCarbGoalClick)
-            MacroStat(label = "Fat", value = fat, goal = fatGoal, onClick = onFatGoalClick)
+            MacroStat(label = "Protein", value = protein.toInt(), goal = proteinGoal, onClick = onProteinGoalClick)
+            MacroStat(label = "Carbs", value = carbs.toInt(), goal = carbGoal, onClick = onCarbGoalClick)
+            MacroStat(label = "Fat", value = fat.toInt(), goal = fatGoal, onClick = onFatGoalClick)
         }
     }
 }

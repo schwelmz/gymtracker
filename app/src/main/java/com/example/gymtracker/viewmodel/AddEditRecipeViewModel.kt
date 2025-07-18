@@ -14,6 +14,7 @@ import com.example.gymtracker.data.model.Recipe
 import com.example.gymtracker.data.model.RecipeIngredient
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlin.collections.forEach
 
 class AddEditRecipeViewModel(
     application: Application,
@@ -26,7 +27,7 @@ class AddEditRecipeViewModel(
     var recipeName by mutableStateOf("")
     var recipeInstructions by mutableStateOf("")
     var recipeImageUri by mutableStateOf<String?>(null)
-    var recipeIngredients by mutableStateOf<Map<FoodTemplate, Int>>(emptyMap())
+    var recipeIngredients by mutableStateOf<Map<FoodTemplate, Float>>(emptyMap())
         private set
 
     init {
@@ -38,11 +39,11 @@ class AddEditRecipeViewModel(
                     recipeInstructions = recipeWithIngredients.recipe.instructions ?: ""
                     recipeImageUri = recipeWithIngredients.recipe.imageUrl
 
-                    val ingredientsMap = mutableMapOf<FoodTemplate, Int>()
+                    val ingredientsMap = mutableMapOf<FoodTemplate, Float>()
                     recipeWithIngredients.ingredients.forEach { ingredient ->
                         val template = foodTemplateDao.getById(ingredient.templateId)
                         if (template != null) {
-                            ingredientsMap[template] = ingredient.grams
+                            ingredientsMap[template] = ingredient.grams.toFloat()
                         }
                     }
                     recipeIngredients = ingredientsMap
@@ -51,7 +52,7 @@ class AddEditRecipeViewModel(
         }
     }
 
-    fun addIngredient(template: FoodTemplate, grams: Int) {
+    fun addIngredient(template: FoodTemplate, grams: Float) {
         recipeIngredients = recipeIngredients + (template to grams)
     }
 

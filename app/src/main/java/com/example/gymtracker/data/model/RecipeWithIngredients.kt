@@ -31,5 +31,5 @@ data class RecipeWithDetails(
 
 data class IngredientDetails(
     val foodTemplate: FoodTemplate,
-    val grams: Int
+    val grams: Float
 )

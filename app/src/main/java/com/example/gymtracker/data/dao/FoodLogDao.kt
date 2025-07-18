@@ -13,11 +13,11 @@ data class FoodLogWithDetails(
     val logId: Int,
     val name: String,
     val imageUrl: String?,
-    val grams: Int,
-    val calories: Int,
-    val protein: Int,
-    val carbs: Int,
-    val fat: Int,
+    val grams: Float,
+    val calories: Float,
+    val protein: Float,
+    val carbs: Float,
+    val fat: Float,
     val timestamp: Long
 )
 
@@ -63,7 +63,7 @@ interface FoodLogDao {
     """)
     fun getAllLogsWithDetails(): Flow<List<FoodLogWithDetails>>
     @Query("UPDATE food_logs SET grams = :newGrams WHERE id = :logId")
-    suspend fun updateGrams(logId: Int, newGrams: Int)
+    suspend fun updateGrams(logId: Int, newGrams: Float)
     @Query("UPDATE food_logs SET timestamp = :newTimestamp WHERE id = :logId")
     suspend fun updateTimestamp(logId: Int, newTimestamp: Long)
     @Query("DELETE FROM food_logs WHERE id = :logId")
@@ -73,16 +73,16 @@ interface FoodLogDao {
     @Query("UPDATE food_logs SET grams = :grams, calories = :calories, protein = :protein, carbs = :carbs, fat = :fat WHERE id = :logId")
     suspend fun updateFoodLogFull(
         logId: Int,
-        grams: Int,
-        calories: Int,
-        protein: Int,
-        carbs: Int,
-        fat: Int
+        grams: Float,
+        calories: Float,
+        protein: Float,
+        carbs: Float,
+        fat: Float
     )
     @Query("UPDATE food_logs SET grams = :grams, timestamp = :timestamp WHERE id = :logId")
     suspend fun updateFoodLog(
         logId: Int,
-        grams: Int,
+        grams: Float,
         timestamp: Long,
     )
 

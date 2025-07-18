@@ -45,7 +45,7 @@ class RecipeViewModel(application: Application) : AndroidViewModel(application) 
     fun addOrUpdateRecipe(
         name: String,
         instructions: String?,
-        ingredients: Map<FoodTemplate, Int>, // Map of Template to Grams
+        ingredients: Map<FoodTemplate, Float>, // Map of Template to Grams
         existingRecipe: RecipeWithDetails?
     ) {
         viewModelScope.launch {

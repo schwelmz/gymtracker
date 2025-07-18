@@ -14,13 +14,13 @@ import com.example.gymtracker.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditFoodLogDialog(
-    initialGrams: Int,
-    initialCalories: Int,
-    initialProtein: Int,
-    initialCarbs: Int,
-    initialFat: Int,
+    initialGrams: Float,
+    initialCalories: Float,
+    initialProtein: Float,
+    initialCarbs: Float,
+    initialFat: Float,
     onDismiss: () -> Unit,
-    onSave: (newGrams: Int, newCalories: Int, newProtein: Int, newCarbs: Int, newFat: Int) -> Unit
+    onSave: (newGrams: Float, newCalories:Float, newProtein: Float, newCarbs: Float, newFat:Float) -> Unit
 ) {
     var grams by remember { mutableStateOf(initialGrams.toString()) }
     var calories by remember { mutableStateOf(initialCalories.toString()) }
@@ -29,8 +29,9 @@ fun EditFoodLogDialog(
     var fat by remember { mutableStateOf(initialFat.toString()) }
 
     val isFormValid = listOf(grams, calories, protein, carbs, fat).all {
-        it.isNotBlank() && it.toIntOrNull() != null
+        it.isNotBlank() && it.toFloatOrNull() != null
     }
+
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -40,7 +41,14 @@ fun EditFoodLogDialog(
                 // Grams Input
                 OutlinedTextField(
                     value = grams,
-                    onValueChange = { grams = it.filter { c -> c.isDigit() } },
+                    onValueChange = {
+                        val cleaned = it.replace(',', '.')
+                            .filterIndexed { index, c ->
+                                c.isDigit() || (c == '.' && !it.take(index).contains('.'))
+                            }
+                        grams = cleaned
+                    },
+
                     label = { Text("Weight") },
                     leadingIcon = {
                         Icon(
@@ -91,11 +99,11 @@ fun EditFoodLogDialog(
             OutlinedButton(
                 onClick = {
                     onSave(
-                        grams.toInt(),
-                        calories.toInt(),
-                        protein.toInt(),
-                        carbs.toInt(),
-                        fat.toInt()
+                        grams.toFloat(),
+                        calories.toFloat(),
+                        protein.toFloat(),
+                        carbs.toFloat(),
+                        fat.toFloat()
                     )
                 },
                 enabled = isFormValid,
@@ -195,16 +203,19 @@ private fun MacroInputRow(
 ) {
     OutlinedTextField(
         value = value,
-        onValueChange = { onValueChange(it.filter { c -> c.isDigit() }) },
+        onValueChange = {
+            val cleaned = it.replace(',', '.')
+                .filterIndexed { index, c ->
+                    c.isDigit() || (c == '.' && !it.take(index).contains('.'))
+                }
+            onValueChange(cleaned)
+        },
         label = { Text(label) },
         leadingIcon = {
-            Icon(
-                painter = painterResource(id = iconRes),
-                contentDescription = null
-            )
+            Icon(painter = painterResource(id = iconRes), contentDescription = null)
         },
         suffix = { Text(suffix) },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         singleLine = true,
         modifier = Modifier.fillMaxWidth()
     )

@@ -7,7 +7,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -21,7 +20,6 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -234,7 +232,7 @@ fun AddEditRecipeScreen(
 }
 
 @Composable
-fun IngredientListItem(template: FoodTemplate, grams: Int, onRemove: () -> Unit) {
+fun IngredientListItem(template: FoodTemplate, grams:Float, onRemove: () -> Unit) {
     val calories = (template.caloriesPer100g * grams) / 100
     ListItem(
         headlineContent = { Text(template.name, fontWeight = FontWeight.SemiBold) },
@@ -255,7 +253,7 @@ fun IngredientListItem(template: FoodTemplate, grams: Int, onRemove: () -> Unit)
 fun AddIngredientDialog(
     allFoodTemplates: List<FoodTemplate>,
     onDismiss: () -> Unit,
-    onIngredientSelected: (FoodTemplate, Int) -> Unit,
+    onIngredientSelected: (FoodTemplate, Float) -> Unit,
     onNavigateToScanner: () -> Unit
 ) {
     var searchText by remember { mutableStateOf("") }
@@ -366,7 +364,7 @@ fun AddIngredientDialog(
                 onClick = {
                     selectedTemplate?.let { template ->
                         grams.toIntOrNull()?.let { weight ->
-                            onIngredientSelected(template, weight)
+                            onIngredientSelected(template, weight.toFloat())
                         }
                     }
                 },

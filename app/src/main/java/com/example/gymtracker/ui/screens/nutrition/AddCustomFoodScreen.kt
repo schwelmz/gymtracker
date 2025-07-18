@@ -57,13 +57,13 @@ fun AddCustomFoodScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(onClick = {
-                val caloriesInt = calories.toIntOrNull() ?: 0
-                val proteinInt = protein.toIntOrNull() ?: 0
-                val carbsInt = carbs.toIntOrNull() ?: 0
-                val fatInt = fat.toIntOrNull() ?: 0
+                val caloriesFloat = calories.toFloatOrNull() ?: 0
+                val proteinFloat = protein.toFloatOrNull() ?: 0
+                val carbsFloat = carbs.toFloatOrNull() ?: 0
+                val fatFloat = fat.toFloatOrNull() ?: 0
 
                 if (name.isNotBlank()) {
-                    viewModel.saveCustomFoodTemplate(name, caloriesInt, proteinInt, carbsInt, fatInt)
+                    viewModel.saveCustomFoodTemplate(name, caloriesFloat, proteinFloat, carbsFloat, fatFloat)
                     onNavigateUp() // Go back after saving
                 }
             }) {

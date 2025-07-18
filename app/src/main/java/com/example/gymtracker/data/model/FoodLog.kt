@@ -3,7 +3,6 @@ package com.example.gymtracker.data.model
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
-import com.example.gymtracker.data.model.FoodTemplate
 
 /**
  * Represents a single instance of a food being logged by the user.
@@ -22,11 +21,11 @@ data class FoodLog(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
     val templateId: Int,
-    val grams: Int,
-    val calories: Int,
-    val protein: Int,
-    val carbs: Int,
-    val fat: Int,
+    val grams: Float,
+    val calories: Float,
+    val protein: Float,
+    val carbs: Float,
+    val fat: Float,
     val timestamp: Long
 )
 

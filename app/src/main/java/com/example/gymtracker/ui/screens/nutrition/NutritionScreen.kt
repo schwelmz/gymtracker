@@ -16,6 +16,7 @@ import com.example.gymtracker.ui.components.DateTimePickerDialog
 import com.example.gymtracker.ui.components.EditFoodLogDialog
 import com.example.gymtracker.ui.components.FoodCard
 import com.example.gymtracker.ui.components.FoodOptionsDialog
+import com.example.gymtracker.ui.components.MacroStat
 import com.example.gymtracker.ui.components.RecipeLogCard
 import com.example.gymtracker.ui.utils.headlineBottomPadding
 import com.example.gymtracker.ui.utils.headlineTopPadding
@@ -135,7 +136,7 @@ fun NutritionScreen(
                 .padding(padding)
         ) {
             val (totalCalories, totalProtein, totalCarbs, totalFat) = remember(todaysDiaryEntries) {
-                var cals = 0; var prot = 0; var carb = 0; var fat = 0
+                var cals = 0f; var prot = 0f; var carb = 0f; var fat = 0f
                 todaysDiaryEntries.forEach { diaryEntry ->
                     when (diaryEntry) {
                         is DiaryEntry.Food -> {
@@ -213,7 +214,7 @@ fun NutritionScreen(
                                         style = MaterialTheme.typography.titleMedium
                                     )
                                     Text(
-                                        text = "$totalCalories kcal",
+                                        text = "${totalCalories.toInt()} kcal",
                                         style = MaterialTheme.typography.headlineMedium,
                                         fontWeight = FontWeight.Bold,
                                         color = calorieColor
@@ -226,7 +227,7 @@ fun NutritionScreen(
                                         style = MaterialTheme.typography.titleMedium
                                     )
                                     Text(
-                                        text = "$leftoverCalories kcal",
+                                        text = "${leftoverCalories.toInt()} kcal",
                                         style = MaterialTheme.typography.headlineMedium,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary
@@ -245,9 +246,9 @@ fun NutritionScreen(
                             horizontalArrangement = Arrangement.SpaceAround,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            MacroStat(label = "Protein", value = totalProtein)
-                            MacroStat(label = "Carbs", value = totalCarbs)
-                            MacroStat(label = "Fat", value = totalFat)
+                            MacroStat(label = "Protein", value = totalProtein.toInt())
+                            MacroStat(label = "Carbs", value = totalCarbs.toInt())
+                            MacroStat(label = "Fat", value = totalFat.toInt())
                         }
                     }
                 }

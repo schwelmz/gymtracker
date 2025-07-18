@@ -21,8 +21,8 @@ data class FoodTemplate(
     val barcode: String? = null,
     val name: String,
     val imageUrl: String? = null,
-    val caloriesPer100g: Int,
-    val proteinPer100g: Int,
-    val carbsPer100g: Int,
-    val fatPer100g: Int
+    val caloriesPer100g: Float,
+    val proteinPer100g: Float,
+    val carbsPer100g: Float,
+    val fatPer100g: Float
 )

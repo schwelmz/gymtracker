@@ -24,5 +24,5 @@ import androidx.room.ForeignKey
 data class RecipeIngredient(
     val recipeId: Int,
     val templateId: Int,
-    val grams: Int
+    val grams: Float
 )

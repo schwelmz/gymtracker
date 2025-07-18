@@ -35,6 +35,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import kotlin.collections.forEach
 import kotlin.math.absoluteValue
 import kotlin.math.ceil
 import kotlin.math.roundToInt
@@ -167,14 +168,14 @@ fun FoodDiaryScreen(
             }
         }
 
-        val dailyCalories = mutableMapOf<LocalDate, Int>()
+        val dailyCalories = mutableMapOf<LocalDate, Float>()
         filteredHistory.forEach { diaryEntry ->
             val date = Instant.ofEpochMilli(diaryEntry.timestamp).atZone(ZoneId.systemDefault()).toLocalDate()
             val calories = when (diaryEntry) {
                 is DiaryEntry.Food -> diaryEntry.details.calories
                 is DiaryEntry.Recipe -> diaryEntry.log.totalCalories
             }
-            dailyCalories[date] = (dailyCalories[date] ?: 0) + calories
+            dailyCalories[date] = (dailyCalories[date] ?: 0f) + calories.toFloat()
         }
 
         val grouped = filteredHistory.groupBy {
@@ -339,7 +340,7 @@ fun TimeSpanSelector(
 @OptIn(ExperimentalTextApi::class)
 @Composable
 fun BarChart(
-    data: List<Pair<LocalDate, Int>>,
+    data: List<Pair<LocalDate, Float>>,
     calorieGoal: Int,
     calorieMode: CalorieMode,
     selectedBar: Pair<LocalDate, Int>?,
@@ -387,7 +388,7 @@ fun BarChart(
             }).copy(alpha = 0.4f)
 
             val barRect = Rect(topLeft = Offset(barX, 0f), bottomRight = Offset(barX + barWidth, chartHeight))
-            barRects.add(barRect to (date to calories))
+            barRects.add((barRect to (date to calories)) as Pair<Rect, Pair<LocalDate, Int>>)
 
             drawRect(color = barColor, topLeft = Offset(barX, topY), size = Size(barWidth, barHeight.coerceAtLeast(2f)))
             val tickY = chartHeight - (calories.toFloat() / maxValue) * chartHeight

@@ -122,7 +122,7 @@ fun FoodScannerScreen(
 
 
 @Composable
-fun ProductDetails(product: Product, onAddFood: (Int, String) -> Unit) {
+fun ProductDetails(product: Product, onAddFood: (Float, String) -> Unit) {
     var grams by remember { mutableStateOf("100") }
 
     // This logic now works perfectly because the name has already been corrected by the ViewModel
@@ -192,9 +192,9 @@ fun ProductDetails(product: Product, onAddFood: (Int, String) -> Unit) {
         Spacer(modifier = Modifier.height(16.dp))
         Button(
             onClick = {
-                val gramsInt = grams.toIntOrNull() ?: 100
+                val gramsInt: Any = grams.toFloatOrNull() ?: 100
                 if (customName.isNotBlank()) {
-                    onAddFood(gramsInt, customName)
+                    onAddFood(gramsInt as Float, customName)
                 }
             },
             enabled = customName.isNotBlank()
