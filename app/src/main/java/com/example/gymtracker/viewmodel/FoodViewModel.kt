@@ -217,6 +217,29 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
             )
         }
     }
+    fun updateFoodLog(
+        logId: Int,
+        grams: Int
+    ) {
+        viewModelScope.launch {
+            val log = logDao.getById(logId) ?: return@launch
+            val template = templateDao.getById(log.templateId) ?: return@launch
+
+            val updatedCalories = (template.caloriesPer100g * grams) / 100
+            val updatedProtein  = (template.proteinPer100g  * grams) / 100
+            val updatedCarbs    = (template.carbsPer100g    * grams) / 100
+            val updatedFat      = (template.fatPer100g      * grams) / 100
+
+            foodLogDao.updateFoodLogFull(
+                logId = logId,
+                grams = grams,
+                calories = updatedCalories,
+                protein = updatedProtein,
+                carbs = updatedCarbs,
+                fat = updatedFat
+            )
+        }
+    }
 
     fun updateFoodLog(
         logId: Int,
@@ -230,6 +253,7 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
             foodLogDao.updateFoodLogFull(logId, grams, calories, protein, carbs, fat)
         }
     }
+
     /**
      * Logs an entry for a predefined or custom food template.
      */
