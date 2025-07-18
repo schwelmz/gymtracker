@@ -44,7 +44,7 @@ fun HomeScreen(
     onNavigateToWeightHistory: () -> Unit
 ) {
     val healthState by homeViewModel.uiState.collectAsState()
-    val goals by goalsViewModel.uiState.collectAsState()
+    val goals by goalsViewModel.userGoals.collectAsState()
     val weightEntries by homeViewModel.weightEntries.collectAsState(initial = emptyList())
 
     val todaysDiaryEntries by foodViewModel.todayDiaryEntries.collectAsState(initial = emptyList())
@@ -155,11 +155,11 @@ fun HomeScreen(
                             showBurned = false, // Hide the burned stat
                             onGoalClick = {
                                 launchGoalDialog("Set Calorie Goal", goals.calorieGoal) {
-                                    goalsViewModel.updateUserGoal(calories = it)
+                                    goalsViewModel.saveUserGoals(goals.copy(calorieGoal = it))
                                 }
                             },
                             onModeChange = { newMode ->
-                                goalsViewModel.updateUserGoal(calorieMode = newMode)
+                                goalsViewModel.saveUserGoals(goals.copy(calorieMode = newMode))
                             }
                         )
                         MacroSummaryCard(
@@ -171,17 +171,17 @@ fun HomeScreen(
                             fatGoal = goals.fatGoal,
                             onProteinGoalClick = {
                                 launchGoalDialog("Set Protein Goal (g)", goals.proteinGoal) {
-                                    goalsViewModel.updateUserGoal(protein = it)
+                                    goalsViewModel.saveUserGoals(goals.copy(proteinGoal = it))
                                 }
                             },
                             onCarbGoalClick = {
                                 launchGoalDialog("Set Carb Goal (g)", goals.carbGoal) {
-                                    goalsViewModel.updateUserGoal(carbs = it)
+                                    goalsViewModel.saveUserGoals(goals.copy(carbGoal = it))
                                 }
                             },
                             onFatGoalClick = {
                                 launchGoalDialog("Set Fat Goal (g)", goals.fatGoal) {
-                                    goalsViewModel.updateUserGoal(fat = it)
+                                    goalsViewModel.saveUserGoals(goals.copy(fatGoal = it))
                                 }
                             }
                         )
@@ -209,11 +209,11 @@ fun HomeScreen(
                             calorieMode = goals.calorieMode,
                             onGoalClick = {
                                 launchGoalDialog("Set Calorie Goal", goals.calorieGoal) {
-                                    goalsViewModel.updateUserGoal(calories = it)
+                                    goalsViewModel.saveUserGoals(goals.copy(calorieGoal = it))
                                 }
                             },
                             onModeChange = { newMode ->
-                                goalsViewModel.updateUserGoal(calorieMode = newMode)
+                                goalsViewModel.saveUserGoals(goals.copy(calorieMode = newMode))
                             }
                         )
                         MacroSummaryCard(
@@ -225,17 +225,17 @@ fun HomeScreen(
                             fatGoal = goals.fatGoal,
                             onProteinGoalClick = {
                                 launchGoalDialog("Set Protein Goal (g)", goals.proteinGoal) {
-                                    goalsViewModel.updateUserGoal(protein = it)
+                                    goalsViewModel.saveUserGoals(goals.copy(proteinGoal = it))
                                 }
                             },
                             onCarbGoalClick = {
                                 launchGoalDialog("Set Carb Goal (g)", goals.carbGoal) {
-                                    goalsViewModel.updateUserGoal(carbs = it)
+                                    goalsViewModel.saveUserGoals(goals.copy(carbGoal = it))
                                 }
                             },
                             onFatGoalClick = {
                                 launchGoalDialog("Set Fat Goal (g)", goals.fatGoal) {
-                                    goalsViewModel.updateUserGoal(fat = it)
+                                    goalsViewModel.saveUserGoals(goals.copy(fatGoal = it))
                                 }
                             }
                         )
@@ -244,7 +244,7 @@ fun HomeScreen(
                             stepsGoal = goals.stepsGoal,
                             onStepsGoalClick = {
                                 launchGoalDialog("Set Daily Step Goal", goals.stepsGoal) {
-                                    goalsViewModel.updateUserGoal(steps = it)
+                                    goalsViewModel.saveUserGoals(goals.copy(stepsGoal = it))
                                 }
                             }
                         )
