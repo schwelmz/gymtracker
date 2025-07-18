@@ -55,7 +55,7 @@ fun NutritionHostScreen(
         )
         Surface(modifier = Modifier.fillMaxSize()) {
             VerticalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
-                val goalsState by goalsViewModel.uiState.collectAsState()
+                val goalsState by goalsViewModel.userGoals.collectAsState()
                 val calorieGoal = goalsState.calorieGoal
                 val calorieMode = goalsState.calorieMode
 
