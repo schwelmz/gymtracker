@@ -97,18 +97,34 @@ fun NutritionScreen(
             onDismiss = { showGramsEditor = false; selectedEntry = null },
             onSave = { newGrams, newCalories, newProtein, newCarbs, newFat ->
                 scope.launch {
-                    viewModel.updateLogGramsAndRecalculate(
-                        logId = entry.details.logId,
-                        grams = newGrams,
-                        calories = newCalories,
-                        protein = newProtein,
-                        carbs = newCarbs,
-                        fat = newFat
-                    )
+                    val old = entry.details
+                    val macrosChanged = old.calories != newCalories ||
+                            old.protein  != newProtein  ||
+                            old.carbs    != newCarbs    ||
+                            old.fat      != newFat
+
+                    if (macrosChanged) {
+                        viewModel.updateFoodLog(
+                            logId = old.logId,
+                            grams = newGrams,
+                            calories = newCalories,
+                            protein = newProtein,
+                            carbs = newCarbs,
+                            fat = newFat
+                        )
+                    } else if (old.grams != newGrams) {
+                        viewModel.updateFoodLog(
+                            logId = old.logId,
+                            grams = newGrams // this triggers the overload that recalculates
+                        )
+                    }
+                    // else do nothing — no values changed
                 }
+
                 showGramsEditor = false
                 selectedEntry = null
-            },
+            }
+            ,
         )
     }
 
