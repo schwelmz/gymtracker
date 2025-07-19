@@ -1,24 +1,18 @@
 package com.example.gymtracker.ui.screens.workout
 
 import ExerciseCard
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import cardHeight
 import com.example.gymtracker.data.model.Exercise
 import com.example.gymtracker.ui.utils.headlineBottomPadding
 import com.example.gymtracker.ui.utils.headlineTopPadding
+import cardHeight
 
 @Composable
 fun AllExercisesView(
@@ -28,26 +22,26 @@ fun AllExercisesView(
     onDeleteExercise: (Exercise) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    LazyColumn {
+    LazyColumn(
+        modifier = modifier.fillMaxSize()
+    ) {
+        // Header Item
         item {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(
-                        top = headlineTopPadding,
-                        bottom = headlineBottomPadding,
-                        end = 16.dp
-                    ),
-                contentAlignment = Alignment.CenterEnd // Aligns content to the end (right)
+                    .padding(top = headlineTopPadding, bottom = headlineBottomPadding, end = 16.dp),
+                contentAlignment = Alignment.CenterEnd
             ) {
                 Text(
                     text = "All Exercises",
                     style = MaterialTheme.typography.headlineLarge,
                     color = MaterialTheme.colorScheme.secondary
-                    // textAlign can be removed if the Box handles the alignment
                 )
             }
         }
+
+        // Add custom exercise button
         item {
             Card(
                 onClick = onAddExerciseClicked,
@@ -69,9 +63,11 @@ fun AllExercisesView(
                 }
             }
         }
+
+        // Exercises list
         items(items = exercises) { exercise ->
             ExerciseCard(
-                exercise,
+                exercise = exercise,
                 onClick = { onExerciseClicked(exercise.name) },
                 onDelete = { onDeleteExercise(exercise) }
             )

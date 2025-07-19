@@ -1,4 +1,3 @@
-// in ui/screens/StatsScreen.kt
 package com.example.gymtracker.ui.screens.workout
 
 import android.graphics.RectF
@@ -44,38 +43,40 @@ import com.patrykandpatrick.vico.core.marker.MarkerLabelFormatter
 import java.text.SimpleDateFormat
 import java.util.*
 
-@OptIn(ExperimentalMaterial3Api::class) // Required for DatePicker
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StatsScreen(
     exerciseName: String,
     sessions: List<WorkoutSession>,
 ) {
-    // --- 1. STATE MANAGEMENT FOR DATE RANGE ---
-
-    // Find the earliest and latest dates from the session data to set as the initial range.
+    // --- STATE MANAGEMENT FOR DATE RANGE ---
     val minDate = remember(sessions) { sessions.minOfOrNull { it.date } }
     val maxDate = remember(sessions) { sessions.maxOfOrNull { it.date } }
 
     var startDate by remember { mutableStateOf(minDate) }
     var endDate by remember { mutableStateOf(maxDate) }
 
-    // State to control the visibility of the date pickers
     var showStartDatePicker by remember { mutableStateOf(false) }
     var showEndDatePicker by remember { mutableStateOf(false) }
 
-    // --- 2. FILTER DATA BASED ON THE SELECTED DATE RANGE ---
-
+    // --- FILTER DATA BASED ON SELECTED DATE RANGE ---
     val filteredSessions = remember(sessions, startDate, endDate) {
         sessions.filter { session ->
-            // Use Calendar for reliable date comparisons
             val sessionCal = Calendar.getInstance().apply { time = session.date }
             val startCal = startDate?.let { Calendar.getInstance().apply { time = it } }
             val endCal = endDate?.let { Calendar.getInstance().apply { time = it } }
 
-            // Normalize calendars to compare dates only, ignoring time.
-            sessionCal.set(Calendar.HOUR_OF_DAY, 0); sessionCal.set(Calendar.MINUTE, 0); sessionCal.set(Calendar.SECOND, 0)
-            startCal?.set(Calendar.HOUR_OF_DAY, 0); startCal?.set(Calendar.MINUTE, 0); startCal?.set(Calendar.SECOND, 0)
-            endCal?.set(Calendar.HOUR_OF_DAY, 0); endCal?.set(Calendar.MINUTE, 0); endCal?.set(Calendar.SECOND, 0)
+            sessionCal.set(Calendar.HOUR_OF_DAY, 0)
+            sessionCal.set(Calendar.MINUTE, 0)
+            sessionCal.set(Calendar.SECOND, 0)
+
+            startCal?.set(Calendar.HOUR_OF_DAY, 0)
+            startCal?.set(Calendar.MINUTE, 0)
+            startCal?.set(Calendar.SECOND, 0)
+
+            endCal?.set(Calendar.HOUR_OF_DAY, 0)
+            endCal?.set(Calendar.MINUTE, 0)
+            endCal?.set(Calendar.SECOND, 0)
 
             val isAfterStart = startCal == null || !sessionCal.before(startCal)
             val isBeforeEnd = endCal == null || !sessionCal.after(endCal)
@@ -83,7 +84,7 @@ fun StatsScreen(
         }
     }
 
-    // --- CHART MODELS (based on the newly filtered data) ---
+    // --- CHART MODELS ---
     val chartModelProducer = filteredSessions.takeIf { it.isNotEmpty() }?.let { sessionList ->
         val chartEntries = sessionList.mapIndexed { index, session ->
             val totalVolume = session.sets.sumOf { it.reps * it.weight }
@@ -107,7 +108,7 @@ fun StatsScreen(
         Text(text = "Progress for $exerciseName", style = MaterialTheme.typography.headlineMedium)
         Spacer(modifier = Modifier.height(16.dp))
 
-        // --- 3. UI FOR DATE SELECTION ---
+        // --- UI FOR DATE SELECTION ---
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceAround,
@@ -194,7 +195,7 @@ fun StatsScreen(
     }
 }
 
-// The createChart and CustomVerticalPlacer functions remain unchanged.
+// --- CREATE CHART FUNCTION ---
 @Composable
 fun createChart(
     sessions: List<WorkoutSession>,
@@ -227,9 +228,9 @@ fun createChart(
     val marker = remember(markerLabelColor, markerBackgroundColor, markerGuidelineColor) {
         val label = textComponent {
             color = markerLabelColor.toArgb()
-            lineCount = 3 // Allow for multi-line text
+            lineCount = 3
             background = ShapeComponent(
-                shape = Shapes.roundedCornerShape(allPercent = 25), // A less circular bubble
+                shape = Shapes.roundedCornerShape(allPercent = 25),
                 color = markerBackgroundColor.toArgb()
             )
             padding = MutableDimensions(horizontalDp = 8.dp.value, verticalDp = 4.dp.value)
@@ -243,7 +244,6 @@ fun createChart(
         )
 
         object : Marker {
-            // Use the passed-in formatter
             val formatter = markerFormatter
 
             override fun getInsets(
@@ -263,7 +263,6 @@ fun createChart(
                 val markedEntry = markedEntries.firstOrNull() ?: return
                 val entryX = markedEntry.location.x
                 val entryY = markedEntry.location.y
-
 
                 val chartValues = chartValuesProvider.getChartValues()
                 val labelText = formatter.getLabel(markedEntries, chartValues)
@@ -285,8 +284,6 @@ fun createChart(
                     horizontalPosition = com.patrykandpatrick.vico.core.component.text.HorizontalPosition.Center,
                     verticalPosition = com.patrykandpatrick.vico.core.component.text.VerticalPosition.Bottom
                 )
-
-
             }
         }
     }

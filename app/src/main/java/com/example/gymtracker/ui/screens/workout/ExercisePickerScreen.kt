@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
@@ -15,15 +14,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.gymtracker.R
 import com.example.gymtracker.viewmodel.ExerciseViewModel
 import com.example.gymtracker.viewmodel.WorkoutPlanViewModel
-import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,19 +37,13 @@ fun ExercisePickerScreen(
         return
     }
 
-    val selectedExercises = remember(planWithExercises) {
-        mutableStateListOf<String>().apply {
-            addAll(planWithExercises!!.exercises.map { it.name })
-        }
-    }
-    //var planGoal by remember(planWithExercises) { mutableStateOf<Int?>(planWithExercises!!.plan.goal) }
+    val selectedExercises = remember { mutableStateListOf<String>().apply { addAll(planWithExercises!!.exercises.map { it.name }) } }
     var searchQuery by remember { mutableStateOf("") }
-    val goalValue = planWithExercises?.plan?.goal ?: 1 // fallback default
-    var planGoal: Int? by remember(planWithExercises?.plan?.goal) {
-        mutableStateOf(goalValue)
-    }
-    val filteredExercises = allExercises.filter {
-        it.name.contains(searchQuery, ignoreCase = true)
+    var planGoal by remember { mutableStateOf(planWithExercises?.plan?.goal ?: 1) }
+
+    // Filter exercises based on the search query
+    val filteredExercises = remember(searchQuery, allExercises) {
+        allExercises.filter { it.name.contains(searchQuery, ignoreCase = true) }
     }
 
     Scaffold(
@@ -115,19 +105,7 @@ fun ExercisePickerScreen(
                 }
                 Spacer(Modifier.height(16.dp))
             }
-//
-//            item {
-//                OutlinedTextField(
-//                    value = planGoal?.toString() ?: "",
-//                    onValueChange = {
-//                        planGoal = it.toIntOrNull()
-//                    },
-//                    label = { Text("Weekly Goal (workouts)") },
-//                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-//                    modifier = Modifier.fillMaxWidth()
-//                )
-//                Spacer(Modifier.height(16.dp))
-//            }
+
             items(filteredExercises, key = { it.name }) { exercise ->
                 val isSelected = exercise.name in selectedExercises
                 Card(
@@ -150,7 +128,7 @@ fun ExercisePickerScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 8.dp), // Tighter padding
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
@@ -160,12 +138,12 @@ fun ExercisePickerScreen(
                             else -> null
                         }
 
-                        if (imageModel != null) {
+                        imageModel?.let {
                             AsyncImage(
                                 model = imageModel,
                                 contentDescription = "Exercise Image",
                                 modifier = Modifier
-                                    .size(56.dp) // Smaller image
+                                    .size(56.dp)
                                     .clip(MaterialTheme.shapes.small)
                             )
                         }
@@ -173,7 +151,7 @@ fun ExercisePickerScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = exercise.name,
-                                style = MaterialTheme.typography.bodyLarge, // Slightly smaller than titleMedium
+                                style = MaterialTheme.typography.bodyLarge,
                                 maxLines = 1
                             )
                             if (!exercise.description.isNullOrBlank()) {
@@ -191,15 +169,15 @@ fun ExercisePickerScreen(
         }
     }
 }
+
 @Composable
-fun resolveExerciseImage(imageUri: String?): Int? {
+fun resolveExerciseImage(imageUri: String?): Any? {
     return when (imageUri) {
         "Barbell Row" -> R.drawable.barbellrow
         "Bench Press" -> R.drawable.benchpress
         "deadlift" -> R.drawable.deadlift
         "overhead press" -> R.drawable.overheadpress
         "squat" -> R.drawable.squat
-        // Add more mappings here if needed
         else -> null
     }
 }

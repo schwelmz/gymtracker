@@ -22,6 +22,8 @@ import com.example.gymtracker.ui.screens.workout.WorkoutPlansView
 import com.example.gymtracker.viewmodel.ExerciseViewModel
 import com.example.gymtracker.viewmodel.WorkoutViewModel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 
 @Composable
@@ -38,14 +40,13 @@ fun WorkoutHostScreen(mainNavController: NavHostController) {
 
     // Synchronize pager state with rail selection
     LaunchedEffect(pagerState.currentPage) {
-        // This ensures the rail highlights the current page when scrolled
-        // No need to update selectedItemId here, it's derived directly from pagerState.currentPage
+        // Ensure rail highlights the current page when scrolled
     }
 
     Row(modifier = Modifier.fillMaxSize()) {
         AppNavigationRail(
             items = workoutNavItems,
-            selectedItemId = workoutNavItems[pagerState.currentPage].id, // Use id for selection
+            selectedItemId = workoutNavItems[pagerState.currentPage].id,
             onItemSelected = { route ->
                 val index = workoutNavItems.indexOfFirst { it.route == route }
                 if (index != -1) {
@@ -95,9 +96,10 @@ fun WorkoutHostScreen(mainNavController: NavHostController) {
                             },
                             onDeleteSession = { session ->
                                 scope.launch {
-                                    workoutViewModel.deleteSession(
-                                        session
-                                    )
+                                    // Ensure deletion occurs on a background thread
+                                    withContext(Dispatchers.IO) {
+                                        workoutViewModel.deleteSession(session)
+                                    }
                                 }
                             },
                             onModifySession = { session ->
@@ -124,9 +126,10 @@ fun WorkoutHostScreen(mainNavController: NavHostController) {
                             },
                             onDeleteExercise = { exercise ->
                                 scope.launch {
-                                    exerciseViewModel.deleteExercise(
-                                        exercise
-                                    )
+                                    // Perform exercise deletion on a background thread
+                                    withContext(Dispatchers.IO) {
+                                        exerciseViewModel.deleteExercise(exercise)
+                                    }
                                 }
                             }
                         )
@@ -149,7 +152,6 @@ fun WorkoutHostScreen(mainNavController: NavHostController) {
                             }
                         )
                     }
-
                 }
             }
         }

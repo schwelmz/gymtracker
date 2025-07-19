@@ -9,6 +9,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.gymtracker.data.model.WorkoutPlan
 import com.example.gymtracker.viewmodel.WorkoutPlanViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun WorkoutPlanScreen(
@@ -16,24 +19,27 @@ fun WorkoutPlanScreen(
     onExercisePicker: (WorkoutPlan) -> Unit,
     onLogWorkoutForPlan: (List<String>, Int) -> Unit
 ) {
-    val plans by viewModel.allPlans.collectAsState(initial = emptyList())
-    var showDialog by remember { mutableStateOf(false) }
-    var deleteDialogPlan by remember { mutableStateOf<WorkoutPlan?>(null) }
-    var newPlanName by remember { mutableStateOf("") }
+    val plans by viewModel.allPlans.collectAsState(initial = emptyList()) // State for all workout plans
+    var showDialog by remember { mutableStateOf(false) } // State to manage showing the dialog for new plan
+    var deleteDialogPlan by remember { mutableStateOf<WorkoutPlan?>(null) } // State for delete confirmation dialog
+    var newPlanName by remember { mutableStateOf("") } // State for the name of the new plan
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
+        // Iterate through all plans and display them
         plans.forEach { planWithExercises ->
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp)
                     .combinedClickable(
-                        onClick = { onLogWorkoutForPlan(planWithExercises.exercises.map { it.name }, planWithExercises.plan.id) }, // <- Card click
-                        onLongClick = { deleteDialogPlan = planWithExercises.plan }
+                        onClick = {
+                            onLogWorkoutForPlan(planWithExercises.exercises.map { it.name }, planWithExercises.plan.id)
+                        },
+                        onLongClick = { deleteDialogPlan = planWithExercises.plan } // Long click to show delete dialog
                     ),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
             ) {
@@ -53,7 +59,9 @@ fun WorkoutPlanScreen(
                         Button(onClick = { onExercisePicker(planWithExercises.plan) }) {
                             Text("Edit Exercises")
                         }
-                        Button(onClick = { onLogWorkoutForPlan(planWithExercises.exercises.map { it.name }, planWithExercises.plan.id) }) {
+                        Button(onClick = {
+                            onLogWorkoutForPlan(planWithExercises.exercises.map { it.name }, planWithExercises.plan.id)
+                        }) {
                             Text("Start Workout")
                         }
                     }
@@ -63,20 +71,22 @@ fun WorkoutPlanScreen(
 
         Spacer(Modifier.height(16.dp))
 
+        // Button to show new plan creation dialog
         Button(onClick = { showDialog = true }, modifier = Modifier.fillMaxWidth()) {
             Text("Create New Plan")
         }
 
-        // Create plan dialog
+        // Dialog to create a new workout plan
         if (showDialog) {
             AlertDialog(
                 onDismissRequest = { showDialog = false },
                 confirmButton = {
                     TextButton(onClick = {
                         if (newPlanName.isNotBlank()) {
+                            // Offload the creation of the new plan to a background thread
                             viewModel.createPlan(newPlanName, null)
-                            newPlanName = ""
-                            showDialog = false
+                            newPlanName = "" // Clear the input after creation
+                            showDialog = false // Close the dialog
                         }
                     }) {
                         Text("Create")
@@ -98,7 +108,7 @@ fun WorkoutPlanScreen(
             )
         }
 
-        // Confirm delete dialog
+        // Confirm delete plan dialog
         deleteDialogPlan?.let { plan ->
             AlertDialog(
                 onDismissRequest = { deleteDialogPlan = null },
@@ -106,6 +116,7 @@ fun WorkoutPlanScreen(
                 text = { Text("Are you sure you want to delete '${plan.name}'?") },
                 confirmButton = {
                     TextButton(onClick = {
+                        // Offload the delete operation to a background thread
                         viewModel.deletePlan(plan)
                         deleteDialogPlan = null
                     }) {

@@ -1,20 +1,9 @@
 package com.example.gymtracker.ui.screens.workout
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -37,22 +26,22 @@ fun WorkoutCalendarView(
     modifier: Modifier = Modifier,
     workoutPlanViewModel: WorkoutPlanViewModel = viewModel(factory = WorkoutPlanViewModel.Factory)
 ) {
+    // Collecting state from the ViewModel
     val plannedWorkoutsThisWeek by workoutPlanViewModel.plannedWorkoutsThisWeek.collectAsState(initial = emptyList())
     val incompletePlans by workoutPlanViewModel.incompleteWorkoutsThisWeek.collectAsState(initial = emptyList())
     val weeklyStreak by workoutPlanViewModel.globalWeeklyStreak.collectAsState()
     val streakWeeks by workoutPlanViewModel.streakWeeks.collectAsState()
 
-    LazyColumn {
+    LazyColumn(
+        modifier = modifier.padding(horizontal = 16.dp)
+    ) {
+        // Overview section
         item {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(
-                        top = headlineTopPadding,
-                        bottom = headlineBottomPadding,
-                        end = 16.dp
-                    ),
-                contentAlignment = Alignment.CenterEnd // Aligns content to the end (right)
+                    .padding(top = headlineTopPadding, bottom = headlineBottomPadding),
+                contentAlignment = Alignment.CenterEnd
             ) {
                 Text(
                     text = "Overview",
@@ -61,26 +50,25 @@ fun WorkoutCalendarView(
                 )
             }
         }
+
+        // Weekly streak display if there's a streak
         if (weeklyStreak > 0) {
             item {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 16.dp, bottom = 16.dp),
+                        .padding(vertical = 8.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.secondaryContainer
                     )
                 ) {
                     Row(
-                        modifier = Modifier.height(64.dp).fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {
-//                        Text(
-//                            text = "🔥",
-//                            style = MaterialTheme.typography.headlineMedium,
-//                            modifier = Modifier.padding(end = 8.dp)
-//                        )
                         val streakUnit = if (weeklyStreak == 1) "week" else "weeks"
                         Text(
                             text = "You have a $weeklyStreak $streakUnit streak!",
@@ -91,6 +79,8 @@ fun WorkoutCalendarView(
                 }
             }
         }
+
+        // Workout calendar display
         item {
             WorkoutCalendar(
                 workoutDates = workoutDates,
@@ -99,6 +89,7 @@ fun WorkoutCalendarView(
             )
         }
 
+        // Display "Planned this week" section if there are incomplete plans
         item {
             Spacer(modifier = Modifier.height(24.dp))
             if (incompletePlans.isNotEmpty()) {
@@ -110,6 +101,7 @@ fun WorkoutCalendarView(
             }
         }
 
+        // Display workout plans
         items(incompletePlans) { planStatus ->
             WorkoutPlanGoalCard(
                 planStatus = planStatus,
@@ -140,16 +132,16 @@ fun WorkoutPlanGoalCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Column {
+            Column(
+                modifier = Modifier.weight(1f) // Ensures proper space distribution between text and button
+            ) {
                 Text(planStatus.plan.name, style = MaterialTheme.typography.titleLarge)
                 Text(
                     "Progress: ${planStatus.currentWeekCompletedCount} / ${planStatus.plan.goal ?: 1}",
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
-            Button(
-                onClick = onLogWorkout
-            ) {
+            Button(onClick = onLogWorkout) {
                 Text("Start Workout")
             }
         }

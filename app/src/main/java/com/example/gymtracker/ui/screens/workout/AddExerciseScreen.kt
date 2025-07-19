@@ -1,4 +1,3 @@
-// In ui/screens/AddExerciseScreen.kt
 package com.example.gymtracker.ui.screens.workout
 
 import android.Manifest
@@ -21,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import coil.compose.rememberAsyncImagePainter
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import java.io.File
@@ -53,9 +53,7 @@ fun AddExerciseScreen(
     )
 
     // Permission state handler for the camera
-    val cameraPermissionState = rememberPermissionState(
-        permission = Manifest.permission.CAMERA
-    )
+    val cameraPermissionState = rememberPermissionState(permission = Manifest.permission.CAMERA)
 
     Scaffold(
         topBar = {
@@ -63,8 +61,6 @@ fun AddExerciseScreen(
                 title = { Text("Add New Exercise") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateUp) {
-                        // You'll need to add the dependency for extended icons for this
-                        // implementation("androidx.compose.material:material-icons-extended")
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
@@ -78,42 +74,18 @@ fun AddExerciseScreen(
                 .fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(16f / 9f) // Common aspect ratio for images
-                    .border(1.dp, MaterialTheme.colorScheme.outline),
-                contentAlignment = Alignment.Center
-            ) {
-                // Show the image if we have a URI, otherwise show text
-                if (imageUri != null) {
-                    Image(
-                        painter = rememberAsyncImagePainter(imageUri),
-                        contentDescription = "Exercise Image",
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else {
-                    Text("No Image Taken")
+            ImagePreviewSection(imageUri = imageUri)
+
+            // Camera permission button
+            CameraPermissionButton(
+                cameraPermissionState = cameraPermissionState,
+                onTakePicture = { uri ->
+                    tempUri = uri // Update state
+                    cameraActivityLauncher.launch(uri)
                 }
-            }
+            )
 
-            Button(
-                onClick = {
-                    if (cameraPermissionState.status.isGranted) {
-                        // Create a file and URI for the camera to save the image to
-                        val uri = createImageUri(context)
-                        tempUri = uri // Update our state
-                        cameraActivityLauncher.launch(uri)
-                    } else {
-                        // Request the permission
-                        cameraPermissionState.launchPermissionRequest()
-                    }
-                },
-                modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
-            ) {
-                Text(if (cameraPermissionState.status.isGranted) "Take Picture" else "Request Camera Permission")
-            }
-
+            // Text fields for name and description
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
@@ -138,7 +110,55 @@ fun AddExerciseScreen(
     }
 }
 
-// A helper function to create a temporary file and its URI
+// Image preview section
+@Composable
+fun ImagePreviewSection(imageUri: Uri?) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(16f / 9f) // Common aspect ratio for images
+            .border(1.dp, MaterialTheme.colorScheme.outline),
+        contentAlignment = Alignment.Center
+    ) {
+        if (imageUri != null) {
+            Image(
+                painter = rememberAsyncImagePainter(imageUri),
+                contentDescription = "Exercise Image",
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            Text("No Image Taken")
+        }
+    }
+}
+
+// Camera permission button with logic
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+fun CameraPermissionButton(
+    cameraPermissionState: PermissionState,
+    onTakePicture: (Uri) -> Unit
+) {
+    val context = LocalContext.current
+
+    Button(
+        onClick = {
+            if (cameraPermissionState.status.isGranted) {
+                // Create a file and URI for the camera to save the image to
+                val uri = createImageUri(context)
+                onTakePicture(uri)
+            } else {
+                // Request the permission
+                cameraPermissionState.launchPermissionRequest()
+            }
+        },
+        modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
+    ) {
+        Text(if (cameraPermissionState.status.isGranted) "Take Picture" else "Request Camera Permission")
+    }
+}
+
+// Helper function to create a temporary file and its URI
 private fun createImageUri(context: Context): Uri {
     val imagesDir = File(context.cacheDir, "images")
     imagesDir.mkdirs()

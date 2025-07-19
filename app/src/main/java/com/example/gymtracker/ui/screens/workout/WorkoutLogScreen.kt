@@ -1,20 +1,9 @@
 package com.example.gymtracker.ui.screens.workout
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.exclude
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -33,35 +22,35 @@ fun WorkoutLogScreen(
     initialReps: Int?,
     initialWeight: Double?
 ) {
-
+    // Optimized padding for handling IME and Navigation bar insets
     val imeBottom = WindowInsets.ime
     val navBars = WindowInsets.navigationBars
-    val combinedInsets = imeBottom.exclude(navBars) // removes nav bar padding from IME height
-    val bottomPadding = with(LocalDensity.current) { combinedInsets.getBottom(this).toDp() }
+    val bottomPadding = with(LocalDensity.current) {
+        (imeBottom.exclude(navBars).getBottom(this)).toDp()
+    }
 
+    // Define layout using Column
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = bottomPadding),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // Header for exercise name
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(
-                    top = headlineTopPadding,
-                    bottom = headlineBottomPadding
-                ),
-            contentAlignment = Alignment.Center // Aligns content to the end (right)
+                .padding(top = headlineTopPadding, bottom = headlineBottomPadding),
+            contentAlignment = Alignment.Center
         ) {
             Text(
                 text = exerciseName,
                 style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.secondary
-                // textAlign can be removed if the Box handles the alignment
             )
         }
 
+        // Exercise set input component with dynamic layout
         ExerciseSetInput(
             sets = sets,
             onAddSet = onAddSet,
@@ -72,6 +61,7 @@ fun WorkoutLogScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
+        // Save workout button, enabled only when sets are added
         Button(
             onClick = onWorkoutSaved,
             enabled = sets.isNotEmpty(),
@@ -79,7 +69,7 @@ fun WorkoutLogScreen(
         ) {
             Text("Finish & Save Workout")
         }
+
         Spacer(modifier = Modifier.height(8.dp))
     }
 }
-
